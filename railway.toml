@@ -2,7 +2,9 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
+# startCommand는 각 서비스 Dashboard에서 개별 지정.
+# - sajucandle-bot: python -m sajucandle.bot
+# - sajucandle-api: python -m uvicorn sajucandle.api:app --host 0.0.0.0 --port $PORT
 [deploy]
-startCommand = "python -m sajucandle.bot"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
