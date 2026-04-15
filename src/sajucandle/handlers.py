@@ -1,13 +1,18 @@
 """Telegram 커맨드 핸들러 + 인자 파싱 유틸."""
 from __future__ import annotations
 
+import logging
+import os
 from datetime import datetime
 
 from telegram import Update
 from telegram.ext import ContextTypes
 
+from sajucandle.cache import BaziCache
+from sajucandle.cached_engine import CachedSajuEngine
 from sajucandle.format import render_bazi_card
-from sajucandle.saju_engine import SajuEngine
+
+logger = logging.getLogger(__name__)
 
 
 class BirthParseError(ValueError):
@@ -60,8 +65,31 @@ def parse_birth_args(args: list[str]) -> tuple[int, int, int, int, int]:
     )
 
 
+def _build_engine() -> CachedSajuEngine:
+    """REDIS_URL 환경변수 있으면 실제 Redis 연결, 없으면 no-op 캐시.
+
+    Upstash는 rediss:// (TLS). 연결 실패해도 캐시 없이 엔진 동작.
+    """
+    redis_url = os.environ.get("REDIS_URL")
+    redis_client = None
+    if redis_url:
+        try:
+            import redis as redis_lib
+
+            redis_client = redis_lib.from_url(redis_url)
+            redis_client.ping()
+            logger.info("Redis 연결 성공. BaziCache 활성화.")
+        except Exception as e:
+            logger.warning("Redis 연결 실패 (%s). 캐시 없이 진행.", e)
+            redis_client = None
+    else:
+        logger.info("REDIS_URL 미설정. 캐시 없이 진행.")
+    cache = BaziCache(redis_client=redis_client)
+    return CachedSajuEngine(cache=cache)
+
+
 # 엔진은 프로세스 수명 동안 1개만 유지
-_engine = SajuEngine()
+_engine = _build_engine()
 
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
