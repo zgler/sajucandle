@@ -1,4 +1,4 @@
-"""asyncpg Pool 싱글톤 테스트. TEST_DATABASE_URL 없으면 skip."""
+"""asyncpg Pool 싱글톤 테스트. 연결 테스트는 TEST_DATABASE_URL 필요."""
 from __future__ import annotations
 
 import os
@@ -8,12 +8,10 @@ import pytest
 from sajucandle import db
 
 
-pytestmark = pytest.mark.skipif(
+@pytest.mark.skipif(
     not os.environ.get("TEST_DATABASE_URL"),
     reason="TEST_DATABASE_URL not set",
 )
-
-
 async def test_connect_and_close():
     """connect() → ping → close()."""
     dsn = os.environ["TEST_DATABASE_URL"]
