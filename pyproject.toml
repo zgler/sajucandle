@@ -1,0 +1,32 @@
+[project]
+name = "sajucandle"
+version = "0.1.0"
+description = "SajuCandle Telegram bot - daily trading entry signals combining Saju score with chart analysis"
+requires-python = ">=3.12"
+dependencies = [
+    "python-telegram-bot>=21.0,<22.0",
+    "lunar-python>=1.4.4",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.4",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/sajucandle"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
