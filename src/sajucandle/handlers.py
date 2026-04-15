@@ -3,6 +3,12 @@ from __future__ import annotations
 
 from datetime import datetime
 
+from telegram import Update
+from telegram.ext import ContextTypes
+
+from sajucandle.format import render_bazi_card
+from sajucandle.saju_engine import SajuEngine
+
 
 class BirthParseError(ValueError):
     """사용자 생년월일시 인자 파싱 실패."""
@@ -52,3 +58,32 @@ def parse_birth_args(args: list[str]) -> tuple[int, int, int, int, int]:
         time_part.hour,
         time_part.minute,
     )
+
+
+# 엔진은 프로세스 수명 동안 1개만 유지
+_engine = SajuEngine()
+
+
+async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/start YYYY-MM-DD HH:MM` 커맨드. 명식 카드로 응답."""
+    if update.message is None:
+        return
+
+    try:
+        year, month, day, hour, minute = parse_birth_args(list(context.args or []))
+    except BirthParseError as e:
+        await update.message.reply_text(str(e))
+        return
+
+    try:
+        chart = _engine.calc_bazi(year, month, day, hour)
+    except Exception as e:  # lunar_python 내부 에러
+        await update.message.reply_text(
+            "명식 계산 중 문제가 발생했습니다. 날짜를 다시 확인해주세요.\n"
+            f"({type(e).__name__})"
+        )
+        return
+
+    birth_str = f"{year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}"
+    card = render_bazi_card(chart, birth_str=birth_str)
+    await update.message.reply_text(card)
