@@ -99,6 +99,14 @@ class ApiClient:
         await self._raise_for_status(r)
         return r.json()
 
+    async def get_admin_users(self) -> list[int]:
+        """등록된 사용자 chat_id 리스트. 브로드캐스트용."""
+        async with self._client() as c:
+            r = await c.get("/v1/admin/users")
+        await self._raise_for_status(r)
+        data = r.json()
+        return list(data.get("chat_ids", []))
+
     async def get_signal(
         self,
         chat_id: int,

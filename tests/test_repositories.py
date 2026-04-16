@@ -5,6 +5,7 @@ from sajucandle.repositories import (
     UserProfile,
     delete_user,
     get_user,
+    list_chat_ids,
     upsert_user,
 )
 
@@ -73,3 +74,21 @@ async def test_delete_is_idempotent(db_conn):
     ))
     await delete_user(db_conn, 4444)
     assert await get_user(db_conn, 4444) is None
+
+
+async def test_list_chat_ids_empty(db_conn):
+    # 다른 테스트 트랜잭션은 롤백되므로 빈 상태 기대
+    ids = await list_chat_ids(db_conn)
+    assert ids == []
+
+
+async def test_list_chat_ids_returns_all_registered(db_conn):
+    for cid in (5001, 5002, 5003):
+        await upsert_user(db_conn, UserProfile(
+            telegram_chat_id=cid,
+            birth_year=1990, birth_month=3, birth_day=15,
+            birth_hour=14, birth_minute=0,
+            asset_class_pref="swing",
+        ))
+    ids = await list_chat_ids(db_conn)
+    assert sorted(ids) == [5001, 5002, 5003]

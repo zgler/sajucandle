@@ -151,3 +151,37 @@ async def test_get_signal_502_raises_apierror(client):
     with pytest.raises(ApiError) as exc_info:
         await client.get_signal(123)
     assert exc_info.value.status == 502
+
+
+# ─────────────────────────────────────────────
+# get_admin_users
+# ─────────────────────────────────────────────
+
+@respx.mock
+async def test_get_admin_users_returns_list(client):
+    route = respx.get(f"{BASE}/v1/admin/users").mock(
+        return_value=httpx.Response(200, json={"chat_ids": [1, 2, 3]})
+    )
+    result = await client.get_admin_users()
+    assert route.called
+    assert route.calls.last.request.headers["X-SAJUCANDLE-KEY"] == KEY
+    assert result == [1, 2, 3]
+
+
+@respx.mock
+async def test_get_admin_users_empty(client):
+    respx.get(f"{BASE}/v1/admin/users").mock(
+        return_value=httpx.Response(200, json={"chat_ids": []})
+    )
+    result = await client.get_admin_users()
+    assert result == []
+
+
+@respx.mock
+async def test_get_admin_users_401_raises(client):
+    respx.get(f"{BASE}/v1/admin/users").mock(
+        return_value=httpx.Response(401, json={"detail": "invalid key"})
+    )
+    with pytest.raises(ApiError) as exc_info:
+        await client.get_admin_users()
+    assert exc_info.value.status == 401

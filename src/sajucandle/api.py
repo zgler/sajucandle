@@ -229,6 +229,23 @@ def create_app(
             await repositories.delete_user(conn, chat_id)
         return None
 
+    @app.get("/v1/admin/users")
+    async def list_users_endpoint(
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ):
+        """등록된 사용자 chat_id 리스트. 데일리 브로드캐스트용.
+
+        X-SAJUCANDLE-KEY 필요. 반환 순서 보장 X. 페이지네이션 X.
+        """
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+        async with db.acquire() as conn:
+            chat_ids = await repositories.list_chat_ids(conn)
+        logger.info("admin list_users count=%s", len(chat_ids))
+        return {"chat_ids": chat_ids}
+
     @app.get("/v1/users/{chat_id}/score")
     async def score_endpoint(
         chat_id: int,

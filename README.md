@@ -56,7 +56,7 @@ pip install -e ".[dev]"
 ```bash
 pytest -v
 ```
-Week 4 기준 **104 passed + 24 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
+Week 5 기준 **123 passed + 28 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
 
 ### 봇 로컬 실행
 ```bash
@@ -128,6 +128,7 @@ src/sajucandle/
 ├── tech_analysis.py    # RSI/SMA/volume_ratio → chart_score (순수 함수)
 ├── market_data.py      # Binance 클라이언트 + 2-tier OHLCV 캐시
 ├── signal_service.py   # saju 0.4 + chart 0.6 결합 + TTL 5분 캐시
+├── broadcast.py        # 데일리 푸시 CLI (Railway Cron에서 매일 07:00 KST 실행)
 ├── api.py              # FastAPI 앱 + 엔드포인트
 ├── api_main.py         # uvicorn 엔트리 (Railway PORT 읽기)
 ├── models.py           # Pydantic 요청/응답 모델
@@ -139,10 +140,12 @@ migrations/
 
 tests/
 ├── test_api.py / test_api_users.py / test_api_score.py / test_api_signal.py
-├── test_api_client.py / test_cache.py / test_cached_engine.py
+├── test_api_admin.py / test_api_client.py
+├── test_cache.py / test_cached_engine.py
 ├── test_db.py / test_repositories.py
 ├── test_format.py / test_handlers.py / test_score_service.py
 ├── test_tech_analysis.py / test_market_data.py / test_signal_service.py
+├── test_broadcast.py
 └── conftest.py         # db_pool, db_conn 롤백 fixture
 
 docs/superpowers/
@@ -171,6 +174,7 @@ docs/superpowers/
 - `DELETE /v1/users/{chat_id}` — 삭제 (멱등, 204)
 - `GET    /v1/users/{chat_id}/score?date=&asset=` — 일일 4축 + 종합 점수 + 추천 시진
 - `GET    /v1/users/{chat_id}/signal?ticker=BTCUSDT&date=` — **사주 + 차트 결합 신호** (Week 4)
+- `GET    /v1/admin/users` — 등록된 chat_id 리스트 (브로드캐스트용, Week 5)
 
 점수 응답은 `score:{chat_id}:{date}:{asset}` 키로 Redis에 캐싱되고, TTL은 **KST 자정까지** (최소 60초)이다.
 신호 응답은 `signal:{chat_id}:{date}:{ticker}` 키로 TTL 5분 캐싱.
@@ -186,6 +190,24 @@ docs/superpowers/
 - **종합** = `round(0.4 * saju + 0.6 * chart)` → 75+ 강진입 / 60+ 진입 / 40+ 관망 / else 회피
 - **2-tier OHLCV 캐시**: `ohlcv:*:fresh` TTL 5분 + `ohlcv:*:backup` TTL 24시간. Binance 장애 시 백업 폴백.
 - **Week 4 한계**: 티커는 BTCUSDT 고정. 자산군 가중치 분기는 미구현.
+
+## Week 5 기능 (데일리 푸시)
+
+매일 **KST 07:00**에 등록된 사용자 전원에게 오늘의 사주 점수 카드를 자동 발송한다.
+
+```
+python -m sajucandle.broadcast [--dry-run] [--test-chat-id N] [--date YYYY-MM-DD]
+```
+
+- 필수 env: `BOT_TOKEN`, `SAJUCANDLE_API_BASE_URL`, `SAJUCANDLE_API_KEY`
+- `--dry-run`: 전송 안 하고 포맷만 출력
+- `--test-chat-id`: admin 리스트 무시, 특정 chat_id에만 발송 (스모크 테스트용)
+- 실패 처리: 봇 차단(Forbidden) / 사용자 삭제(404) / 네트워크 에러 → 해당 건만 스킵, 나머지는 계속
+
+### Railway Cron 서비스 (세 번째 서비스)
+- Start Command: `python -m sajucandle.broadcast`
+- Cron Schedule: `0 22 * * *` (UTC 22:00 = KST 07:00)
+- Variables: `BOT_TOKEN`, `SAJUCANDLE_API_BASE_URL`, `SAJUCANDLE_API_KEY` (기존 서비스와 동일 값)
 
 ### DB 초기화
 Supabase Studio → SQL Editor → `migrations/001_init.sql` 전체 붙여넣고 Run. `users`, `user_bazi` 두 테이블이 생긴다.

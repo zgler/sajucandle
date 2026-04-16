@@ -103,3 +103,13 @@ async def get_user(conn: asyncpg.Connection, chat_id: int) -> Optional[UserProfi
 async def delete_user(conn: asyncpg.Connection, chat_id: int) -> None:
     """ON DELETE CASCADE로 user_bazi도 함께 삭제. 없으면 no-op."""
     await conn.execute("DELETE FROM users WHERE telegram_chat_id = $1", chat_id)
+
+
+async def list_chat_ids(conn: asyncpg.Connection) -> list[int]:
+    """명식이 등록된 모든 사용자의 chat_id 리스트.
+
+    user_bazi 기준. users에만 있고 명식 없는 레코드는 제외 (/score가 어차피 실패).
+    반환 순서는 보장 X.
+    """
+    rows = await conn.fetch("SELECT telegram_chat_id FROM user_bazi")
+    return [r["telegram_chat_id"] for r in rows]

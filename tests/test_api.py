@@ -117,3 +117,21 @@ def test_signal_db_unavailable_returns_503(client: TestClient, api_key: str):
         headers={"X-SAJUCANDLE-KEY": api_key},
     )
     assert r.status_code == 503
+
+
+# ─────────────────────────────────────────────
+# /v1/admin/users — DB 불필요 케이스
+# (DB 필요한 케이스는 test_api_admin.py)
+# ─────────────────────────────────────────────
+
+def test_admin_users_requires_api_key(client: TestClient):
+    r = client.get("/v1/admin/users")
+    assert r.status_code == 401
+
+
+def test_admin_users_db_unavailable_returns_503(client: TestClient, api_key: str):
+    r = client.get(
+        "/v1/admin/users",
+        headers={"X-SAJUCANDLE-KEY": api_key},
+    )
+    assert r.status_code == 503
