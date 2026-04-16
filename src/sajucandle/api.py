@@ -110,7 +110,10 @@ def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
                 db_status = "up"
             except Exception:
                 db_status = "down"
-        return {"status": "ok", "db": db_status}
+        # auth: API 키가 설정됐으면 "enabled", 없으면 "disabled"(= 누구나 접근 가능)
+        # 프로덕션에서 "disabled"면 환경변수 누락을 의미 — 즉시 감지하려고 노출.
+        auth_status = "enabled" if os.environ.get("SAJUCANDLE_API_KEY", "").strip() else "disabled"
+        return {"status": "ok", "db": db_status, "auth": auth_status}
 
     @app.post("/v1/bazi", response_model=BaziResponse)
     async def bazi(

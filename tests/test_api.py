@@ -31,6 +31,21 @@ def test_health_ok(client: TestClient):
     data = r.json()
     assert data["status"] == "ok"
     assert data["db"] in ("up", "down")
+    # 이 테스트는 SAJUCANDLE_API_KEY를 세팅하므로 enabled여야 함
+    assert data["auth"] == "enabled"
+
+
+def test_health_reports_auth_disabled_when_no_key(monkeypatch: pytest.MonkeyPatch):
+    """프로덕션에서 API 키 누락 시 즉시 감지 가능해야 함."""
+    monkeypatch.delenv("SAJUCANDLE_API_KEY", raising=False)
+    from sajucandle.api import create_app
+    from sajucandle.cache import BaziCache
+    from sajucandle.cached_engine import CachedSajuEngine
+    app = create_app(engine=CachedSajuEngine(cache=BaziCache(redis_client=None)))
+    c = TestClient(app)
+    r = c.get("/health")
+    assert r.status_code == 200
+    assert r.json()["auth"] == "disabled"
 
 
 def test_bazi_requires_api_key(client: TestClient):
