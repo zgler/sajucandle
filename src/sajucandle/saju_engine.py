@@ -13,10 +13,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from datetime import date, datetime
+from datetime import date
 from enum import Enum
 from typing import Optional
-from lunar_python import Solar, EightChar
+from lunar_python import Solar
 
 
 # ─────────────────────────────────────────────
@@ -518,7 +518,6 @@ class SajuEngine:
         # 용신이 재성이고 일진이 용신을 생하면
         iljin_wx = TIANGAN_WUXING[iljin_gan]
         if bazi.yongsin and SHENG.get(iljin_wx) == bazi.yongsin:
-            cai_gods = {TenGod.PIANCAI, TenGod.ZHENGCAI}
             dm_wx = TIANGAN_WUXING[bazi.day_gan]
             yongsin_is_cai = (bazi.yongsin == KE[dm_wx])
             if yongsin_is_cai:
@@ -542,10 +541,10 @@ class SajuEngine:
         # 일진이 편관(칠살)이고 신약이면 감점
         if iljin_tg == TenGod.PIANGUAN and bazi.day_master_strength == "신약":
             score -= 25
-            reasons.append(f"칠살(七殺) + 신약 — 판단력 약화")
+            reasons.append("칠살(七殺) + 신약 — 판단력 약화")
         elif iljin_tg == TenGod.PIANGUAN:
             score -= 10
-            reasons.append(f"일진이 편관 — 약간의 압박감")
+            reasons.append("일진이 편관 — 약간의 압박감")
 
         # 일지와 일진 지지의 관계
         if DIZHI_LIUHE.get(iljin_zhi) == bazi.day_zhi:

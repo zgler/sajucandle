@@ -72,9 +72,9 @@ def test_compute_with_no_redis_still_works():
     assert resp.composite_score >= 0
 
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone  # noqa: E402
 
-from sajucandle.score_service import _seconds_until_kst_midnight
+from sajucandle.score_service import _seconds_until_kst_midnight  # noqa: E402
 
 
 def test_seconds_until_kst_midnight_at_kst_noon():
