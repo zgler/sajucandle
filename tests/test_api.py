@@ -28,7 +28,9 @@ def client(monkeypatch: pytest.MonkeyPatch, api_key: str) -> TestClient:
 def test_health_ok(client: TestClient):
     r = client.get("/health")
     assert r.status_code == 200
-    assert r.json() == {"status": "ok"}
+    data = r.json()
+    assert data["status"] == "ok"
+    assert data["db"] in ("up", "down")
 
 
 def test_bazi_requires_api_key(client: TestClient):
