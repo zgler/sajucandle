@@ -53,3 +53,59 @@ def bazi_chart_to_response(chart: BaziChart) -> BaziResponse:
         day_master_strength=chart.day_master_strength,
         yongsin=chart.yongsin.value if chart.yongsin else None,
     )
+
+
+# ─────────────────────────────────────────────
+# Week 3: User profile + Score
+# ─────────────────────────────────────────────
+
+from datetime import datetime  # noqa: E402
+from typing import List, Literal  # noqa: E402
+
+
+AssetClass = Literal["swing", "scalp", "long", "default"]
+
+
+class UserProfileRequest(BaseModel):
+    """PUT /v1/users/{chat_id} body."""
+
+    birth_year: int = Field(ge=1900, le=2100)
+    birth_month: int = Field(ge=1, le=12)
+    birth_day: int = Field(ge=1, le=31)
+    birth_hour: int = Field(ge=0, le=23)
+    birth_minute: int = Field(default=0, ge=0, le=59)
+    asset_class_pref: AssetClass = "swing"
+
+
+class UserProfileResponse(BaseModel):
+    telegram_chat_id: int
+    birth_year: int
+    birth_month: int
+    birth_day: int
+    birth_hour: int
+    birth_minute: int
+    asset_class_pref: AssetClass
+    created_at: datetime
+    updated_at: datetime
+
+
+class AxisScore(BaseModel):
+    score: int = Field(ge=0, le=100)
+    reason: str = ""
+
+
+class HourRecommendation(BaseModel):
+    shichen: str          # "巳"
+    time_range: str       # "09:00~11:00"
+    multiplier: float     # 1.15
+
+
+class SajuScoreResponse(BaseModel):
+    chat_id: int
+    date: str             # "2026-04-16"
+    asset_class: AssetClass
+    iljin: str            # "庚申"
+    composite_score: int = Field(ge=0, le=100)
+    signal_grade: str     # "🔥 강한 진입" 같은 원본 문자열
+    axes: dict[str, AxisScore]   # keys: wealth, decision, volatility, flow
+    best_hours: List[HourRecommendation]
