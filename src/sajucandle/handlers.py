@@ -106,7 +106,15 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         logger.warning("api error: %s", e)
         await update.message.reply_text(f"서버 오류가 발생했습니다. ({e.status})")
         return
+    except Exception:
+        logger.exception("start_command unexpected error chat_id=%s", chat_id)
+        await update.message.reply_text("예기치 못한 오류가 발생했습니다.")
+        return
 
+    logger.info(
+        "start ok chat_id=%s birth=%04d-%02d-%02d %02d:%02d",
+        chat_id, year, month, day, hour, minute,
+    )
     await update.message.reply_text(
         f"✅ 등록 완료.\n"
         f"생년월일: {year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}\n"
@@ -136,7 +144,12 @@ async def score_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         await update.message.reply_text("서버에 연결할 수 없습니다.")
         return
     except ApiError as e:
+        logger.warning("score api error chat_id=%s status=%s", chat_id, e.status)
         await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+    except Exception:
+        logger.exception("score_command unexpected error chat_id=%s asset=%s", chat_id, asset)
+        await update.message.reply_text("예기치 못한 오류가 발생했습니다.")
         return
 
     lines = [
@@ -175,7 +188,12 @@ async def me_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await update.message.reply_text("서버에 연결할 수 없습니다.")
         return
     except ApiError as e:
+        logger.warning("me api error chat_id=%s status=%s", chat_id, e.status)
         await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+    except Exception:
+        logger.exception("me_command unexpected error chat_id=%s", chat_id)
+        await update.message.reply_text("예기치 못한 오류가 발생했습니다.")
         return
 
     await update.message.reply_text(
@@ -201,8 +219,14 @@ async def forget_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("서버에 연결할 수 없습니다.")
         return
     except ApiError as e:
+        logger.warning("forget api error chat_id=%s status=%s", chat_id, e.status)
         await update.message.reply_text(f"서버 오류 ({e.status}).")
         return
+    except Exception:
+        logger.exception("forget_command unexpected error chat_id=%s", chat_id)
+        await update.message.reply_text("예기치 못한 오류가 발생했습니다.")
+        return
+    logger.info("forget ok chat_id=%s", chat_id)
     await update.message.reply_text("🗑️ 등록된 정보를 모두 삭제했습니다.")
 
 

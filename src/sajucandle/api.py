@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+import time
 from datetime import date as date_cls, datetime
 from contextlib import asynccontextmanager
 from typing import Optional
@@ -26,6 +27,27 @@ from sajucandle.models import (
 from sajucandle.score_service import KST, ScoreService
 
 logger = logging.getLogger(__name__)
+
+
+def _configure_sajucandle_logging() -> None:
+    """sajucandle.* 로거에 StreamHandler 부착 (멱등).
+
+    Railway는 `uvicorn sajucandle.api:app`을 직접 실행해서 uvicorn이 uvicorn.*
+    로거만 설정함. sajucandle.* 로거는 전파할 핸들러가 없어 INFO 로그가 유실됨.
+    모듈 임포트 시 1회 세팅해서 Railway stdout으로 나가게 한다.
+    """
+    lg = logging.getLogger("sajucandle")
+    if lg.handlers:  # 이미 세팅됨 (bot.py basicConfig 등)
+        return
+    h = logging.StreamHandler()
+    h.setFormatter(
+        logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    )
+    lg.addHandler(h)
+    lg.setLevel(logging.INFO)
+
+
+_configure_sajucandle_logging()
 
 
 def _build_default_engine() -> CachedSajuEngine:
@@ -214,11 +236,19 @@ def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
             raise HTTPException(404, detail="user not found")
 
         final_asset = asset or profile.asset_class_pref
+        t0 = time.perf_counter()
         try:
-            return score_service.compute(profile, target, final_asset)
+            result = score_service.compute(profile, target, final_asset)
         except Exception as e:
             logger.exception("score compute failed")
             raise HTTPException(400, detail=f"점수 계산 실패: {type(e).__name__}")
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+        logger.info(
+            "score ok chat_id=%s date=%s asset=%s composite=%s grade=%s elapsed_ms=%s",
+            chat_id, target.isoformat(), final_asset,
+            result.composite_score, result.signal_grade, elapsed_ms,
+        )
+        return result
 
     return app
 
