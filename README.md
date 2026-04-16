@@ -11,7 +11,7 @@
 
 ```
 [Telegram 사용자]
-      │ /start, /score, /me, /forget, /help
+      │ /start, /score, /signal, /me, /forget, /help
       ▼
 ┌─────────────────────────┐
 │  Railway: sajucandle-bot │ (worker — python -m sajucandle.bot)
@@ -22,15 +22,20 @@
            ▼
 ┌─────────────────────────┐     ┌────────────────────────┐
 │  Railway: sajucandle-api │────▶│  Upstash Redis         │
-│  FastAPI + uvicorn       │     │  bazi:* , score:*      │
-│  ScoreService + Engine   │     └────────────────────────┘
-└──────────┬──────────────┘
-           │ asyncpg Pool
-           ▼
-┌─────────────────────────┐
-│  Supabase PostgreSQL     │
-│  users, user_bazi        │
-└─────────────────────────┘
+│  FastAPI + uvicorn       │     │  bazi:*, score:*,      │
+│  Score + Signal Services │     │  signal:*, ohlcv:*     │
+└──────────┬──────────────┘     └────────────────────────┘
+           │ asyncpg Pool         ▲
+           ▼                      │ 2-tier cache
+┌─────────────────────────┐       │ (fresh 5min +
+│  Supabase PostgreSQL     │      │  backup 24h)
+│  users, user_bazi        │      │
+└─────────────────────────┘       │
+                                  │
+                         ┌────────┴───────┐
+                         │  Binance API   │ (BTCUSDT 일봉)
+                         │  /klines       │
+                         └────────────────┘
 ```
 
 두 Railway 서비스는 같은 GitHub repo + 같은 Dockerfile + 같은 `REDIS_URL`을 공유한다. 봇은 API에 HTTP로만 접근하고 엔진/DB를 직접 건드리지 않는다.
@@ -51,7 +56,7 @@ pip install -e ".[dev]"
 ```bash
 pytest -v
 ```
-Week 3 기준 48 passed + 18 skipped (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
+Week 4 기준 **104 passed + 24 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
 
 ### 봇 로컬 실행
 ```bash
@@ -113,13 +118,16 @@ curl https://<api-domain>.up.railway.app/health
 ```
 src/sajucandle/
 ├── bot.py              # Telegram 봇 엔트리 포인트
-├── handlers.py         # /start /score /me /forget /help 핸들러
+├── handlers.py         # /start /score /signal /me /forget /help 핸들러
 ├── api_client.py       # 봇 → API httpx 래퍼 (NotFoundError/ApiError)
 ├── format.py           # 명식 카드 텍스트 렌더러
 ├── saju_engine.py      # 명리 계산 엔진 (lunar_python)
 ├── cache.py            # Redis 캐시 래퍼
 ├── cached_engine.py    # SajuEngine + BaziCache
 ├── score_service.py    # 일일 점수 + KST 자정 TTL 캐시
+├── tech_analysis.py    # RSI/SMA/volume_ratio → chart_score (순수 함수)
+├── market_data.py      # Binance 클라이언트 + 2-tier OHLCV 캐시
+├── signal_service.py   # saju 0.4 + chart 0.6 결합 + TTL 5분 캐시
 ├── api.py              # FastAPI 앱 + 엔드포인트
 ├── api_main.py         # uvicorn 엔트리 (Railway PORT 읽기)
 ├── models.py           # Pydantic 요청/응답 모델
@@ -130,10 +138,11 @@ migrations/
 └── 001_init.sql        # Supabase 초기 스키마
 
 tests/
-├── test_api.py / test_api_users.py / test_api_score.py / test_api_client.py
-├── test_cache.py / test_cached_engine.py
+├── test_api.py / test_api_users.py / test_api_score.py / test_api_signal.py
+├── test_api_client.py / test_cache.py / test_cached_engine.py
 ├── test_db.py / test_repositories.py
 ├── test_format.py / test_handlers.py / test_score_service.py
+├── test_tech_analysis.py / test_market_data.py / test_signal_service.py
 └── conftest.py         # db_pool, db_conn 롤백 fixture
 
 docs/superpowers/
@@ -143,24 +152,40 @@ docs/superpowers/
 
 ---
 
-## Week 3 기능 (사주 점수)
+## 봇 커맨드
 
-### 봇 커맨드
 | Command | 설명 |
 |---------|------|
 | `/start YYYY-MM-DD HH:MM` | 생년월일시 등록 (upsert) |
 | `/score [swing\|scalp\|long]` | 오늘의 일진 점수 카드 |
+| `/signal` | **BTC 사주+차트 결합 신호** (Week 4) |
 | `/me` | 등록된 내 정보 |
 | `/forget` | 내 정보 삭제 (멱등) |
 | `/help` | 명령어 도움말 |
 
-### 신규 API 엔드포인트
+## API 엔드포인트
+
+- `POST   /v1/bazi` — 명식 계산 (DB 불필요)
 - `PUT    /v1/users/{chat_id}` — 프로필 upsert
 - `GET    /v1/users/{chat_id}` — 조회 (없으면 404)
 - `DELETE /v1/users/{chat_id}` — 삭제 (멱등, 204)
-- `GET    /v1/users/{chat_id}/score?date=YYYY-MM-DD&asset=swing` — 일일 4축 + 종합 점수 + 추천 시진
+- `GET    /v1/users/{chat_id}/score?date=&asset=` — 일일 4축 + 종합 점수 + 추천 시진
+- `GET    /v1/users/{chat_id}/signal?ticker=BTCUSDT&date=` — **사주 + 차트 결합 신호** (Week 4)
 
 점수 응답은 `score:{chat_id}:{date}:{asset}` 키로 Redis에 캐싱되고, TTL은 **KST 자정까지** (최소 60초)이다.
+신호 응답은 `signal:{chat_id}:{date}:{ticker}` 키로 TTL 5분 캐싱.
+
+## Week 4 기능 (사주 + 차트 결합 신호)
+
+`/signal` 커맨드는 사용자의 **오늘 사주 점수**와 **BTC 일봉 기술분석**을 합쳐 0~100점 종합 신호를 돌려준다.
+
+- **차트 점수** (0~100) = `0.4 * RSI + 0.4 * MA + 0.2 * volume`
+  - RSI(14): ≤30 과매도→70, ≤45→55, ≤55 중립→50, ≤70→40, >70 과매수→20
+  - MA20 vs MA50: 교차 비율로 70/60/50/35 + trend(up/flat/down)
+  - 거래량: 최근 5일 평균 / 이전 20일 평균 비율로 65/55/45/35
+- **종합** = `round(0.4 * saju + 0.6 * chart)` → 75+ 강진입 / 60+ 진입 / 40+ 관망 / else 회피
+- **2-tier OHLCV 캐시**: `ohlcv:*:fresh` TTL 5분 + `ohlcv:*:backup` TTL 24시간. Binance 장애 시 백업 폴백.
+- **Week 4 한계**: 티커는 BTCUSDT 고정. 자산군 가중치 분기는 미구현.
 
 ### DB 초기화
 Supabase Studio → SQL Editor → `migrations/001_init.sql` 전체 붙여넣고 Run. `users`, `user_bazi` 두 테이블이 생긴다.

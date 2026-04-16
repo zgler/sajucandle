@@ -98,3 +98,22 @@ def test_bazi_cache_hit_on_second_call(client: TestClient, api_key: str):
     assert r1.status_code == 200
     assert r2.status_code == 200
     assert r1.json() == r2.json()
+
+
+# ─────────────────────────────────────────────
+# /v1/users/{chat_id}/signal — DB 불필요 케이스만
+# (DB 필요한 케이스는 test_api_signal.py)
+# ─────────────────────────────────────────────
+
+def test_signal_requires_api_key(client: TestClient):
+    r = client.get("/v1/users/123/signal")
+    assert r.status_code == 401
+
+
+def test_signal_db_unavailable_returns_503(client: TestClient, api_key: str):
+    # DATABASE_URL 없으므로 db.get_pool() is None
+    r = client.get(
+        "/v1/users/123/signal",
+        headers={"X-SAJUCANDLE-KEY": api_key},
+    )
+    assert r.status_code == 503

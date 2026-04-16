@@ -17,14 +17,17 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from sajucandle import db, repositories
 from sajucandle.cache import BaziCache
 from sajucandle.cached_engine import CachedSajuEngine
+from sajucandle.market_data import BinanceClient, MarketDataUnavailable
 from sajucandle.models import (
     BaziResponse,
     BirthRequest,
+    SignalResponse,
     UserProfileRequest,
     UserProfileResponse,
     bazi_chart_to_response,
 )
 from sajucandle.score_service import KST, ScoreService
+from sajucandle.signal_service import SignalService
 
 logger = logging.getLogger(__name__)
 
@@ -89,7 +92,10 @@ def _profile_to_response(p: repositories.UserProfile) -> UserProfileResponse:
     )
 
 
-def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
+def create_app(
+    engine: CachedSajuEngine | None = None,
+    signal_service: SignalService | None = None,
+) -> FastAPI:
     engine = engine or _build_default_engine()
 
     def _build_score_service() -> ScoreService:
@@ -105,6 +111,25 @@ def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
         return ScoreService(engine=engine, redis_client=redis_client)
 
     score_service = _build_score_service()
+
+    def _build_signal_service() -> SignalService:
+        redis_url = os.environ.get("REDIS_URL")
+        redis_client = None
+        if redis_url:
+            try:
+                import redis as redis_lib
+                redis_client = redis_lib.from_url(redis_url)
+                redis_client.ping()
+            except Exception:
+                redis_client = None
+        market_client = BinanceClient(redis_client=redis_client, timeout=3.0)
+        return SignalService(
+            score_service=score_service,
+            market_client=market_client,
+            redis_client=redis_client,
+        )
+
+    signal_service = signal_service or _build_signal_service()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -247,6 +272,55 @@ def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
             "score ok chat_id=%s date=%s asset=%s composite=%s grade=%s elapsed_ms=%s",
             chat_id, target.isoformat(), final_asset,
             result.composite_score, result.signal_grade, elapsed_ms,
+        )
+        return result
+
+    @app.get("/v1/users/{chat_id}/signal", response_model=SignalResponse)
+    async def signal_endpoint(
+        chat_id: int,
+        request: Request,
+        ticker: str = "BTCUSDT",
+        date: Optional[str] = None,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ):
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+
+        # Week 4: BTCUSDT만 허용
+        if ticker != "BTCUSDT":
+            raise HTTPException(400, detail="ticker must be BTCUSDT (Week 4 limit)")
+
+        # date 파싱
+        if date is None:
+            target = datetime.now(tz=KST).date()
+        else:
+            try:
+                target = date_cls.fromisoformat(date)
+            except ValueError:
+                raise HTTPException(400, detail="date must be YYYY-MM-DD")
+
+        async with db.acquire() as conn:
+            profile = await repositories.get_user(conn, chat_id)
+        if profile is None:
+            raise HTTPException(404, detail="user not found")
+
+        t0 = time.perf_counter()
+        try:
+            result = signal_service.compute(profile, target, ticker)
+        except MarketDataUnavailable as e:
+            logger.warning("signal market data unavailable: %s", e)
+            raise HTTPException(502, detail="chart data unavailable")
+        except Exception as e:
+            logger.exception("signal compute failed")
+            raise HTTPException(400, detail=f"신호 계산 실패: {type(e).__name__}")
+        elapsed_ms = int((time.perf_counter() - t0) * 1000)
+        logger.info(
+            "signal ok chat_id=%s ticker=%s date=%s composite=%s grade=%s "
+            "saju=%s chart=%s elapsed_ms=%s",
+            chat_id, ticker, target.isoformat(),
+            result.composite_score, result.signal_grade,
+            result.saju.composite, result.chart.score, elapsed_ms,
         )
         return result
 

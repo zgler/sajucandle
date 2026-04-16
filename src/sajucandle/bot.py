@@ -12,6 +12,7 @@ from sajucandle.handlers import (
     help_command,
     me_command,
     score_command,
+    signal_command,
     start_command,
 )
 
@@ -36,6 +37,7 @@ def main() -> None:
     app = Application.builder().token(token).build()
     app.add_handler(CommandHandler("start", start_command))
     app.add_handler(CommandHandler("score", score_command))
+    app.add_handler(CommandHandler("signal", signal_command))
     app.add_handler(CommandHandler("me", me_command))
     app.add_handler(CommandHandler("forget", forget_command))
     app.add_handler(CommandHandler("help", help_command))

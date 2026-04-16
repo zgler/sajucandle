@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from sajucandle import handlers
-from sajucandle.api_client import NotFoundError
+from sajucandle.api_client import ApiError, NotFoundError
 
 
 def _update(text: str, chat_id: int = 12345):
@@ -205,11 +205,80 @@ async def test_forget_deletes(monkeypatch):
     assert upd.message.reply_text.await_count == 1
 
 
+# ── /signal ──
+
+def _signal_payload():
+    return {
+        "chat_id": 12345, "ticker": "BTCUSDT", "date": "2026-04-16",
+        "price": {"current": 67432.1, "change_pct_24h": 2.15},
+        "saju": {"composite": 55, "grade": "🔄 관망"},
+        "chart": {
+            "score": 72, "rsi": 58.2, "ma20": 65100.0, "ma50": 62300.0,
+            "ma_trend": "up", "volume_ratio": 1.3,
+            "reason": "RSI 58(중립), MA20>MA50, 볼륨→",
+        },
+        "composite_score": 65, "signal_grade": "진입",
+        "best_hours": [
+            {"shichen": "寅", "time_range": "03:00~05:00", "multiplier": 1.1},
+        ],
+    }
+
+
+async def test_signal_replies_with_combined_card(monkeypatch):
+    fake = MagicMock()
+    fake.get_signal = AsyncMock(return_value=_signal_payload())
+    monkeypatch.setattr(handlers, "_api_client", fake)
+
+    upd = _update("/signal")
+    await handlers.signal_command(upd, _ctx([]))
+    fake.get_signal.assert_awaited_once_with(12345, ticker="BTCUSDT")
+    text = upd.message.reply_text.await_args.args[0]
+    assert "BTCUSDT" in text
+    assert "65" in text  # composite
+    assert "진입" in text  # grade
+    assert "67,432" in text  # price formatted
+    assert "RSI" in text
+
+
+async def test_signal_404_tells_user_to_register(monkeypatch):
+    fake = MagicMock()
+    fake.get_signal = AsyncMock(side_effect=NotFoundError(404, "user not found"))
+    monkeypatch.setattr(handlers, "_api_client", fake)
+
+    upd = _update("/signal")
+    await handlers.signal_command(upd, _ctx([]))
+    assert "/start" in upd.message.reply_text.await_args.args[0]
+
+
+async def test_signal_502_market_unavailable(monkeypatch):
+    fake = MagicMock()
+    fake.get_signal = AsyncMock(
+        side_effect=ApiError(502, "chart data unavailable")
+    )
+    monkeypatch.setattr(handlers, "_api_client", fake)
+
+    upd = _update("/signal")
+    await handlers.signal_command(upd, _ctx([]))
+    text = upd.message.reply_text.await_args.args[0]
+    assert "시장 데이터" in text
+
+
+async def test_signal_generic_500(monkeypatch):
+    fake = MagicMock()
+    fake.get_signal = AsyncMock(side_effect=ApiError(500, "boom"))
+    monkeypatch.setattr(handlers, "_api_client", fake)
+
+    upd = _update("/signal")
+    await handlers.signal_command(upd, _ctx([]))
+    text = upd.message.reply_text.await_args.args[0]
+    assert "500" in text
+
+
 # ── /help ──
 
 async def test_help_lists_commands():
     upd = _update("/help")
     await handlers.help_command(upd, _ctx([]))
     text = upd.message.reply_text.await_args.args[0]
-    for cmd in ("/start", "/score", "/me", "/forget"):
+    for cmd in ("/start", "/score", "/signal", "/me", "/forget"):
         assert cmd in text

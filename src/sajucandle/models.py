@@ -109,3 +109,40 @@ class SajuScoreResponse(BaseModel):
     signal_grade: str     # "🔥 강한 진입" 같은 원본 문자열
     axes: dict[str, AxisScore]   # keys: wealth, decision, volatility, flow
     best_hours: List[HourRecommendation]
+
+
+# ─────────────────────────────────────────────
+# Week 4: 사주 + 차트 결합 신호
+# ─────────────────────────────────────────────
+
+
+class PricePoint(BaseModel):
+    current: float
+    change_pct_24h: float
+
+
+class SajuSummary(BaseModel):
+    composite: int = Field(ge=0, le=100)
+    grade: str            # 사주 단독 등급 (SajuScoreResponse.signal_grade)
+
+
+class ChartSummary(BaseModel):
+    score: int = Field(ge=0, le=100)
+    rsi: float
+    ma20: float
+    ma50: float
+    ma_trend: Literal["up", "down", "flat"]
+    volume_ratio: float
+    reason: str
+
+
+class SignalResponse(BaseModel):
+    chat_id: int
+    ticker: str
+    date: str             # "2026-04-16"
+    price: PricePoint
+    saju: SajuSummary
+    chart: ChartSummary
+    composite_score: int = Field(ge=0, le=100)
+    signal_grade: str     # "강진입" | "진입" | "관망" | "회피"
+    best_hours: List[HourRecommendation]

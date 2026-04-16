@@ -98,3 +98,17 @@ class ApiClient:
             r = await c.get(f"/v1/users/{chat_id}/score", params=params)
         await self._raise_for_status(r)
         return r.json()
+
+    async def get_signal(
+        self,
+        chat_id: int,
+        ticker: str = "BTCUSDT",
+        date: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        params: Dict[str, str] = {"ticker": ticker}
+        if date:
+            params["date"] = date
+        async with self._client() as c:
+            r = await c.get(f"/v1/users/{chat_id}/signal", params=params)
+        await self._raise_for_status(r)
+        return r.json()

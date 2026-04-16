@@ -103,3 +103,51 @@ async def test_500_raises_apierror(client):
     respx.get(f"{BASE}/v1/users/1").mock(return_value=httpx.Response(500))
     with pytest.raises(ApiError):
         await client.get_user(1)
+
+
+def _signal_response_fixture() -> dict:
+    return {
+        "chat_id": 123, "ticker": "BTCUSDT", "date": "2026-04-16",
+        "price": {"current": 67432.1, "change_pct_24h": 2.15},
+        "saju": {"composite": 55, "grade": "🔄 관망"},
+        "chart": {
+            "score": 72, "rsi": 58.2, "ma20": 65100.0, "ma50": 62300.0,
+            "ma_trend": "up", "volume_ratio": 1.3,
+            "reason": "RSI 58(중립), MA20>MA50, 볼륨→",
+        },
+        "composite_score": 65, "signal_grade": "진입",
+        "best_hours": [
+            {"shichen": "寅", "time_range": "03:00~05:00", "multiplier": 1.1},
+        ],
+    }
+
+
+@respx.mock
+async def test_get_signal_success(client):
+    route = respx.get(f"{BASE}/v1/users/123/signal").mock(
+        return_value=httpx.Response(200, json=_signal_response_fixture())
+    )
+    result = await client.get_signal(123, ticker="BTCUSDT")
+    assert route.called
+    assert route.calls.last.request.url.params["ticker"] == "BTCUSDT"
+    assert result["composite_score"] == 65
+    assert result["signal_grade"] == "진입"
+
+
+@respx.mock
+async def test_get_signal_404_raises_notfound(client):
+    respx.get(f"{BASE}/v1/users/999/signal").mock(
+        return_value=httpx.Response(404, json={"detail": "user not found"})
+    )
+    with pytest.raises(NotFoundError):
+        await client.get_signal(999)
+
+
+@respx.mock
+async def test_get_signal_502_raises_apierror(client):
+    respx.get(f"{BASE}/v1/users/123/signal").mock(
+        return_value=httpx.Response(502, json={"detail": "chart data unavailable"})
+    )
+    with pytest.raises(ApiError) as exc_info:
+        await client.get_signal(123)
+    assert exc_info.value.status == 502
