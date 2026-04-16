@@ -135,6 +135,34 @@ def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
             )
         return _profile_to_response(saved)
 
+    @app.get("/v1/users/{chat_id}", response_model=UserProfileResponse)
+    async def get_user_endpoint(
+        chat_id: int,
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ) -> UserProfileResponse:
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+        async with db.acquire() as conn:
+            user = await repositories.get_user(conn, chat_id)
+        if user is None:
+            raise HTTPException(404, detail="user not found")
+        return _profile_to_response(user)
+
+    @app.delete("/v1/users/{chat_id}", status_code=204)
+    async def delete_user_endpoint(
+        chat_id: int,
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ) -> None:
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+        async with db.acquire() as conn:
+            await repositories.delete_user(conn, chat_id)
+        return None
+
     return app
 
 

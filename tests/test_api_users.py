@@ -75,3 +75,38 @@ def test_put_user_rejects_invalid_payload(client):
                          "birth_hour": 0},
                    headers=HDR)
     assert r.status_code == 422
+
+
+def test_get_user_returns_profile(client):
+    body = {
+        "birth_year": 1990, "birth_month": 3, "birth_day": 15,
+        "birth_hour": 14, "birth_minute": 0,
+        "asset_class_pref": "swing",
+    }
+    client.put("/v1/users/700010", json=body, headers=HDR)
+
+    r = client.get("/v1/users/700010", headers=HDR)
+    assert r.status_code == 200
+    assert r.json()["telegram_chat_id"] == 700010
+
+    client.delete("/v1/users/700010", headers=HDR)
+
+
+def test_get_user_404_when_missing(client):
+    r = client.get("/v1/users/9999999", headers=HDR)
+    assert r.status_code == 404
+
+
+def test_delete_user_is_idempotent(client):
+    r = client.delete("/v1/users/8888888", headers=HDR)
+    assert r.status_code == 204
+
+    body = {
+        "birth_year": 1990, "birth_month": 3, "birth_day": 15,
+        "birth_hour": 14, "birth_minute": 0,
+    }
+    client.put("/v1/users/700020", json=body, headers=HDR)
+    r = client.delete("/v1/users/700020", headers=HDR)
+    assert r.status_code == 204
+    r = client.get("/v1/users/700020", headers=HDR)
+    assert r.status_code == 404
