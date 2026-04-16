@@ -1,16 +1,16 @@
-"""Telegram 커맨드 핸들러 + 인자 파싱 유틸."""
+"""Telegram 커맨드 핸들러. API 호출만 수행, 엔진/DB 직접 접근 금지."""
 from __future__ import annotations
 
 import logging
 import os
 from datetime import datetime
+from typing import Optional
 
+import httpx
 from telegram import Update
 from telegram.ext import ContextTypes
 
-from sajucandle.cache import BaziCache
-from sajucandle.cached_engine import CachedSajuEngine
-from sajucandle.format import render_bazi_card
+from sajucandle.api_client import ApiClient, ApiError, NotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -20,30 +20,24 @@ class BirthParseError(ValueError):
 
 
 def parse_birth_args(args: list[str]) -> tuple[int, int, int, int, int]:
-    """`/start YYYY-MM-DD HH:MM` 인자를 (year, month, day, hour, minute)로.
+    """`/start YYYY-MM-DD HH:MM` → (year, month, day, hour, minute).
 
     허용 포맷:
       - `YYYY-MM-DD HH:MM`
       - `YYYY-MM-DD HH:MM:SS` (초는 무시)
       - `YYYY-MM-DD HH`       (분 = 0)
-
-    Raises:
-        BirthParseError: 인자 부족, 포맷 오류, 값 범위 오류.
     """
     if len(args) < 2:
         raise BirthParseError(
             "사용법: /start YYYY-MM-DD HH:MM\n예: /start 1990-03-15 14:00"
         )
-
     date_str, time_str = args[0], args[1]
-
     try:
         date_part = datetime.strptime(date_str, "%Y-%m-%d").date()
     except ValueError as e:
         raise BirthParseError(
             f"날짜 형식이 잘못되었습니다 (YYYY-MM-DD): {date_str}"
         ) from e
-
     time_part = None
     for fmt in ("%H:%M:%S", "%H:%M", "%H"):
         try:
@@ -52,66 +46,177 @@ def parse_birth_args(args: list[str]) -> tuple[int, int, int, int, int]:
         except ValueError:
             continue
     if time_part is None:
-        raise BirthParseError(
-            f"시각 형식이 잘못되었습니다 (HH:MM): {time_str}"
-        )
-
+        raise BirthParseError(f"시각 형식이 잘못되었습니다 (HH:MM): {time_str}")
     return (
-        date_part.year,
-        date_part.month,
-        date_part.day,
-        time_part.hour,
-        time_part.minute,
+        date_part.year, date_part.month, date_part.day,
+        time_part.hour, time_part.minute,
     )
 
 
-def _build_engine() -> CachedSajuEngine:
-    """REDIS_URL 환경변수 있으면 실제 Redis 연결, 없으면 no-op 캐시.
-
-    Upstash는 rediss:// (TLS). 연결 실패해도 캐시 없이 엔진 동작.
-    """
-    redis_url = os.environ.get("REDIS_URL")
-    redis_client = None
-    if redis_url:
-        try:
-            import redis as redis_lib
-
-            redis_client = redis_lib.from_url(redis_url)
-            redis_client.ping()
-            logger.info("Redis 연결 성공. BaziCache 활성화.")
-        except Exception as e:
-            logger.warning("Redis 연결 실패 (%s). 캐시 없이 진행.", e)
-            redis_client = None
-    else:
-        logger.info("REDIS_URL 미설정. 캐시 없이 진행.")
-    cache = BaziCache(redis_client=redis_client)
-    return CachedSajuEngine(cache=cache)
+def _build_api_client() -> ApiClient:
+    base = os.environ.get("SAJUCANDLE_API_BASE_URL", "http://127.0.0.1:8000")
+    key = os.environ.get("SAJUCANDLE_API_KEY", "")
+    return ApiClient(base_url=base, api_key=key, timeout=10.0)
 
 
-# 엔진은 프로세스 수명 동안 1개만 유지
-_engine = _build_engine()
+# 프로세스 수명 동안 1개 유지. 테스트에서 monkeypatch로 치환 가능.
+_api_client = _build_api_client()
 
+
+# ─────────────────────────────────────────────
+# Commands
+# ─────────────────────────────────────────────
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """`/start YYYY-MM-DD HH:MM` 커맨드. 명식 카드로 응답."""
+    """`/start [YYYY-MM-DD HH:MM]`.
+
+    인자 없으면 사용법 안내. 있으면 API upsert 후 등록 확인 메시지.
+    """
     if update.message is None:
         return
-
+    args = list(context.args or [])
+    if not args:
+        await update.message.reply_text(
+            "사용법:\n/start YYYY-MM-DD HH:MM\n예: /start 1990-03-15 14:00\n\n"
+            "생년월일시를 저장하면 매일 /score 로 그날 점수를 볼 수 있습니다."
+        )
+        return
     try:
-        year, month, day, hour, minute = parse_birth_args(list(context.args or []))
+        year, month, day, hour, minute = parse_birth_args(args)
     except BirthParseError as e:
         await update.message.reply_text(str(e))
         return
 
+    chat_id = update.effective_chat.id
     try:
-        chart = _engine.calc_bazi(year, month, day, hour)
-    except Exception as e:  # lunar_python 내부 에러
-        await update.message.reply_text(
-            "명식 계산 중 문제가 발생했습니다. 날짜를 다시 확인해주세요.\n"
-            f"({type(e).__name__})"
+        await _api_client.put_user(
+            chat_id,
+            birth_year=year, birth_month=month, birth_day=day,
+            birth_hour=hour, birth_minute=minute,
+            asset_class_pref="swing",
         )
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시 시도해주세요.")
+        return
+    except httpx.TransportError as e:
+        logger.warning("transport error: %s", e)
+        await update.message.reply_text("서버에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+        return
+    except ApiError as e:
+        logger.warning("api error: %s", e)
+        await update.message.reply_text(f"서버 오류가 발생했습니다. ({e.status})")
         return
 
-    birth_str = f"{year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}"
-    card = render_bazi_card(chart, birth_str=birth_str)
-    await update.message.reply_text(card)
+    await update.message.reply_text(
+        f"✅ 등록 완료.\n"
+        f"생년월일: {year:04d}-{month:02d}-{day:02d} {hour:02d}:{minute:02d}\n"
+        f"이제 /score 로 오늘 점수를 확인하세요."
+    )
+
+
+async def score_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/score [swing|scalp|long|default]`. 오늘 점수 카드."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+    args = list(context.args or [])
+    asset: Optional[str] = args[0] if args else None
+
+    try:
+        data = await _api_client.get_score(chat_id, date=None, asset=asset)
+    except NotFoundError:
+        await update.message.reply_text(
+            "먼저 생년월일을 등록하세요.\n예: /start 1990-03-15 14:00"
+        )
+        return
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+
+    lines = [
+        f"── {data['date']} ({data['iljin']}) ── [{data['asset_class']}]",
+        f"재물운: {data['axes']['wealth']['score']:>3}  | {data['axes']['wealth']['reason']}",
+        f"결단운: {data['axes']['decision']['score']:>3}  | {data['axes']['decision']['reason']}",
+        f"충돌운: {data['axes']['volatility']['score']:>3}  | {data['axes']['volatility']['reason']}",
+        f"합  운: {data['axes']['flow']['score']:>3}  | {data['axes']['flow']['reason']}",
+        "────────────────────────────────",
+        f"종합: {data['composite_score']:>3}  | {data['signal_grade']}",
+    ]
+    if data["best_hours"]:
+        hrs = ", ".join(
+            f"{h['shichen']}시 {h['time_range']}" for h in data["best_hours"]
+        )
+        lines.append(f"추천 시진: {hrs}")
+    await update.message.reply_text("\n".join(lines))
+
+
+async def me_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/me`. 등록된 프로필 조회."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+    try:
+        data = await _api_client.get_user(chat_id)
+    except NotFoundError:
+        await update.message.reply_text(
+            "등록된 정보가 없습니다.\n/start YYYY-MM-DD HH:MM 로 먼저 등록하세요."
+        )
+        return
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+
+    await update.message.reply_text(
+        f"등록된 정보:\n"
+        f"생년월일: {data['birth_year']:04d}-{data['birth_month']:02d}-{data['birth_day']:02d}\n"
+        f"시각: {data['birth_hour']:02d}:{data['birth_minute']:02d}\n"
+        f"선호 자산군: {data['asset_class_pref']}\n"
+        f"(변경은 /start 로 재등록, 삭제는 /forget)"
+    )
+
+
+async def forget_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/forget`. 프로필 삭제 (idempotent)."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+    try:
+        await _api_client.delete_user(chat_id)
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+    await update.message.reply_text("🗑️ 등록된 정보를 모두 삭제했습니다.")
+
+
+async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/help`. 명령어 목록."""
+    if update.message is None:
+        return
+    await update.message.reply_text(
+        "SajuCandle 봇 사용법\n"
+        "─────────────\n"
+        "/start YYYY-MM-DD HH:MM — 생년월일시 등록\n"
+        "/score [swing|scalp|long] — 오늘 점수\n"
+        "/me — 등록된 정보 확인\n"
+        "/forget — 내 정보 삭제\n"
+        "/help — 이 도움말\n"
+        "\n※ 엔터테인먼트 목적. 투자 추천 아님."
+    )
