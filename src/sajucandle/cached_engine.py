@@ -32,3 +32,8 @@ class CachedSajuEngine:
             key,
             lambda: self._engine.calc_bazi(year, month, day, hour),
         )
+
+    @property
+    def engine(self) -> SajuEngine:
+        """Public access to the underlying SajuEngine (e.g. for calc_daily_score)."""
+        return self._engine
