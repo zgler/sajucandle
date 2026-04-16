@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import logging
 import os
+from datetime import date as date_cls, datetime
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -22,6 +23,7 @@ from sajucandle.models import (
     UserProfileResponse,
     bazi_chart_to_response,
 )
+from sajucandle.score_service import KST, ScoreService
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +69,20 @@ def _profile_to_response(p: repositories.UserProfile) -> UserProfileResponse:
 
 def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
     engine = engine or _build_default_engine()
+
+    def _build_score_service() -> ScoreService:
+        redis_url = os.environ.get("REDIS_URL")
+        redis_client = None
+        if redis_url:
+            try:
+                import redis as redis_lib
+                redis_client = redis_lib.from_url(redis_url)
+                redis_client.ping()
+            except Exception:
+                redis_client = None
+        return ScoreService(engine=engine, redis_client=redis_client)
+
+    score_service = _build_score_service()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -162,6 +178,44 @@ def create_app(engine: CachedSajuEngine | None = None) -> FastAPI:
         async with db.acquire() as conn:
             await repositories.delete_user(conn, chat_id)
         return None
+
+    @app.get("/v1/users/{chat_id}/score")
+    async def score_endpoint(
+        chat_id: int,
+        request: Request,
+        date: Optional[str] = None,
+        asset: Optional[str] = None,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ):
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+
+        # date 파싱
+        if date is None:
+            target = datetime.now(tz=KST).date()
+        else:
+            try:
+                target = date_cls.fromisoformat(date)
+            except ValueError:
+                raise HTTPException(400, detail="date must be YYYY-MM-DD")
+
+        # asset 검증
+        allowed_assets = {"swing", "scalp", "long", "default"}
+        if asset is not None and asset not in allowed_assets:
+            raise HTTPException(400, detail=f"asset must be one of {sorted(allowed_assets)}")
+
+        async with db.acquire() as conn:
+            profile = await repositories.get_user(conn, chat_id)
+        if profile is None:
+            raise HTTPException(404, detail="user not found")
+
+        final_asset = asset or profile.asset_class_pref
+        try:
+            return score_service.compute(profile, target, final_asset)
+        except Exception as e:
+            logger.exception("score compute failed")
+            raise HTTPException(400, detail=f"점수 계산 실패: {type(e).__name__}")
 
     return app
 
