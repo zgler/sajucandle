@@ -57,7 +57,7 @@ def test_fetch_klines_fresh_cache_hit():
     r.setex("ohlcv:BTCUSDT:1d:fresh", 300, payload)
 
     with respx.mock(assert_all_called=False) as mock:
-        klines = mock.get("https://api.binance.com/api/v3/klines").respond(200, json=[])
+        klines = mock.get("https://data-api.binance.vision/api/v3/klines").respond(200, json=[])
         client = BinanceClient(redis_client=r)
         out = client.fetch_klines("BTCUSDT")
         assert len(out) == 1
@@ -73,7 +73,7 @@ def test_fetch_klines_fresh_cache_hit():
 @respx.mock
 def test_fetch_klines_http_success_sets_both_caches():
     r = fakeredis.FakeStrictRedis()
-    binance = respx.get("https://api.binance.com/api/v3/klines").respond(
+    binance = respx.get("https://data-api.binance.vision/api/v3/klines").respond(
         200, json=_make_binance_response(100)
     )
     client = BinanceClient(redis_client=r)
@@ -105,7 +105,7 @@ def test_fetch_klines_http_fail_backup_hit():
         json.dumps([k.to_dict() for k in preloaded]),
     )
     # fresh는 없음 (만료된 것처럼)
-    respx.get("https://api.binance.com/api/v3/klines").mock(
+    respx.get("https://data-api.binance.vision/api/v3/klines").mock(
         side_effect=httpx.ConnectError("boom")
     )
 
@@ -122,7 +122,7 @@ def test_fetch_klines_http_fail_backup_hit():
 @respx.mock
 def test_fetch_klines_http_fail_no_backup_raises():
     r = fakeredis.FakeStrictRedis()
-    respx.get("https://api.binance.com/api/v3/klines").mock(
+    respx.get("https://data-api.binance.vision/api/v3/klines").mock(
         side_effect=httpx.ConnectError("boom")
     )
     client = BinanceClient(redis_client=r)
@@ -133,7 +133,7 @@ def test_fetch_klines_http_fail_no_backup_raises():
 @respx.mock
 def test_fetch_klines_http_5xx_no_backup_raises():
     r = fakeredis.FakeStrictRedis()
-    respx.get("https://api.binance.com/api/v3/klines").respond(500, text="server err")
+    respx.get("https://data-api.binance.vision/api/v3/klines").respond(500, text="server err")
     client = BinanceClient(redis_client=r)
     with pytest.raises(MarketDataUnavailable):
         client.fetch_klines("BTCUSDT")
@@ -145,7 +145,7 @@ def test_fetch_klines_http_5xx_no_backup_raises():
 
 @respx.mock
 def test_fetch_klines_no_redis_http_ok():
-    respx.get("https://api.binance.com/api/v3/klines").respond(
+    respx.get("https://data-api.binance.vision/api/v3/klines").respond(
         200, json=_make_binance_response(50)
     )
     client = BinanceClient(redis_client=None)
@@ -155,7 +155,7 @@ def test_fetch_klines_no_redis_http_ok():
 
 @respx.mock
 def test_fetch_klines_no_redis_http_fail_raises():
-    respx.get("https://api.binance.com/api/v3/klines").mock(
+    respx.get("https://data-api.binance.vision/api/v3/klines").mock(
         side_effect=httpx.TimeoutException("timeout")
     )
     client = BinanceClient(redis_client=None)

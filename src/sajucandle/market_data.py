@@ -18,7 +18,10 @@ import httpx
 
 logger = logging.getLogger(__name__)
 
-_BASE_URL = "https://api.binance.com"
+# data-api.binance.vision — Binance 공식 market-data-only 미러.
+# api.binance.com은 AWS/GCP 미국 리전(Railway 포함) IP를 지역 차단하지만
+# 이 도메인은 public market data 전용이라 차단 없이 /api/v3/* 동일 스펙 제공.
+_BASE_URL = "https://data-api.binance.vision"
 _FRESH_TTL = 300            # 5분
 _BACKUP_TTL = 86400         # 24시간
 
