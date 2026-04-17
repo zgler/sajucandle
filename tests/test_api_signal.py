@@ -14,6 +14,8 @@ from fastapi.testclient import TestClient
 from sajucandle.api import create_app
 from sajucandle.cache import BaziCache
 from sajucandle.cached_engine import CachedSajuEngine
+from sajucandle.market.base import UnsupportedTicker
+from sajucandle.market.router import MarketRouter
 from sajucandle.market_data import Kline, MarketDataUnavailable
 from sajucandle.score_service import ScoreService
 from sajucandle.signal_service import SignalService
@@ -51,6 +53,13 @@ class _FakeMarketClient:
             raise self.raise_exc
         return self.klines
 
+    def is_market_open(self, symbol: str) -> bool:
+        return True
+
+    def last_session_date(self, symbol: str):
+        from datetime import date as date_cls
+        return date_cls(2026, 4, 16)
+
 
 @pytest.fixture
 def fake_market():
@@ -68,9 +77,10 @@ def client(monkeypatch, fake_market, redis):
     monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
     engine = CachedSajuEngine(cache=BaziCache(redis_client=redis))
     score_svc = ScoreService(engine=engine, redis_client=redis)
+    router = MarketRouter(binance=fake_market, yfinance=fake_market)
     signal_svc = SignalService(
         score_service=score_svc,
-        market_client=fake_market,
+        market_router=router,
         redis_client=redis,
     )
     app = create_app(engine=engine, signal_service=signal_svc)
@@ -100,7 +110,7 @@ def test_signal_invalid_ticker_returns_400(client):
             "/v1/users/720001/signal?ticker=ETHUSDT", headers=HDR
         )
         assert r.status_code == 400
-        assert "BTCUSDT" in r.json()["detail"]
+        assert "unsupported" in r.json()["detail"].lower()
     finally:
         client.delete("/v1/users/720001", headers=HDR)
 
@@ -138,9 +148,10 @@ def test_signal_market_unavailable_returns_502(monkeypatch, redis):
     engine = CachedSajuEngine(cache=BaziCache(redis_client=redis))
     score_svc = ScoreService(engine=engine, redis_client=redis)
     broken_market = _FakeMarketClient(raise_exc=MarketDataUnavailable("boom"))
+    router = MarketRouter(binance=broken_market, yfinance=broken_market)
     signal_svc = SignalService(
         score_service=score_svc,
-        market_client=broken_market,
+        market_router=router,
         redis_client=redis,
     )
     app = create_app(engine=engine, signal_service=signal_svc)
@@ -185,3 +196,77 @@ def test_signal_rejects_bad_date(client):
         assert r.status_code == 400
     finally:
         client.delete("/v1/users/720005", headers=HDR)
+
+
+@pytest.fixture
+def stub_yfinance():
+    """yfinance.Ticker를 mock해서 일정한 AAPL DataFrame 반환."""
+    from unittest.mock import patch, MagicMock
+    import pandas as pd
+    idx = pd.date_range(end="2026-04-16", periods=100, freq="B", tz="America/New_York")
+    df = pd.DataFrame({
+        "Open": [180.0 + i * 0.3 for i in range(100)],
+        "High": [180.5 + i * 0.3 for i in range(100)],
+        "Low": [179.5 + i * 0.3 for i in range(100)],
+        "Close": [180.2 + i * 0.3 for i in range(100)],
+        "Volume": [50_000_000] * 100,
+    }, index=idx)
+    fake = MagicMock()
+    fake.history.return_value = df
+    with patch("sajucandle.market.yfinance.yf.Ticker", return_value=fake):
+        yield
+
+
+def test_signal_endpoint_rejects_unsupported_ticker(client):
+    """AMZN 같은 화이트리스트 외 심볼은 400."""
+    _create(client, 720006)
+    try:
+        resp = client.get(
+            "/v1/users/720006/signal",
+            params={"ticker": "AMZN"},
+            headers=HDR,
+        )
+        assert resp.status_code == 400
+        assert "unsupported" in resp.json()["detail"].lower()
+    finally:
+        client.delete("/v1/users/720006", headers=HDR)
+
+
+def test_signal_endpoint_accepts_aapl(monkeypatch, stub_yfinance, redis):
+    """AAPL은 정상 처리되어 market_status.category='us_stock' 반환."""
+    monkeypatch.setenv("SAJUCANDLE_API_KEY", "test-key")
+    monkeypatch.setenv("DATABASE_URL", os.environ["TEST_DATABASE_URL"])
+    engine = CachedSajuEngine(cache=BaziCache(redis_client=redis))
+    score_svc = ScoreService(engine=engine, redis_client=redis)
+    # Use a real YFinanceClient (stub_yfinance patches yf.Ticker) with fake binance for crypto
+    from sajucandle.market.yfinance import YFinanceClient
+    yf_client = YFinanceClient(redis_client=redis)
+    router = MarketRouter(binance=_FakeMarketClient(), yfinance=yf_client)
+    signal_svc = SignalService(
+        score_service=score_svc,
+        market_router=router,
+        redis_client=redis,
+    )
+    app = create_app(engine=engine, signal_service=signal_svc)
+    with TestClient(app) as c:
+        c.put(
+            "/v1/users/720007",
+            json={
+                "birth_year": 1990, "birth_month": 3, "birth_day": 15,
+                "birth_hour": 14, "birth_minute": 0,
+                "asset_class_pref": "swing",
+            },
+            headers=HDR,
+        )
+        try:
+            resp = c.get(
+                "/v1/users/720007/signal",
+                params={"ticker": "AAPL", "date": "2026-04-16"},
+                headers=HDR,
+            )
+            assert resp.status_code == 200, resp.text
+            body = resp.json()
+            assert body["ticker"] == "AAPL"
+            assert body["market_status"]["category"] == "us_stock"
+        finally:
+            c.delete("/v1/users/720007", headers=HDR)

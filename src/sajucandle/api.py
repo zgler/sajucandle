@@ -17,6 +17,9 @@ from fastapi import FastAPI, Header, HTTPException, Request
 from sajucandle import db, repositories
 from sajucandle.cache import BaziCache
 from sajucandle.cached_engine import CachedSajuEngine
+from sajucandle.market.base import UnsupportedTicker
+from sajucandle.market.router import MarketRouter
+from sajucandle.market.yfinance import YFinanceClient
 from sajucandle.market_data import BinanceClient, MarketDataUnavailable
 from sajucandle.models import (
     BaziResponse,
@@ -122,10 +125,12 @@ def create_app(
                 redis_client.ping()
             except Exception:
                 redis_client = None
-        market_client = BinanceClient(redis_client=redis_client, timeout=3.0)
+        binance = BinanceClient(redis_client=redis_client, timeout=3.0)
+        yfinance_client = YFinanceClient(redis_client=redis_client)
+        router = MarketRouter(binance=binance, yfinance=yfinance_client)
         return SignalService(
             score_service=score_service,
-            market_client=market_client,
+            market_router=router,
             redis_client=redis_client,
         )
 
@@ -304,10 +309,6 @@ def create_app(
         if db.get_pool() is None:
             raise HTTPException(503, detail="database not available")
 
-        # Week 4: BTCUSDT만 허용
-        if ticker != "BTCUSDT":
-            raise HTTPException(400, detail="ticker must be BTCUSDT (Week 4 limit)")
-
         # date 파싱
         if date is None:
             target = datetime.now(tz=KST).date()
@@ -325,6 +326,8 @@ def create_app(
         t0 = time.perf_counter()
         try:
             result = signal_service.compute(profile, target, ticker)
+        except UnsupportedTicker as e:
+            raise HTTPException(400, detail=f"unsupported ticker: {e.symbol}")
         except MarketDataUnavailable as e:
             logger.warning("signal market data unavailable: %s", e)
             raise HTTPException(502, detail="chart data unavailable")
