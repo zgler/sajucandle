@@ -483,3 +483,221 @@ async def test_precompute_failure_does_not_abort_phase2():
     assert summary.precompute_ok == 0
     # Phase 2가 정상 실행됐는지 (get_score 호출 확인)
     api_client.get_score.assert_called_once()
+
+
+# ─────────────────────────────────────────────
+# Week 7: Phase 3 Watchlist 요약
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_watchlist_summary_sent_for_user_with_items():
+    """watchlist 있는 사용자에게 2번째 메시지로 요약 발송."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[99])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=[])
+    api_client.get_score = AsyncMock(return_value=_score_fixture())
+
+    async def fake_get_watchlist(chat_id):
+        return [
+            {"ticker": "AAPL", "added_at": "2026-04-16T09:00:00+09:00"},
+        ]
+    api_client.get_watchlist = fake_get_watchlist
+
+    async def fake_get_signal(chat_id, ticker=None, date=None):
+        return {
+            "ticker": ticker,
+            "price": {"current": 184.12, "change_pct_24h": 1.2},
+            "composite_score": 65, "signal_grade": "진입",
+            "market_status": {"is_open": True, "category": "us_stock",
+                               "last_session_date": "2026-04-16"},
+        }
+    api_client.get_signal = fake_get_signal
+
+    sent_messages = []
+    async def send(chat_id, text):
+        sent_messages.append((chat_id, text))
+
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[99],
+        target_date=date(2026, 4, 17),
+        dry_run=False,
+        admin_chat_id=None,
+        skip_watchlist=False,
+    )
+    assert len(sent_messages) == 2
+    assert "관심 종목" in sent_messages[1][1]
+    assert "AAPL" in sent_messages[1][1]
+    assert summary.watchlist_sent == 1
+    assert summary.watchlist_skipped_empty == 0
+
+
+@pytest.mark.asyncio
+async def test_watchlist_skipped_for_empty_user():
+    """watchlist 비어있는 사용자는 1통(사주)만 발송."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[99])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=[])
+    api_client.get_score = AsyncMock(return_value=_score_fixture())
+    api_client.get_watchlist = AsyncMock(return_value=[])
+    api_client.get_signal = AsyncMock()
+
+    sent_messages = []
+    async def send(chat_id, text):
+        sent_messages.append((chat_id, text))
+
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[99],
+        target_date=date(2026, 4, 17),
+        dry_run=False,
+        admin_chat_id=None,
+        skip_watchlist=False,
+    )
+    assert len(sent_messages) == 1
+    assert summary.watchlist_skipped_empty == 1
+    assert summary.watchlist_sent == 0
+
+
+@pytest.mark.asyncio
+async def test_watchlist_partial_signal_failure_still_sends():
+    """일부 심볼 시그널 실패해도 나머지 포함해 요약 발송."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.api_client import ApiError
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[99])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=[])
+    api_client.get_score = AsyncMock(return_value=_score_fixture())
+    api_client.get_watchlist = AsyncMock(return_value=[
+        {"ticker": "AAPL", "added_at": "2026-04-16"},
+        {"ticker": "TSLA", "added_at": "2026-04-17"},
+    ])
+
+    async def fake_get_signal(chat_id, ticker=None, date=None):
+        if ticker == "TSLA":
+            raise ApiError(502, "chart data unavailable")
+        return {
+            "ticker": ticker,
+            "price": {"current": 184.12, "change_pct_24h": 1.2},
+            "composite_score": 65, "signal_grade": "진입",
+            "market_status": {"is_open": True, "category": "us_stock",
+                               "last_session_date": "2026-04-16"},
+        }
+    api_client.get_signal = fake_get_signal
+
+    sent_messages = []
+    async def send(chat_id, text):
+        sent_messages.append((chat_id, text))
+
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[99],
+        target_date=date(2026, 4, 17),
+        dry_run=False,
+        admin_chat_id=None,
+        skip_watchlist=False,
+    )
+    assert len(sent_messages) == 2
+    assert "데이터 불가" in sent_messages[1][1]
+    assert "AAPL" in sent_messages[1][1]
+    assert "TSLA" in sent_messages[1][1]
+    assert summary.watchlist_sent == 1
+
+
+@pytest.mark.asyncio
+async def test_skip_watchlist_flag_disables_phase3():
+    """skip_watchlist=True 시 Phase 3 완전 skip."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[99])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=[])
+    api_client.get_score = AsyncMock(return_value=_score_fixture())
+    api_client.get_watchlist = AsyncMock()
+    api_client.get_signal = AsyncMock()
+
+    sent_messages = []
+    async def send(chat_id, text):
+        sent_messages.append((chat_id, text))
+
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[99],
+        target_date=date(2026, 4, 17),
+        dry_run=False,
+        admin_chat_id=None,
+        skip_watchlist=True,
+    )
+    api_client.get_watchlist.assert_not_called()
+    assert len(sent_messages) == 1
+    assert summary.watchlist_sent == 0
+    assert summary.watchlist_skipped_empty == 0
+
+
+@pytest.mark.asyncio
+async def test_watchlist_dry_run_does_not_send():
+    """dry_run=True면 Phase 3도 전송 skip."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[99])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=[])
+    api_client.get_score = AsyncMock(return_value=_score_fixture())
+    api_client.get_watchlist = AsyncMock(return_value=[
+        {"ticker": "AAPL", "added_at": "2026-04-16"},
+    ])
+    api_client.get_signal = AsyncMock(return_value={
+        "ticker": "AAPL",
+        "price": {"current": 184.12, "change_pct_24h": 1.2},
+        "composite_score": 65, "signal_grade": "진입",
+        "market_status": {"is_open": True, "category": "us_stock",
+                           "last_session_date": "2026-04-16"},
+    })
+
+    sent_messages = []
+    async def send(chat_id, text):
+        sent_messages.append((chat_id, text))
+
+    await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[99],
+        target_date=date(2026, 4, 17),
+        dry_run=True,
+        admin_chat_id=None,
+        skip_watchlist=False,
+    )
+    assert len(sent_messages) == 0
+
+
+def test_cli_parses_skip_watchlist_flag():
+    """argparse --skip-watchlist 플래그 파싱."""
+    from sajucandle.broadcast import _parse_args
+    args = _parse_args(["--skip-watchlist"])
+    assert args.skip_watchlist is True
+
+
+def test_cli_default_skip_watchlist_false():
+    from sajucandle.broadcast import _parse_args
+    args = _parse_args([])
+    assert args.skip_watchlist is False

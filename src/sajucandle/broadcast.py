@@ -154,6 +154,7 @@ async def run_broadcast(
     bad_request_exc: Optional[type[BaseException]] = None,
     send_delay: float = _SEND_DELAY_SEC,
     admin_chat_id: Optional[int] = None,   # Week 7: Phase 1 precompute
+    skip_watchlist: bool = False,           # Week 7: Phase 3 toggle
 ) -> BroadcastSummary:
     """chat_ids 순회하며 카드 발송. 예외는 잡아서 summary에 누적.
 
@@ -245,6 +246,69 @@ async def run_broadcast(
         if send_delay > 0:
             await asyncio.sleep(send_delay)
 
+    # ─── Phase 3: Watchlist 요약 ───
+    if not skip_watchlist:
+        for chat_id in chat_ids:
+            try:
+                items = await api_client.get_watchlist(chat_id)
+            except Exception as e:
+                logger.warning(
+                    "watchlist fetch failed chat_id=%s: %s", chat_id, e
+                )
+                summary.watchlist_failed += 1
+                continue
+
+            if not items:
+                summary.watchlist_skipped_empty += 1
+                continue
+
+            signals = []
+            for it in items:
+                ticker = it["ticker"]
+                try:
+                    sig = await api_client.get_signal(
+                        chat_id,
+                        ticker=ticker,
+                        date=target_date.isoformat(),
+                    )
+                    signals.append(sig)
+                except Exception as e:
+                    logger.warning(
+                        "watchlist signal failed chat_id=%s ticker=%s: %s",
+                        chat_id, ticker, e,
+                    )
+                    signals.append({"ticker": ticker, "error": "데이터 불가"})
+
+            card = format_watchlist_summary(signals, target_date)
+            if card is None:
+                continue
+            if dry_run:
+                logger.info(
+                    "[DRY-RUN] watchlist chat_id=%s text=\n%s",
+                    chat_id, card,
+                )
+            else:
+                try:
+                    await send_message(chat_id, card)
+                    summary.watchlist_sent += 1
+                    await asyncio.sleep(send_delay)
+                except Exception as e:
+                    logger.warning(
+                        "watchlist send failed chat_id=%s: %s", chat_id, e
+                    )
+                    summary.watchlist_failed += 1
+
+    logger.info(
+        "broadcast done date=%s sent=%s failed=%s blocked=%s not_found=%s "
+        "bad_request=%s watchlist_sent=%s watchlist_skipped_empty=%s "
+        "watchlist_failed=%s precompute_ok=%s precompute_failed=%s",
+        target_date.isoformat(),
+        summary.sent, summary.failed, summary.blocked,
+        summary.not_found, summary.bad_request,
+        summary.watchlist_sent, summary.watchlist_skipped_empty,
+        summary.watchlist_failed,
+        summary.precompute_ok, summary.precompute_failed,
+    )
     return summary
 
 
@@ -269,6 +333,11 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     p.add_argument(
         "--date", type=str, default=None,
         help="점수 산출 기준 날짜 (YYYY-MM-DD). 기본: KST 오늘",
+    )
+    p.add_argument(
+        "--skip-watchlist",
+        action="store_true",
+        help="Phase 3 watchlist 요약을 발송하지 않음 (Week 5 동작 유지)",
     )
     return p.parse_args(argv)
 
@@ -324,6 +393,9 @@ async def _async_main(args: argparse.Namespace) -> int:
     async def send_message(chat_id: int, text: str) -> None:
         await bot.send_message(chat_id=chat_id, text=text)
 
+    admin_chat_id_env = os.environ.get("SAJUCANDLE_ADMIN_CHAT_ID")
+    admin_chat_id = int(admin_chat_id_env) if admin_chat_id_env else None
+
     summary = await run_broadcast(
         api_client=api,
         send_message=send_message,
@@ -332,9 +404,9 @@ async def _async_main(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         forbidden_exc=Forbidden,
         bad_request_exc=BadRequest,
+        admin_chat_id=admin_chat_id,
+        skip_watchlist=args.skip_watchlist,
     )
-
-    logger.info("broadcast done date=%s %s", target_date.isoformat(), summary.as_log())
     print(f"date={target_date.isoformat()} {summary.as_log()}")
     return 0
 
