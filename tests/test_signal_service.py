@@ -9,6 +9,8 @@ import pytest
 
 from sajucandle.cache import BaziCache
 from sajucandle.cached_engine import CachedSajuEngine
+from sajucandle.market.base import UnsupportedTicker
+from sajucandle.market.router import MarketRouter
 from sajucandle.market_data import Kline, MarketDataUnavailable
 from sajucandle.repositories import UserProfile
 from sajucandle.score_service import ScoreService
@@ -60,6 +62,24 @@ class _FakeMarketClient:
         return self.klines
 
 
+def _make_fake_market_client(klines=None, raise_exc=None):
+    """테스트용 fake provider. is_market_open=True, last_session_date=오늘 UTC."""
+    fake = _FakeMarketClient(klines=klines, raise_exc=raise_exc)
+
+    from datetime import datetime as _dt, timezone as _tz
+    fake.is_market_open = lambda symbol: True
+    fake.last_session_date = lambda symbol: _dt.now(_tz.utc).date()
+    return fake
+
+
+def _make_router(fake_client) -> MarketRouter:
+    """_FakeMarketClient를 양쪽 슬롯에 꽂은 MarketRouter.
+
+    테스트에서는 같은 fake로 양쪽 모두 반환.
+    """
+    return MarketRouter(binance=fake_client, yfinance=fake_client)
+
+
 # ─────────────────────────────────────────────
 # grade boundaries
 # ─────────────────────────────────────────────
@@ -81,9 +101,9 @@ def test_grade_boundaries(score, expected):
 def test_compute_basic_response_shape():
     engine = CachedSajuEngine(cache=BaziCache(redis_client=None))
     score_svc = ScoreService(engine=engine, redis_client=None)
-    market = _FakeMarketClient()
+    market = _make_fake_market_client()
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=None
+        score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
 
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
@@ -106,9 +126,9 @@ def test_compute_cache_hit_on_second_call():
     r = fakeredis.FakeRedis()
     engine = CachedSajuEngine(cache=BaziCache(redis_client=r))
     score_svc = ScoreService(engine=engine, redis_client=r)
-    market = _FakeMarketClient()
+    market = _make_fake_market_client()
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=r
+        score_service=score_svc, market_router=_make_router(market), redis_client=r
     )
 
     r1 = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
@@ -129,27 +149,27 @@ def test_compute_cache_key_varies_by_ticker():
     r = fakeredis.FakeRedis()
     engine = CachedSajuEngine(cache=BaziCache(redis_client=r))
     score_svc = ScoreService(engine=engine, redis_client=r)
-    market = _FakeMarketClient()
+    market = _make_fake_market_client()
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=r
+        score_service=score_svc, market_router=_make_router(market), redis_client=r
     )
 
     svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
-    svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="ETHUSDT")
+    svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="AAPL")
 
     keys = sorted(k.decode() for k in r.keys("signal:*"))
     assert keys == [
+        "signal:42:2026-04-16:AAPL",
         "signal:42:2026-04-16:BTCUSDT",
-        "signal:42:2026-04-16:ETHUSDT",
     ]
 
 
 def test_compute_without_redis_still_works():
     engine = CachedSajuEngine(cache=BaziCache(redis_client=None))
     score_svc = ScoreService(engine=engine, redis_client=None)
-    market = _FakeMarketClient()
+    market = _make_fake_market_client()
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=None
+        score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
     assert resp.composite_score >= 0
@@ -188,9 +208,9 @@ class _FixedScoreService:
 def test_compute_final_weighting_saju_only():
     """saju=100, chart=? → final = 0.4*100 + 0.6*chart. chart=0이 아니면 40보다 큼."""
     score_svc = _FixedScoreService(composite=100)
-    market = _FakeMarketClient()  # chart는 _make_klines 기반 (상승세)
+    market = _make_fake_market_client()  # chart는 _make_klines 기반 (상승세)
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=None
+        score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
     # saju=100 기여분만 최소 40점
@@ -200,9 +220,9 @@ def test_compute_final_weighting_saju_only():
 def test_compute_final_weighting_chart_dominant():
     """saju=0 → final = 0.6*chart. chart=50 근처면 final ~30."""
     score_svc = _FixedScoreService(composite=0)
-    market = _FakeMarketClient()
+    market = _make_fake_market_client()
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=None
+        score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
     # saju 기여 0, chart가 전부. 0.6 비중.
@@ -213,9 +233,9 @@ def test_compute_final_weighting_chart_dominant():
 
 def test_compute_final_weighting_50_50():
     score_svc = _FixedScoreService(composite=50)
-    market = _FakeMarketClient()
+    market = _make_fake_market_client()
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=None
+        score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
     # final = round(0.4*50 + 0.6*chart) = round(20 + 0.6*chart)
@@ -229,9 +249,26 @@ def test_compute_final_weighting_50_50():
 
 def test_compute_propagates_market_data_unavailable():
     score_svc = _FixedScoreService(composite=50)
-    market = _FakeMarketClient(raise_exc=MarketDataUnavailable("boom"))
+    market = _make_fake_market_client(raise_exc=MarketDataUnavailable("boom"))
     svc = SignalService(
-        score_service=score_svc, market_client=market, redis_client=None
+        score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     with pytest.raises(MarketDataUnavailable):
         svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
+
+
+def test_signal_compute_populates_market_status():
+    """compute 결과에 market_status 필드가 채워진다."""
+    fake = _make_fake_market_client()
+    cache = BaziCache(redis_client=fakeredis.FakeStrictRedis())
+    engine = CachedSajuEngine(cache=cache)
+    score_svc = ScoreService(engine=engine, redis_client=None)
+
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    assert resp.market_status.is_open is True
+    assert resp.market_status.category in ("crypto", "us_stock")
+    assert len(resp.market_status.last_session_date) == 10

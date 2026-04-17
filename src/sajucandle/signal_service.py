@@ -17,9 +17,12 @@ import logging
 from datetime import date
 from typing import Optional
 
-from sajucandle.market_data import BinanceClient, Kline
+from sajucandle.market.base import MarketDataProvider
+from sajucandle.market.router import MarketRouter
+from sajucandle.market_data import Kline, MarketDataUnavailable
 from sajucandle.models import (
     ChartSummary,
+    MarketStatus,
     PricePoint,
     SajuSummary,
     SignalResponse,
@@ -47,11 +50,11 @@ class SignalService:
     def __init__(
         self,
         score_service: ScoreService,
-        market_client: BinanceClient,
+        market_router: MarketRouter,
         redis_client=None,
     ):
         self._score = score_service
-        self._market = market_client
+        self._router = market_router
         self._redis = redis_client
 
     def compute(
@@ -64,32 +67,37 @@ class SignalService:
             f"signal:{profile.telegram_chat_id}:{target_date.isoformat()}:{ticker}"
         )
 
-        # 1. 캐시 히트?
         cached = self._redis_get(cache_key)
         if cached is not None:
             return cached
 
-        # 2. 사주 (기존 score_service가 자체 캐시 사용)
         saju_resp = self._score.compute(
             profile, target_date, profile.asset_class_pref
         )
 
-        # 3. 차트 데이터 (실패 시 MarketDataUnavailable 전파)
-        klines: list[Kline] = self._market.fetch_klines(ticker, interval="1d", limit=100)
+        # ticker → provider 라우팅 (UnsupportedTicker는 상위로 전파)
+        provider = self._router.get_provider(ticker)
+
+        klines: list[Kline] = provider.fetch_klines(ticker, interval="1d", limit=100)
         closes = [k.close for k in klines]
         volumes = [k.volume for k in klines]
-
         chart_b = score_chart(closes, volumes)
 
-        # 4. 가격 포인트
         current = klines[-1].close
         prev = klines[-2].close if len(klines) >= 2 else current
         change_pct = ((current / prev) - 1.0) * 100 if prev else 0.0
 
-        # 5. 결합
         final = round(0.4 * saju_resp.composite_score + 0.6 * chart_b.score)
         final = max(0, min(100, final))
         grade = _grade_signal(final)
+
+        # market_status 채우기
+        is_crypto = ticker.upper().lstrip("$") == "BTCUSDT"
+        market_status = MarketStatus(
+            is_open=provider.is_market_open(ticker),
+            last_session_date=provider.last_session_date(ticker).isoformat(),
+            category="crypto" if is_crypto else "us_stock",
+        )
 
         resp = SignalResponse(
             chat_id=profile.telegram_chat_id,
@@ -112,9 +120,9 @@ class SignalService:
             composite_score=final,
             signal_grade=grade,
             best_hours=saju_resp.best_hours,
+            market_status=market_status,
         )
 
-        # 6. 캐시 저장
         self._redis_set(cache_key, resp)
         return resp
 
