@@ -231,13 +231,30 @@ async def forget_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """`/signal`. 사주 + BTC 차트 결합 신호."""
+    """`/signal [심볼|list]`. 사주 + 차트 결합 신호.
+
+    · 인자 없음: BTCUSDT
+    · `/signal list`: 지원 심볼 목록
+    · 그 외: 해당 심볼 조회 (내부에서 upper + $제거 정규화)
+    """
     if update.message is None:
         return
     chat_id = update.effective_chat.id
+    args = list(context.args or [])
+
+    # 서브커맨드: list
+    if args and args[0].lower() == "list":
+        await _show_symbol_list(update)
+        return
+
+    # ticker 정규화
+    if args:
+        ticker = args[0].upper().lstrip("$")
+    else:
+        ticker = "BTCUSDT"
 
     try:
-        data = await _api_client.get_signal(chat_id, ticker="BTCUSDT")
+        data = await _api_client.get_signal(chat_id, ticker=ticker)
     except NotFoundError:
         await update.message.reply_text(
             "먼저 생년월일을 등록하세요.\n예: /start 1990-03-15 14:00"
@@ -250,10 +267,17 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await update.message.reply_text("서버에 연결할 수 없습니다.")
         return
     except ApiError as e:
-        if e.status == 502:
+        if e.status == 400 and "unsupported" in (e.detail or "").lower():
+            await update.message.reply_text(
+                f"지원하지 않는 심볼: {ticker}\n"
+                f"/signal list 로 지원 심볼을 확인하세요."
+            )
+        elif e.status == 502:
             await update.message.reply_text("시장 데이터 일시 불능. 잠시 후 다시.")
         else:
-            logger.warning("signal api error chat_id=%s status=%s", chat_id, e.status)
+            logger.warning(
+                "signal api error chat_id=%s status=%s", chat_id, e.status
+            )
             await update.message.reply_text(f"서버 오류 ({e.status}).")
         return
     except Exception:
@@ -266,12 +290,32 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         chat_id, data["ticker"], data["composite_score"], data["signal_grade"],
     )
 
+    await update.message.reply_text(_format_signal_card(data))
+
+
+def _format_signal_card(data: dict) -> str:
+    """/signal 응답 dict → 카드 문자열.
+
+    BTC(crypto): 배지 줄 생략 (기존 포맷 유지)
+    US stocks: `🟢 장 중` 또는 `🕐 휴장 중 · 기준: YYYY-MM-DD` 배지 표시
+    """
     price = data["price"]
     saju = data["saju"]
     chart = data["chart"]
+    status = data.get("market_status") or {}
+    category = status.get("category", "crypto")
+
     change_sign = "+" if price["change_pct_24h"] >= 0 else ""
-    lines = [
-        f"── {data['date']} {data['ticker']} ──",
+    lines = [f"── {data['date']} {data['ticker']} ──"]
+
+    if category == "us_stock":
+        if status.get("is_open"):
+            lines.append("🟢 장 중")
+        else:
+            last = status.get("last_session_date", "")
+            lines.append(f"🕐 휴장 중 · 기준: {last} 종가")
+
+    lines.extend([
         f"현재가: ${price['current']:,.2f} "
         f"({change_sign}{price['change_pct_24h']:.2f}%)",
         "────────────────",
@@ -279,14 +323,42 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         f"차트 점수: {chart['score']:>3} ({chart['reason']})",
         "────────────────",
         f"종합: {data['composite_score']:>3} | {data['signal_grade']}",
-    ]
-    if data["best_hours"]:
+    ])
+    if data.get("best_hours"):
         hrs = ", ".join(
             f"{h['shichen']}시 {h['time_range']}" for h in data["best_hours"]
         )
         lines.append(f"추천 시진: {hrs}")
     lines.append("")
     lines.append("※ 엔터테인먼트 목적. 투자 추천 아님.")
+    return "\n".join(lines)
+
+
+async def _show_symbol_list(update: Update) -> None:
+    """`/signal list` — 지원 심볼 카탈로그 표시."""
+    try:
+        symbols = await _api_client.get_supported_symbols()
+    except (httpx.TimeoutException, httpx.TransportError):
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+
+    crypto = [s for s in symbols if s.get("category") == "crypto"]
+    stocks = [s for s in symbols if s.get("category") == "us_stock"]
+    lines = ["지원 심볼:", "────────────"]
+    if crypto:
+        lines.append("암호화폐")
+        for s in crypto:
+            lines.append(f"  · {s['ticker']} — {s['name']}")
+        lines.append("")
+    if stocks:
+        lines.append("미국주식")
+        for s in stocks:
+            lines.append(f"  · {s['ticker']} — {s['name']}")
+        lines.append("")
+    lines.append("사용법: /signal AAPL")
     await update.message.reply_text("\n".join(lines))
 
 
@@ -299,7 +371,10 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "─────────────\n"
         "/start YYYY-MM-DD HH:MM — 생년월일시 등록\n"
         "/score [swing|scalp|long] — 오늘 사주 점수\n"
-        "/signal — BTC 사주+차트 결합 신호\n"
+        "/signal [심볼] — 사주+차트 결합 신호\n"
+        "  · 심볼 생략: BTC\n"
+        "  · 지원: BTCUSDT, AAPL, MSFT, GOOGL, NVDA, TSLA\n"
+        "  · /signal list — 전체 목록\n"
         "/me — 등록된 정보 확인\n"
         "/forget — 내 정보 삭제\n"
         "/help — 이 도움말\n"

@@ -282,3 +282,240 @@ async def test_help_lists_commands():
     text = upd.message.reply_text.await_args.args[0]
     for cmd in ("/start", "/score", "/signal", "/me", "/forget"):
         assert cmd in text
+
+
+# ─────────────────────────────────────────────
+# Week 6: /signal 심볼 인자, /signal list, 배지
+# ─────────────────────────────────────────────
+
+def _make_update(text: str, chat_id: int):
+    """가짜 Telegram Update 객체. chat_id + message.text."""
+    from unittest.mock import MagicMock
+    update = MagicMock()
+    update.message = MagicMock()
+    update.message.text = text
+    update.effective_chat = MagicMock()
+    update.effective_chat.id = chat_id
+    return update
+
+
+def _btc_signal_payload() -> dict:
+    return {
+        "ticker": "BTCUSDT",
+        "date": "2026-04-16",
+        "price": {"current": 72000.0, "change_pct_24h": 1.5},
+        "saju": {"composite": 56, "grade": "😐 관망"},
+        "chart": {"score": 72, "rsi": 60.0, "ma20": 71000.0, "ma50": 69000.0,
+                  "ma_trend": "up", "volume_ratio": 1.2,
+                  "reason": "MA 우상향"},
+        "composite_score": 66,
+        "signal_grade": "진입",
+        "best_hours": [],
+        "market_status": {"is_open": True, "last_session_date": "2026-04-16",
+                          "category": "crypto"},
+    }
+
+
+def _aapl_signal_payload() -> dict:
+    return {
+        "ticker": "AAPL",
+        "date": "2026-04-16",
+        "price": {"current": 184.12, "change_pct_24h": 1.23},
+        "saju": {"composite": 56, "grade": "😐 관망"},
+        "chart": {"score": 72, "rsi": 62.0, "ma20": 180.0, "ma50": 175.0,
+                  "ma_trend": "up", "volume_ratio": 1.1,
+                  "reason": "MA 우상향, RSI 62"},
+        "composite_score": 66,
+        "signal_grade": "진입",
+        "best_hours": [],
+        "market_status": {"is_open": True, "last_session_date": "2026-04-16",
+                          "category": "us_stock"},
+    }
+
+
+@pytest.mark.asyncio
+async def test_signal_no_arg_uses_btcusdt(monkeypatch):
+    """`/signal` (인자 없음) → ticker=BTCUSDT."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        captured["ticker"] = ticker
+        return _btc_signal_payload()
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+
+    update = _make_update(text="/signal", chat_id=42)
+    context = MagicMock(args=[])
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    assert captured["ticker"] == "BTCUSDT"
+
+
+@pytest.mark.asyncio
+async def test_signal_aapl_routes_to_stock(monkeypatch):
+    """`/signal AAPL` → ticker=AAPL."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        captured["ticker"] = ticker
+        return _aapl_signal_payload()
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    context = MagicMock(args=["AAPL"])
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    assert captured["ticker"] == "AAPL"
+
+
+@pytest.mark.asyncio
+async def test_signal_lowercase_aapl_is_normalized(monkeypatch):
+    """`/signal aapl` → AAPL."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        captured["ticker"] = ticker
+        return _aapl_signal_payload()
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["aapl"])
+    update = _make_update(text="/signal aapl", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    assert captured["ticker"] == "AAPL"
+
+
+@pytest.mark.asyncio
+async def test_signal_dollar_prefix_stripped(monkeypatch):
+    """`/signal $AAPL` → AAPL."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        captured["ticker"] = ticker
+        return _aapl_signal_payload()
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["$AAPL"])
+    update = _make_update(text="/signal $AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    assert captured["ticker"] == "AAPL"
+
+
+@pytest.mark.asyncio
+async def test_signal_list_fetches_catalog(monkeypatch):
+    """`/signal list` → get_supported_symbols 호출 + 메시지에 티커 포함."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_symbols():
+        return [
+            {"ticker": "BTCUSDT", "name": "Bitcoin", "category": "crypto"},
+            {"ticker": "AAPL", "name": "Apple", "category": "us_stock"},
+        ]
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_supported_symbols=fake_symbols,
+                                  get_signal=AsyncMock()))
+    context = MagicMock(args=["list"])
+    update = _make_update(text="/signal list", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "BTCUSDT" in sent
+    assert "AAPL" in sent
+
+
+@pytest.mark.asyncio
+async def test_signal_unknown_symbol_shows_list_hint(monkeypatch):
+    """`/signal UNKNOWN` → API 400 → 안내 문구."""
+    from sajucandle import handlers
+    from sajucandle.api_client import ApiError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        raise ApiError(400, "unsupported ticker: UNKNOWN")
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["UNKNOWN"])
+    update = _make_update(text="/signal UNKNOWN", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "지원하지 않" in sent or "list" in sent.lower()
+
+
+@pytest.mark.asyncio
+async def test_signal_aapl_card_shows_closed_badge(monkeypatch):
+    """휴장 상태의 AAPL 응답 → 카드에 '휴장 중' + 기준 날짜 포함."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["market_status"] = {
+        "is_open": False,
+        "last_session_date": "2026-04-16",
+        "category": "us_stock",
+    }
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "휴장" in sent
+    assert "2026-04-16" in sent
+
+
+@pytest.mark.asyncio
+async def test_signal_btc_card_has_no_badge_line(monkeypatch):
+    """BTC 응답은 배지 줄을 표시하지 않는다 (기존 포맷 유지)."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _btc_signal_payload()
+    payload["market_status"] = {
+        "is_open": True,
+        "last_session_date": "2026-04-16",
+        "category": "crypto",
+    }
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=[])
+    update = _make_update(text="/signal", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "휴장" not in sent
+    assert "장 중" not in sent
