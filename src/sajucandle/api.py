@@ -297,6 +297,15 @@ def create_app(
         )
         return result
 
+    @app.get("/v1/signal/symbols")
+    async def signal_symbols_endpoint(
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ):
+        """지원 심볼 카탈로그. 봇 /signal list용."""
+        _require_api_key(request, x_sajucandle_key)
+        return {"symbols": MarketRouter.all_symbols()}
+
     @app.get("/v1/users/{chat_id}/signal", response_model=SignalResponse)
     async def signal_endpoint(
         chat_id: int,

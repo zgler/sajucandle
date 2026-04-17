@@ -135,3 +135,26 @@ def test_admin_users_db_unavailable_returns_503(client: TestClient, api_key: str
         headers={"X-SAJUCANDLE-KEY": api_key},
     )
     assert r.status_code == 503
+
+
+def test_signal_symbols_requires_api_key(client):
+    resp = client.get("/v1/signal/symbols")
+    assert resp.status_code == 401
+
+
+def test_signal_symbols_returns_catalog(client):
+    resp = client.get(
+        "/v1/signal/symbols",
+        headers={"X-SAJUCANDLE-KEY": "test-secret-key"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    tickers = [s["ticker"] for s in body["symbols"]]
+    assert "BTCUSDT" in tickers
+    assert "AAPL" in tickers
+    assert "MSFT" in tickers
+    assert "GOOGL" in tickers
+    assert "NVDA" in tickers
+    assert "TSLA" in tickers
+    for s in body["symbols"]:
+        assert set(s.keys()) >= {"ticker", "name", "category"}
