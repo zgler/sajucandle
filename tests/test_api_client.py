@@ -231,3 +231,134 @@ async def test_get_supported_symbols_401():
         with pytest.raises(ApiError) as exc:
             await c.get_supported_symbols()
     assert exc.value.status == 401
+
+
+# ─────────────────────────────────────────────
+# Week 7: watchlist
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_watchlist_returns_items():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/users/42/watchlist").mock(
+            return_value=Response(
+                200,
+                json={"items": [
+                    {"ticker": "AAPL", "added_at": "2026-04-16T09:00:00+09:00"},
+                    {"ticker": "TSLA", "added_at": "2026-04-17T10:00:00+09:00"},
+                ]},
+            )
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        items = await c.get_watchlist(42)
+    assert len(items) == 2
+    assert items[0]["ticker"] == "AAPL"
+
+
+@pytest.mark.asyncio
+async def test_add_watchlist_success_204():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.post("/v1/users/42/watchlist").mock(return_value=Response(204))
+        c = ApiClient(base_url="http://test", api_key="k")
+        await c.add_watchlist(42, "AAPL")   # returns None
+
+
+@pytest.mark.asyncio
+async def test_add_watchlist_conflict_409_full():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient, ApiError
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.post("/v1/users/42/watchlist").mock(
+            return_value=Response(409, json={"detail": "watchlist full (max 5)"})
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        with pytest.raises(ApiError) as exc:
+            await c.add_watchlist(42, "AAPL")
+    assert exc.value.status == 409
+    assert "full" in exc.value.detail
+
+
+@pytest.mark.asyncio
+async def test_add_watchlist_conflict_409_already():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient, ApiError
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.post("/v1/users/42/watchlist").mock(
+            return_value=Response(409, json={"detail": "already in watchlist"})
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        with pytest.raises(ApiError) as exc:
+            await c.add_watchlist(42, "AAPL")
+    assert exc.value.status == 409
+    assert "already" in exc.value.detail
+
+
+@pytest.mark.asyncio
+async def test_add_watchlist_unsupported_400():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient, ApiError
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.post("/v1/users/42/watchlist").mock(
+            return_value=Response(400, json={"detail": "unsupported ticker: AMZN"})
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        with pytest.raises(ApiError) as exc:
+            await c.add_watchlist(42, "AMZN")
+    assert exc.value.status == 400
+
+
+@pytest.mark.asyncio
+async def test_remove_watchlist_success_204():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.delete("/v1/users/42/watchlist/AAPL").mock(return_value=Response(204))
+        c = ApiClient(base_url="http://test", api_key="k")
+        await c.remove_watchlist(42, "AAPL")
+
+
+@pytest.mark.asyncio
+async def test_remove_watchlist_not_found_404():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient, NotFoundError
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.delete("/v1/users/42/watchlist/AAPL").mock(
+            return_value=Response(404, json={"detail": "not in watchlist"})
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        with pytest.raises(NotFoundError):
+            await c.remove_watchlist(42, "AAPL")
+
+
+@pytest.mark.asyncio
+async def test_get_admin_watchlist_symbols_returns_list():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/admin/watchlist-symbols").mock(
+            return_value=Response(200, json={"symbols": ["AAPL", "TSLA"]})
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        syms = await c.get_admin_watchlist_symbols()
+    assert syms == ["AAPL", "TSLA"]

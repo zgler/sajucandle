@@ -128,3 +128,32 @@ class ApiClient:
         await self._raise_for_status(r)
         data = r.json()
         return list(data.get("symbols", []))
+
+    async def get_watchlist(self, chat_id: int) -> list[dict]:
+        """GET /v1/users/{chat_id}/watchlist. [{ticker, added_at}, ...]"""
+        async with self._client() as c:
+            r = await c.get(f"/v1/users/{chat_id}/watchlist")
+        await self._raise_for_status(r)
+        return list(r.json().get("items", []))
+
+    async def add_watchlist(self, chat_id: int, ticker: str) -> None:
+        """POST /v1/users/{chat_id}/watchlist body={ticker}. 204 or raise ApiError."""
+        async with self._client() as c:
+            r = await c.post(
+                f"/v1/users/{chat_id}/watchlist",
+                json={"ticker": ticker},
+            )
+        await self._raise_for_status(r)
+
+    async def remove_watchlist(self, chat_id: int, ticker: str) -> None:
+        """DELETE /v1/users/{chat_id}/watchlist/{ticker}. 204 or raise ApiError."""
+        async with self._client() as c:
+            r = await c.delete(f"/v1/users/{chat_id}/watchlist/{ticker}")
+        await self._raise_for_status(r)
+
+    async def get_admin_watchlist_symbols(self) -> list[str]:
+        """GET /v1/admin/watchlist-symbols. 반환: ['AAPL', 'TSLA', ...]"""
+        async with self._client() as c:
+            r = await c.get("/v1/admin/watchlist-symbols")
+        await self._raise_for_status(r)
+        return list(r.json().get("symbols", []))
