@@ -32,10 +32,11 @@
 │  users, user_bazi        │      │
 └─────────────────────────┘       │
                                   │
-                         ┌────────┴───────┐
-                         │  Binance API   │ (BTCUSDT 일봉)
-                         │  /klines       │
-                         └────────────────┘
+                         ┌────────┴───────┐   ┌──────────────────────┐
+                         │  Binance API   │   │  yfinance (PyPI)     │
+                         │  /klines       │   │  AAPL/MSFT/GOOGL/    │
+                         │  (BTCUSDT)     │   │  NVDA/TSLA 일봉      │
+                         └────────────────┘   └──────────────────────┘
 ```
 
 두 Railway 서비스는 같은 GitHub repo + 같은 Dockerfile + 같은 `REDIS_URL`을 공유한다. 봇은 API에 HTTP로만 접근하고 엔진/DB를 직접 건드리지 않는다.
@@ -56,7 +57,7 @@ pip install -e ".[dev]"
 ```bash
 pytest -v
 ```
-Week 5 기준 **123 passed + 28 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
+Week 6 기준 **164 passed + 30 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
 
 ### 봇 로컬 실행
 ```bash
@@ -127,6 +128,10 @@ src/sajucandle/
 ├── score_service.py    # 일일 점수 + KST 자정 TTL 캐시
 ├── tech_analysis.py    # RSI/SMA/volume_ratio → chart_score (순수 함수)
 ├── market_data.py      # Binance 클라이언트 + 2-tier OHLCV 캐시
+├── market/             # Week 6: 멀티 자산 시장 데이터 (신규)
+│   ├── base.py         #   MarketDataProvider Protocol + UnsupportedTicker
+│   ├── yfinance.py     #   YFinanceClient (Redis 2단 캐시, fresh 1h / backup 24h)
+│   └── router.py       #   MarketRouter.get_provider() / all_symbols()
 ├── signal_service.py   # saju 0.4 + chart 0.6 결합 + TTL 5분 캐시
 ├── broadcast.py        # 데일리 푸시 CLI (Railway Cron에서 매일 07:00 KST 실행)
 ├── api.py              # FastAPI 앱 + 엔드포인트
@@ -145,6 +150,7 @@ tests/
 ├── test_db.py / test_repositories.py
 ├── test_format.py / test_handlers.py / test_score_service.py
 ├── test_tech_analysis.py / test_market_data.py / test_signal_service.py
+├── test_market_base.py / test_market_yfinance.py / test_market_router.py  # Week 6
 ├── test_broadcast.py
 └── conftest.py         # db_pool, db_conn 롤백 fixture
 
@@ -161,7 +167,8 @@ docs/superpowers/
 |---------|------|
 | `/start YYYY-MM-DD HH:MM` | 생년월일시 등록 (upsert) |
 | `/score [swing\|scalp\|long]` | 오늘의 일진 점수 카드 |
-| `/signal` | **BTC 사주+차트 결합 신호** (Week 4) |
+| `/signal [심볼]` | **사주+차트 결합 신호** — BTC 기본, AAPL/MSFT/GOOGL/NVDA/TSLA 지원 (Week 6) |
+| `/signal list` | 지원 심볼 목록 |
 | `/me` | 등록된 내 정보 |
 | `/forget` | 내 정보 삭제 (멱등) |
 | `/help` | 명령어 도움말 |
@@ -175,6 +182,7 @@ docs/superpowers/
 - `GET    /v1/users/{chat_id}/score?date=&asset=` — 일일 4축 + 종합 점수 + 추천 시진
 - `GET    /v1/users/{chat_id}/signal?ticker=BTCUSDT&date=` — **사주 + 차트 결합 신호** (Week 4)
 - `GET    /v1/admin/users` — 등록된 chat_id 리스트 (브로드캐스트용, Week 5)
+- `GET    /v1/signal/symbols` — 지원 심볼 카탈로그 (인증 필요, Week 6)
 
 점수 응답은 `score:{chat_id}:{date}:{asset}` 키로 Redis에 캐싱되고, TTL은 **KST 자정까지** (최소 60초)이다.
 신호 응답은 `signal:{chat_id}:{date}:{ticker}` 키로 TTL 5분 캐싱.
@@ -227,6 +235,59 @@ Supabase Studio → SQL Editor → `migrations/001_init.sql` 전체 붙여넣고
 $env:TEST_DATABASE_URL = "postgresql://..."
 pytest -v
 ```
+
+## Week 6: 미국주식 /signal
+
+yfinance 기반 미국주식 5종 지원. 휴장/주말에도 마지막 종가로 카드 생성.
+
+### 지원 심볼
+| 심볼 | 이름 | 카테고리 |
+|------|------|----------|
+| BTCUSDT | Bitcoin | crypto |
+| AAPL | Apple | us_stock |
+| MSFT | Microsoft | us_stock |
+| GOOGL | Alphabet | us_stock |
+| NVDA | NVIDIA | us_stock |
+| TSLA | Tesla | us_stock |
+
+### 명령어
+- `/signal` — BTC (기본)
+- `/signal AAPL` — 애플
+- `/signal aapl` / `/signal $AAPL` — 대소문자/$ 무관 정규화
+- `/signal list` — 지원 심볼 목록
+- `/signal UNKNOWN` — "지원하지 않는 심볼" 안내
+
+### 카드 포맷 (주식)
+
+```
+── 2026-04-17 AAPL ──
+🕐 휴장 중 · 기준: 2026-04-16 종가
+현재가: $184.12 (+1.23%)
+────────────────
+사주 점수:  56 (관망)
+차트 점수:  72 (MA 우상향, RSI 62)
+────────────────
+종합:  66 | 진입
+※ 엔터테인먼트 목적. 투자 추천 아님.
+```
+
+### 새 API 엔드포인트
+- `GET /v1/signal/symbols` — 지원 심볼 카탈로그 (인증 필요)
+
+### 아키텍처
+- `src/sajucandle/market/` 패키지 신설
+  - `base.py` — `MarketDataProvider` Protocol + `UnsupportedTicker`
+  - `yfinance.py` — `YFinanceClient` (Redis 2단 캐시, fresh 1h / backup 24h)
+  - `router.py` — `MarketRouter.get_provider(ticker)`, `MarketRouter.all_symbols()`
+- `BinanceClient`에 `is_market_open` / `last_session_date` 추가 (24/7 trivial impl)
+- `SignalResponse.market_status: MarketStatus` 필드 추가
+
+### 범위 밖 (Week 7+)
+- 모닝 푸시 카드에 주식 통합
+- 사용자별 watchlist (`/watch AAPL`)
+- 국내주식 (KIS OpenAPI)
+- 공휴일 정확 판별
+- 프리마켓/애프터아워
 
 ---
 

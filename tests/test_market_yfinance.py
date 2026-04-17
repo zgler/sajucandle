@@ -5,8 +5,9 @@ yfinance.Ticker를 mock. 실제 네트워크 호출 0회.
 from __future__ import annotations
 
 import json
-from datetime import datetime
-from unittest.mock import patch, MagicMock
+from datetime import date as date_cls, datetime
+from unittest.mock import MagicMock, patch
+from zoneinfo import ZoneInfo
 
 import fakeredis
 import pandas as pd
@@ -164,10 +165,6 @@ def test_fetch_klines_network_error_no_backup_raises():
 # ─────────────────────────────────────────────
 # is_market_open / last_session_date
 # ─────────────────────────────────────────────
-
-from datetime import date as date_cls
-from zoneinfo import ZoneInfo
-
 
 NY = ZoneInfo("America/New_York")
 

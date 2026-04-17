@@ -1,13 +1,11 @@
 """market.base: MarketDataProvider Protocol + UnsupportedTicker."""
 from __future__ import annotations
 
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from typing import Protocol
 
-import pytest
-
 from sajucandle.market.base import MarketDataProvider, UnsupportedTicker
-from sajucandle.market_data import BinanceClient, Kline
+from sajucandle.market_data import BinanceClient
 
 
 def test_unsupported_ticker_is_exception():

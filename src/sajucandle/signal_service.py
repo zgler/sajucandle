@@ -17,9 +17,8 @@ import logging
 from datetime import date
 from typing import Optional
 
-from sajucandle.market.base import MarketDataProvider
 from sajucandle.market.router import MarketRouter
-from sajucandle.market_data import Kline, MarketDataUnavailable
+from sajucandle.market_data import Kline
 from sajucandle.models import (
     ChartSummary,
     MarketStatus,

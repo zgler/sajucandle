@@ -9,7 +9,6 @@ import pytest
 
 from sajucandle.cache import BaziCache
 from sajucandle.cached_engine import CachedSajuEngine
-from sajucandle.market.base import UnsupportedTicker
 from sajucandle.market.router import MarketRouter
 from sajucandle.market_data import Kline, MarketDataUnavailable
 from sajucandle.repositories import UserProfile
