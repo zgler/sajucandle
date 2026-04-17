@@ -153,6 +153,7 @@ async def run_broadcast(
     forbidden_exc: Optional[type[BaseException]] = None,
     bad_request_exc: Optional[type[BaseException]] = None,
     send_delay: float = _SEND_DELAY_SEC,
+    admin_chat_id: Optional[int] = None,   # Week 7: Phase 1 precompute
 ) -> BroadcastSummary:
     """chat_ids 순회하며 카드 발송. 예외는 잡아서 summary에 누적.
 
@@ -161,6 +162,27 @@ async def run_broadcast(
       테스트에서는 주입 안 하면 해당 분기 안 탐.
     """
     summary = BroadcastSummary()
+
+    # ─── Phase 1: Precompute (watchlist 심볼 캐시 워밍) ───
+    if admin_chat_id is not None:
+        try:
+            symbols = await api_client.get_admin_watchlist_symbols()
+        except Exception as e:
+            logger.warning("broadcast precompute symbol list failed: %s", e)
+            symbols = []
+        for ticker in symbols:
+            try:
+                await api_client.get_signal(
+                    admin_chat_id,
+                    ticker=ticker,
+                    date=target_date.isoformat(),
+                )
+                summary.precompute_ok += 1
+            except Exception as e:
+                logger.warning(
+                    "broadcast precompute failed ticker=%s: %s", ticker, e
+                )
+                summary.precompute_failed += 1
 
     for chat_id in chat_ids:
         # 1. 점수 조회

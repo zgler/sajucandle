@@ -354,3 +354,132 @@ def test_format_watchlist_summary_multiple_mixed():
     for t in ["BTC", "AAPL", "TSLA"]:
         assert t in card
     assert card.count("\n") >= 4
+
+
+# ─────────────────────────────────────────────
+# Week 7: Phase 1 Precompute
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_precompute_warms_cache_for_all_symbols():
+    """run_broadcast 시작 시 admin chat으로 watchlist union 심볼 선조회."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[])
+    api_client.get_admin_watchlist_symbols = AsyncMock(
+        return_value=["AAPL", "TSLA"]
+    )
+    precompute_calls = []
+    async def fake_get_signal(chat_id, ticker=None, date=None):
+        precompute_calls.append((chat_id, ticker))
+        return {}
+    api_client.get_signal = fake_get_signal
+
+    send = AsyncMock()
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[],
+        target_date=date(2026, 4, 17),
+        dry_run=True,
+        admin_chat_id=7492682272,
+    )
+    assert len(precompute_calls) == 2
+    assert all(c[0] == 7492682272 for c in precompute_calls)
+    tickers_called = {c[1] for c in precompute_calls}
+    assert tickers_called == {"AAPL", "TSLA"}
+    assert summary.precompute_ok == 2
+    assert summary.precompute_failed == 0
+
+
+@pytest.mark.asyncio
+async def test_precompute_continues_on_partial_failure():
+    """일부 심볼 실패해도 나머지 진행."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.api_client import ApiError
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[])
+    api_client.get_admin_watchlist_symbols = AsyncMock(
+        return_value=["AAPL", "TSLA"]
+    )
+    async def fake_get_signal(chat_id, ticker=None, date=None):
+        if ticker == "AAPL":
+            raise ApiError(502, "chart data unavailable")
+        return {}
+    api_client.get_signal = fake_get_signal
+
+    send = AsyncMock()
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[],
+        target_date=date(2026, 4, 17),
+        dry_run=True,
+        admin_chat_id=7492682272,
+    )
+    assert summary.precompute_ok == 1
+    assert summary.precompute_failed == 1
+
+
+@pytest.mark.asyncio
+async def test_precompute_skipped_when_admin_chat_id_none():
+    """admin_chat_id=None이면 Phase 1 skip."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=["AAPL"])
+    api_client.get_signal = AsyncMock()
+
+    send = AsyncMock()
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[],
+        target_date=date(2026, 4, 17),
+        dry_run=True,
+        admin_chat_id=None,
+    )
+    api_client.get_admin_watchlist_symbols.assert_not_called()
+    api_client.get_signal.assert_not_called()
+    assert summary.precompute_ok == 0
+    assert summary.precompute_failed == 0
+
+
+@pytest.mark.asyncio
+async def test_precompute_failure_does_not_abort_phase2():
+    """Phase 1 완전 실패해도 Phase 2(사주 카드)는 진행."""
+    from datetime import date
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.api_client import ApiError
+    from sajucandle.broadcast import run_broadcast
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[])
+    api_client.get_admin_watchlist_symbols = AsyncMock(
+        side_effect=ApiError(500, "db down")
+    )
+    api_client.get_score = AsyncMock(return_value=_score_fixture())
+    api_client.get_signal = AsyncMock()
+
+    send = AsyncMock()
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[99],
+        target_date=date(2026, 4, 17),
+        dry_run=True,
+        admin_chat_id=7492682272,
+    )
+    assert summary.precompute_ok == 0
+    # Phase 2가 정상 실행됐는지 (get_score 호출 확인)
+    api_client.get_score.assert_called_once()
