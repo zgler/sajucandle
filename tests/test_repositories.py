@@ -1,6 +1,8 @@
 """repositories 단위 테스트. 각 테스트는 트랜잭션 롤백."""
 from __future__ import annotations
 
+import pytest
+
 from sajucandle.repositories import (
     UserProfile,
     delete_user,
@@ -92,3 +94,102 @@ async def test_list_chat_ids_returns_all_registered(db_conn):
         ))
     ids = await list_chat_ids(db_conn)
     assert sorted(ids) == [5001, 5002, 5003]
+
+
+# ─────────────────────────────────────────────
+# Week 7: watchlist CRUD
+# ─────────────────────────────────────────────
+
+from sajucandle.repositories import (
+    WatchlistEntry,
+    add_to_watchlist,
+    count_watchlist,
+    list_all_watchlist_tickers,
+    list_watchlist,
+    remove_from_watchlist,
+)
+
+
+async def _register_user(db_conn, chat_id: int) -> None:
+    """watchlist FK를 만족시키기 위한 전제 사용자 등록."""
+    await upsert_user(db_conn, UserProfile(
+        telegram_chat_id=chat_id,
+        birth_year=1990, birth_month=3, birth_day=15,
+        birth_hour=14, birth_minute=0,
+        asset_class_pref="swing",
+    ))
+
+
+async def test_list_watchlist_empty(db_conn):
+    await _register_user(db_conn, 100001)
+    items = await list_watchlist(db_conn, 100001)
+    assert items == []
+
+
+async def test_add_and_list_watchlist(db_conn):
+    await _register_user(db_conn, 100002)
+    await add_to_watchlist(db_conn, 100002, "AAPL")
+    items = await list_watchlist(db_conn, 100002)
+    assert len(items) == 1
+    assert items[0].ticker == "AAPL"
+    assert items[0].added_at is not None
+
+
+async def test_list_watchlist_ordered_by_added_at_asc(db_conn):
+    await _register_user(db_conn, 100003)
+    await add_to_watchlist(db_conn, 100003, "AAPL")
+    await add_to_watchlist(db_conn, 100003, "MSFT")
+    await add_to_watchlist(db_conn, 100003, "BTCUSDT")
+    items = await list_watchlist(db_conn, 100003)
+    tickers = [i.ticker for i in items]
+    assert tickers == ["AAPL", "MSFT", "BTCUSDT"]
+
+
+async def test_add_duplicate_raises_unique_violation(db_conn):
+    import asyncpg
+    await _register_user(db_conn, 100004)
+    await add_to_watchlist(db_conn, 100004, "AAPL")
+    with pytest.raises(asyncpg.UniqueViolationError):
+        await add_to_watchlist(db_conn, 100004, "AAPL")
+
+
+async def test_remove_from_watchlist_returns_true_when_existed(db_conn):
+    await _register_user(db_conn, 100005)
+    await add_to_watchlist(db_conn, 100005, "AAPL")
+    deleted = await remove_from_watchlist(db_conn, 100005, "AAPL")
+    assert deleted is True
+    items = await list_watchlist(db_conn, 100005)
+    assert items == []
+
+
+async def test_remove_from_watchlist_returns_false_when_missing(db_conn):
+    await _register_user(db_conn, 100006)
+    deleted = await remove_from_watchlist(db_conn, 100006, "AAPL")
+    assert deleted is False
+
+
+async def test_count_watchlist(db_conn):
+    await _register_user(db_conn, 100007)
+    assert await count_watchlist(db_conn, 100007) == 0
+    await add_to_watchlist(db_conn, 100007, "AAPL")
+    await add_to_watchlist(db_conn, 100007, "MSFT")
+    assert await count_watchlist(db_conn, 100007) == 2
+
+
+async def test_list_all_watchlist_tickers_union(db_conn):
+    await _register_user(db_conn, 100008)
+    await _register_user(db_conn, 100009)
+    await add_to_watchlist(db_conn, 100008, "AAPL")
+    await add_to_watchlist(db_conn, 100008, "TSLA")
+    await add_to_watchlist(db_conn, 100009, "AAPL")
+    await add_to_watchlist(db_conn, 100009, "BTCUSDT")
+    symbols = await list_all_watchlist_tickers(db_conn)
+    assert symbols == {"AAPL", "TSLA", "BTCUSDT"}
+
+
+async def test_delete_user_cascades_watchlist(db_conn):
+    await _register_user(db_conn, 100010)
+    await add_to_watchlist(db_conn, 100010, "AAPL")
+    await delete_user(db_conn, 100010)
+    items = await list_watchlist(db_conn, 100010)
+    assert items == []

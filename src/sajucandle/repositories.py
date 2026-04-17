@@ -113,3 +113,68 @@ async def list_chat_ids(conn: asyncpg.Connection) -> list[int]:
     """
     rows = await conn.fetch("SELECT telegram_chat_id FROM user_bazi")
     return [r["telegram_chat_id"] for r in rows]
+
+
+# ─────────────────────────────────────────────
+# Week 7: watchlist
+# ─────────────────────────────────────────────
+
+
+@dataclass
+class WatchlistEntry:
+    ticker: str
+    added_at: datetime
+
+
+async def list_watchlist(
+    conn: asyncpg.Connection, chat_id: int
+) -> list[WatchlistEntry]:
+    """사용자의 watchlist (added_at ASC). 비어있으면 []."""
+    rows = await conn.fetch(
+        "SELECT ticker, added_at FROM user_watchlist "
+        "WHERE telegram_chat_id = $1 ORDER BY added_at ASC",
+        chat_id,
+    )
+    return [WatchlistEntry(ticker=r["ticker"], added_at=r["added_at"]) for r in rows]
+
+
+async def add_to_watchlist(
+    conn: asyncpg.Connection, chat_id: int, ticker: str
+) -> None:
+    """INSERT. 중복이면 asyncpg.UniqueViolationError 전파."""
+    await conn.execute(
+        "INSERT INTO user_watchlist (telegram_chat_id, ticker) VALUES ($1, $2)",
+        chat_id, ticker,
+    )
+
+
+async def remove_from_watchlist(
+    conn: asyncpg.Connection, chat_id: int, ticker: str
+) -> bool:
+    """DELETE. True=삭제됨, False=애초에 없었음."""
+    result = await conn.execute(
+        "DELETE FROM user_watchlist "
+        "WHERE telegram_chat_id = $1 AND ticker = $2",
+        chat_id, ticker,
+    )
+    # asyncpg execute는 "DELETE N" 형태 문자열 반환
+    return result.endswith(" 1")
+
+
+async def count_watchlist(
+    conn: asyncpg.Connection, chat_id: int
+) -> int:
+    """현재 등록된 심볼 개수."""
+    n = await conn.fetchval(
+        "SELECT COUNT(*) FROM user_watchlist WHERE telegram_chat_id = $1",
+        chat_id,
+    )
+    return int(n or 0)
+
+
+async def list_all_watchlist_tickers(
+    conn: asyncpg.Connection,
+) -> set[str]:
+    """모든 사용자 watchlist ticker union. broadcast precompute용."""
+    rows = await conn.fetch("SELECT DISTINCT ticker FROM user_watchlist")
+    return {r["ticker"] for r in rows}
