@@ -74,6 +74,29 @@ class YFinanceClient:
         self._redis_set(backup_key, klines, _BACKUP_TTL)
         return klines
 
+    def is_market_open(self, symbol: str) -> bool:
+        """NYSE 정규장(ET 09:30~16:00, 주말 제외).
+
+        공휴일은 커버하지 않는다 — 배지 정확도 < 복잡도 비용. 공휴일에는
+        is_market_open=True 오판이 날 수 있으나 last_session_date는 정확하다
+        (yfinance가 휴장일 데이터를 안 줌).
+        """
+        now_ny = datetime.now(_NY_TZ)
+        if now_ny.weekday() >= 5:   # Sat=5, Sun=6
+            return False
+        open_t = now_ny.replace(hour=9, minute=30, second=0, microsecond=0)
+        close_t = now_ny.replace(hour=16, minute=0, second=0, microsecond=0)
+        return open_t <= now_ny <= close_t
+
+    def last_session_date(self, symbol: str) -> date:
+        """fetch_klines 마지막 캔들의 NY 날짜.
+
+        주말/휴장일에도 금요일(직전 거래일)이 반환되므로 사용자에게 정확한
+        '기준 날짜'를 표시할 수 있다.
+        """
+        klines = self.fetch_klines(symbol, limit=1)
+        return klines[-1].open_time.astimezone(_NY_TZ).date()
+
     # ─────────────────────────────────────────────
     # Internals
     # ─────────────────────────────────────────────

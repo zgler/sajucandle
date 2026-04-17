@@ -159,3 +159,83 @@ def test_fetch_klines_network_error_no_backup_raises():
     ):
         with pytest.raises(MarketDataUnavailable):
             client.fetch_klines("AAPL")
+
+
+# ─────────────────────────────────────────────
+# is_market_open / last_session_date
+# ─────────────────────────────────────────────
+
+from datetime import date as date_cls
+from zoneinfo import ZoneInfo
+
+
+NY = ZoneInfo("America/New_York")
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_weekday_mid_session(mock_dt):
+    """수요일 12:00 ET → 장 중."""
+    mock_dt.now.return_value = datetime(2026, 4, 15, 12, 0, tzinfo=NY)
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is True
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_weekday_before_open(mock_dt):
+    """수요일 09:29 ET → 장 전."""
+    mock_dt.now.return_value = datetime(2026, 4, 15, 9, 29, tzinfo=NY)
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is False
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_weekday_at_open(mock_dt):
+    """수요일 정확히 09:30 ET → 장 시작 (inclusive)."""
+    mock_dt.now.return_value = datetime(2026, 4, 15, 9, 30, tzinfo=NY)
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is True
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_weekday_at_close(mock_dt):
+    """수요일 정확히 16:00 ET → 장 마감 직전 (inclusive)."""
+    mock_dt.now.return_value = datetime(2026, 4, 15, 16, 0, tzinfo=NY)
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is True
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_weekday_after_close(mock_dt):
+    """수요일 16:01 ET → 장 후."""
+    mock_dt.now.return_value = datetime(2026, 4, 15, 16, 1, tzinfo=NY)
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is False
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_saturday(mock_dt):
+    """토요일 어느 시각이든 False."""
+    mock_dt.now.return_value = datetime(2026, 4, 18, 12, 0, tzinfo=NY)   # Sat
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is False
+
+
+@patch("sajucandle.market.yfinance.datetime")
+def test_is_market_open_sunday(mock_dt):
+    """일요일 어느 시각이든 False."""
+    mock_dt.now.return_value = datetime(2026, 4, 19, 10, 0, tzinfo=NY)   # Sun
+    client = YFinanceClient()
+    assert client.is_market_open("AAPL") is False
+
+
+def test_last_session_date_returns_last_kline_ny_date():
+    """fetch_klines의 마지막 요소의 NY 날짜 반환."""
+    df = _make_yf_dataframe(5)
+    # DataFrame index 마지막은 2026-04-16 (기본값, NY tz)
+    fake_ticker = MagicMock()
+    fake_ticker.history.return_value = df
+    client = YFinanceClient()
+    with patch("sajucandle.market.yfinance.yf.Ticker", return_value=fake_ticker):
+        d = client.last_session_date("AAPL")
+    assert isinstance(d, date_cls)
+    assert d == date_cls(2026, 4, 16)
