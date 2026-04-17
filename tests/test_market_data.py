@@ -189,3 +189,21 @@ def test_kline_roundtrip_dict():
     d = k.to_dict()
     k2 = Kline.from_dict(d)
     assert k == k2
+
+
+# ─────────────────────────────────────────────
+# Week 6: MarketDataProvider protocol conformance
+# ─────────────────────────────────────────────
+
+def test_binance_is_market_open_always_true():
+    """BTC는 24/7 거래이므로 항상 True."""
+    client = BinanceClient()
+    assert client.is_market_open("BTCUSDT") is True
+
+
+def test_binance_last_session_date_is_today_utc():
+    """BTC는 현재 UTC 날짜를 마지막 세션으로 간주."""
+    from datetime import datetime, timezone
+    client = BinanceClient()
+    expected = datetime.now(timezone.utc).date()
+    assert client.last_session_date("BTCUSDT") == expected

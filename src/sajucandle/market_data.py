@@ -169,3 +169,16 @@ class BinanceClient:
             self._redis.setex(key, ttl, payload)
         except Exception as e:
             logger.warning("redis SETEX %s failed: %s", key, e)
+
+    # ─────────────────────────────────────────────
+    # MarketDataProvider protocol (Week 6+)
+    # ─────────────────────────────────────────────
+
+    def is_market_open(self, symbol: str) -> bool:
+        """BTC 24/7 거래. 심볼 무관 항상 True."""
+        return True
+
+    def last_session_date(self, symbol: str):
+        """24/7 거래라 '마지막 세션'은 현재 UTC 날짜."""
+        from datetime import datetime, timezone
+        return datetime.now(timezone.utc).date()
