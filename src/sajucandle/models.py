@@ -136,6 +136,13 @@ class ChartSummary(BaseModel):
     reason: str
 
 
+class MarketStatus(BaseModel):
+    """시장 개장 상태. 카드에 배지 표시용."""
+    is_open: bool
+    last_session_date: str   # ISO "YYYY-MM-DD" (주식=NY tz, crypto=UTC)
+    category: Literal["crypto", "us_stock"]
+
+
 class SignalResponse(BaseModel):
     chat_id: int
     ticker: str
@@ -146,3 +153,4 @@ class SignalResponse(BaseModel):
     composite_score: int = Field(ge=0, le=100)
     signal_grade: str     # "강진입" | "진입" | "관망" | "회피"
     best_hours: List[HourRecommendation]
+    market_status: MarketStatus
