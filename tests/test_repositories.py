@@ -5,9 +5,14 @@ import pytest
 
 from sajucandle.repositories import (
     UserProfile,
+    add_to_watchlist,
+    count_watchlist,
     delete_user,
     get_user,
+    list_all_watchlist_tickers,
     list_chat_ids,
+    list_watchlist,
+    remove_from_watchlist,
     upsert_user,
 )
 
@@ -100,14 +105,6 @@ async def test_list_chat_ids_returns_all_registered(db_conn):
 # Week 7: watchlist CRUD
 # ─────────────────────────────────────────────
 
-from sajucandle.repositories import (
-    WatchlistEntry,
-    add_to_watchlist,
-    count_watchlist,
-    list_all_watchlist_tickers,
-    list_watchlist,
-    remove_from_watchlist,
-)
 
 
 async def _register_user(db_conn, chat_id: int) -> None:

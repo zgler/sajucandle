@@ -6,7 +6,6 @@ import os
 import pytest
 from fastapi.testclient import TestClient
 
-from sajucandle import db
 from sajucandle.api import create_app
 
 
