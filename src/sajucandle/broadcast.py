@@ -43,6 +43,12 @@ class BroadcastSummary:
     blocked: int = 0     # Telegram Forbidden
     not_found: int = 0   # 사용자 등록 삭제됨
     bad_request: int = 0  # Telegram BadRequest
+    # Week 7: watchlist + precompute
+    watchlist_sent: int = 0
+    watchlist_skipped_empty: int = 0
+    watchlist_failed: int = 0
+    precompute_ok: int = 0
+    precompute_failed: int = 0
 
     def total(self) -> int:
         return self.sent + self.failed + self.blocked + self.not_found + self.bad_request
@@ -84,6 +90,55 @@ def format_morning_card(score: dict, target_date: date) -> str:
     lines.append("")
     lines.append("오늘 BTC는 /signal 로 확인하세요.")
     lines.append("")
+    lines.append("※ 엔터테인먼트 목적. 투자 추천 아님.")
+    return "\n".join(lines)
+
+
+_WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"]
+
+
+def _short_ticker(ticker: str) -> str:
+    """BTCUSDT → BTC 축약. 그 외는 원본 유지."""
+    if ticker.endswith("USDT"):
+        return ticker[:-4]
+    return ticker
+
+
+def format_watchlist_summary(signals: list[dict], target_date) -> Optional[str]:
+    """watchlist 요약 카드.
+
+    signals 원소:
+      - 정상: {"ticker", "price":{"current","change_pct_24h"},
+               "composite_score", "signal_grade",
+               "market_status":{"is_open","category","last_session_date"}}
+      - 실패: {"ticker", "error": str}
+
+    빈 리스트면 None 반환 (호출자가 전송 skip).
+    """
+    if not signals:
+        return None
+    weekday = _WEEKDAY_KO[target_date.weekday()]
+    lines = [f"📊 {target_date.isoformat()} ({weekday}) 관심 종목", "─────────────"]
+    for s in signals:
+        if "error" in s:
+            lines.append(f"[{_short_ticker(s['ticker'])}]  {s['error']}")
+            continue
+        t = _short_ticker(s["ticker"])
+        score = s.get("composite_score", 0)
+        grade = s.get("signal_grade", "")
+        price = s.get("price", {})
+        cur = price.get("current", 0.0)
+        pct = price.get("change_pct_24h", 0.0)
+        sign = "+" if pct >= 0 else ""
+        status = s.get("market_status") or {}
+        clock = ""
+        if status.get("category") == "us_stock" and not status.get("is_open"):
+            clock = "  🕐"
+        lines.append(
+            f"[{t}] {score:>3} {grade}  ${cur:,.2f}  ({sign}{pct:.2f}%){clock}"
+        )
+    lines.append("")
+    lines.append("상세: /signal <심볼>")
     lines.append("※ 엔터테인먼트 목적. 투자 추천 아님.")
     return "\n".join(lines)
 

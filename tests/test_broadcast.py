@@ -237,3 +237,120 @@ def test_summary_total_and_log():
     assert s.total() == 7
     assert "sent=3" in s.as_log()
     assert "blocked=2" in s.as_log()
+
+
+# ─────────────────────────────────────────────
+# Week 7: BroadcastSummary 확장 + format_watchlist_summary
+# ─────────────────────────────────────────────
+
+
+def test_broadcast_summary_has_watchlist_fields():
+    from sajucandle.broadcast import BroadcastSummary
+    s = BroadcastSummary()
+    assert s.watchlist_sent == 0
+    assert s.watchlist_skipped_empty == 0
+    assert s.watchlist_failed == 0
+    assert s.precompute_ok == 0
+    assert s.precompute_failed == 0
+
+
+def test_format_watchlist_summary_renders_open_stock():
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+
+    signals = [{
+        "ticker": "AAPL",
+        "price": {"current": 184.12, "change_pct_24h": 1.23},
+        "composite_score": 66,
+        "signal_grade": "진입",
+        "market_status": {"is_open": True, "category": "us_stock",
+                           "last_session_date": "2026-04-16"},
+    }]
+    card = format_watchlist_summary(signals, date(2026, 4, 17))
+    assert "2026-04-17" in card
+    assert "관심 종목" in card
+    assert "AAPL" in card
+    assert "66" in card
+    assert "진입" in card
+    assert "184.12" in card
+    assert "+1.23" in card
+    assert "🕐" not in card
+    assert "엔터테인먼트" in card
+
+
+def test_format_watchlist_summary_closed_stock_shows_clock():
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+
+    signals = [{
+        "ticker": "TSLA",
+        "price": {"current": 215.00, "change_pct_24h": -2.3},
+        "composite_score": 45,
+        "signal_grade": "관망",
+        "market_status": {"is_open": False, "category": "us_stock",
+                           "last_session_date": "2026-04-16"},
+    }]
+    card = format_watchlist_summary(signals, date(2026, 4, 17))
+    assert "🕐" in card
+
+
+def test_format_watchlist_summary_btc_no_clock():
+    """crypto는 24/7이라 휴장 아이콘 없음."""
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+
+    signals = [{
+        "ticker": "BTCUSDT",
+        "price": {"current": 72120.0, "change_pct_24h": 1.5},
+        "composite_score": 72,
+        "signal_grade": "진입",
+        "market_status": {"is_open": True, "category": "crypto",
+                           "last_session_date": "2026-04-17"},
+    }]
+    card = format_watchlist_summary(signals, date(2026, 4, 17))
+    assert "🕐" not in card
+    # BTCUSDT는 [BTC]로 축약
+    assert "[BTC]" in card
+
+
+def test_format_watchlist_summary_failed_signal():
+    """시그널 실패한 심볼은 '데이터 불가'."""
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+
+    signals = [{
+        "ticker": "XYZ",
+        "error": "데이터 불가",
+    }]
+    card = format_watchlist_summary(signals, date(2026, 4, 17))
+    assert "XYZ" in card
+    assert "데이터 불가" in card
+
+
+def test_format_watchlist_summary_empty_returns_none():
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+    assert format_watchlist_summary([], date(2026, 4, 17)) is None
+
+
+def test_format_watchlist_summary_multiple_mixed():
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+
+    signals = [
+        {"ticker": "BTCUSDT",
+         "price": {"current": 72000.0, "change_pct_24h": 1.5},
+         "composite_score": 72, "signal_grade": "진입",
+         "market_status": {"is_open": True, "category": "crypto",
+                            "last_session_date": "2026-04-17"}},
+        {"ticker": "AAPL",
+         "price": {"current": 184.12, "change_pct_24h": 1.2},
+         "composite_score": 65, "signal_grade": "진입",
+         "market_status": {"is_open": False, "category": "us_stock",
+                            "last_session_date": "2026-04-16"}},
+        {"ticker": "TSLA", "error": "데이터 불가"},
+    ]
+    card = format_watchlist_summary(signals, date(2026, 4, 17))
+    for t in ["BTC", "AAPL", "TSLA"]:
+        assert t in card
+    assert card.count("\n") >= 4
