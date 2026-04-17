@@ -27,6 +27,10 @@ from sajucandle.models import (
     SignalResponse,
     UserProfileRequest,
     UserProfileResponse,
+    WatchlistAddRequest,
+    WatchlistItem,
+    WatchlistResponse,
+    WatchlistSymbolsResponse,
     bazi_chart_to_response,
 )
 from sajucandle.score_service import KST, ScoreService
@@ -250,6 +254,104 @@ def create_app(
             chat_ids = await repositories.list_chat_ids(conn)
         logger.info("admin list_users count=%s", len(chat_ids))
         return {"chat_ids": chat_ids}
+
+    _WATCHLIST_MAX = 5
+
+    def _normalize_ticker(t: str) -> str:
+        return t.upper().lstrip("$")
+
+    def _ticker_is_supported(t: str) -> bool:
+        """MarketRouter.all_symbols()의 ticker set 검증."""
+        supported = {s["ticker"] for s in MarketRouter.all_symbols()}
+        return t in supported
+
+    @app.get("/v1/users/{chat_id}/watchlist", response_model=WatchlistResponse)
+    async def list_watchlist_endpoint(
+        chat_id: int,
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ) -> WatchlistResponse:
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+        async with db.acquire() as conn:
+            entries = await repositories.list_watchlist(conn, chat_id)
+        return WatchlistResponse(
+            items=[WatchlistItem(ticker=e.ticker, added_at=e.added_at)
+                   for e in entries]
+        )
+
+    @app.post("/v1/users/{chat_id}/watchlist", status_code=204)
+    async def add_watchlist_endpoint(
+        chat_id: int,
+        body: WatchlistAddRequest,
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ) -> None:
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+
+        ticker = _normalize_ticker(body.ticker)
+        if not _ticker_is_supported(ticker):
+            raise HTTPException(400, detail=f"unsupported ticker: {ticker}")
+
+        import asyncpg
+        async with db.acquire() as conn:
+            async with conn.transaction():
+                # 사용자 존재 확인
+                user = await repositories.get_user(conn, chat_id)
+                if user is None:
+                    raise HTTPException(404, detail="user not found")
+                # 5개 제한 (트랜잭션 내 검증)
+                n = await repositories.count_watchlist(conn, chat_id)
+                if n >= _WATCHLIST_MAX:
+                    raise HTTPException(
+                        409,
+                        detail=f"watchlist full (max {_WATCHLIST_MAX})",
+                    )
+                try:
+                    await repositories.add_to_watchlist(conn, chat_id, ticker)
+                except asyncpg.UniqueViolationError:
+                    raise HTTPException(409, detail="already in watchlist")
+        logger.info(
+            "watchlist added chat_id=%s ticker=%s count=%s/%s",
+            chat_id, ticker, n + 1, _WATCHLIST_MAX,
+        )
+        return None
+
+    @app.delete("/v1/users/{chat_id}/watchlist/{ticker}", status_code=204)
+    async def remove_watchlist_endpoint(
+        chat_id: int,
+        ticker: str,
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ) -> None:
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+        t = _normalize_ticker(ticker)
+        async with db.acquire() as conn:
+            deleted = await repositories.remove_from_watchlist(conn, chat_id, t)
+        if not deleted:
+            raise HTTPException(404, detail="not in watchlist")
+        logger.info("watchlist removed chat_id=%s ticker=%s", chat_id, t)
+        return None
+
+    @app.get(
+        "/v1/admin/watchlist-symbols",
+        response_model=WatchlistSymbolsResponse,
+    )
+    async def admin_watchlist_symbols_endpoint(
+        request: Request,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ) -> WatchlistSymbolsResponse:
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+        async with db.acquire() as conn:
+            symbols = await repositories.list_all_watchlist_tickers(conn)
+        return WatchlistSymbolsResponse(symbols=sorted(symbols))
 
     @app.get("/v1/users/{chat_id}/score")
     async def score_endpoint(

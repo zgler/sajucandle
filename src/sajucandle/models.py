@@ -154,3 +154,26 @@ class SignalResponse(BaseModel):
     signal_grade: str     # "강진입" | "진입" | "관망" | "회피"
     best_hours: List[HourRecommendation]
     market_status: MarketStatus
+
+
+# ─────────────────────────────────────────────
+# Week 7: Watchlist
+# ─────────────────────────────────────────────
+
+
+class WatchlistAddRequest(BaseModel):
+    """POST /v1/users/{chat_id}/watchlist body."""
+    ticker: str = Field(min_length=1, max_length=16)
+
+
+class WatchlistItem(BaseModel):
+    ticker: str
+    added_at: datetime
+
+
+class WatchlistResponse(BaseModel):
+    items: List[WatchlistItem]
+
+
+class WatchlistSymbolsResponse(BaseModel):
+    symbols: List[str]
