@@ -362,6 +362,169 @@ async def _show_symbol_list(update: Update) -> None:
     await update.message.reply_text("\n".join(lines))
 
 
+# ─────────────────────────────────────────────
+# Week 7: watchlist commands
+# ─────────────────────────────────────────────
+
+_SYMBOL_NAMES = {
+    "BTCUSDT": "Bitcoin",
+    "AAPL": "Apple",
+    "MSFT": "Microsoft",
+    "GOOGL": "Alphabet",
+    "NVDA": "NVIDIA",
+    "TSLA": "Tesla",
+}
+
+
+def _symbol_name(ticker: str) -> str:
+    return _SYMBOL_NAMES.get(ticker, ticker)
+
+
+async def watch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/watch <심볼>` — 관심 종목 추가 (최대 5개)."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+    args = list(context.args or [])
+
+    if not args:
+        await update.message.reply_text(
+            "사용법: /watch <심볼>\n예: /watch AAPL"
+        )
+        return
+
+    ticker = args[0].upper().lstrip("$")
+
+    try:
+        await _api_client.add_watchlist(chat_id, ticker)
+    except NotFoundError:
+        await update.message.reply_text(
+            "먼저 생년월일을 등록하세요.\n예: /start 1990-03-15 14:00"
+        )
+        return
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        detail = (e.detail or "").lower()
+        if e.status == 409 and "full" in detail:
+            await update.message.reply_text(
+                "관심 종목은 최대 5개입니다.\n"
+                "/watchlist 에서 제거 후 다시 시도."
+            )
+        elif e.status == 409 and "already" in detail:
+            await update.message.reply_text(f"이미 관심 종목에 있습니다: {ticker}")
+        elif e.status == 400 and "unsupported" in detail:
+            await update.message.reply_text(
+                f"지원하지 않는 심볼: {ticker}\n"
+                f"/signal list 로 확인."
+            )
+        else:
+            logger.warning(
+                "watch api error chat_id=%s status=%s", chat_id, e.status
+            )
+            await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+    except Exception:
+        logger.exception("watch_command unexpected error chat_id=%s", chat_id)
+        await update.message.reply_text("예기치 못한 오류가 발생했습니다.")
+        return
+
+    # 성공 시 현재 개수 조회해서 표시
+    try:
+        items = await _api_client.get_watchlist(chat_id)
+        count = len(items)
+    except Exception:
+        count = "?"
+
+    await update.message.reply_text(
+        f"✅ {ticker} ({_symbol_name(ticker)}) 관심 종목 추가 완료.\n"
+        f"현재 {count}/5개. /watchlist 로 전체 확인."
+    )
+
+
+async def unwatch_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/unwatch <심볼>` — 관심 종목 제거."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+    args = list(context.args or [])
+
+    if not args:
+        await update.message.reply_text("사용법: /unwatch <심볼>")
+        return
+
+    ticker = args[0].upper().lstrip("$")
+
+    try:
+        await _api_client.remove_watchlist(chat_id, ticker)
+    except NotFoundError:
+        await update.message.reply_text(f"관심 종목에 없습니다: {ticker}")
+        return
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        logger.warning(
+            "unwatch api error chat_id=%s status=%s", chat_id, e.status
+        )
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+    except Exception:
+        logger.exception("unwatch_command unexpected error chat_id=%s", chat_id)
+        await update.message.reply_text("예기치 못한 오류가 발생했습니다.")
+        return
+
+    await update.message.reply_text(f"🗑️ {ticker} 관심 종목에서 제거했습니다.")
+
+
+async def watchlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/watchlist` — 본인 관심 종목 목록."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+
+    try:
+        items = await _api_client.get_watchlist(chat_id)
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        logger.warning(
+            "watchlist api error chat_id=%s status=%s", chat_id, e.status
+        )
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+
+    if not items:
+        await update.message.reply_text(
+            "관심 종목이 비어있습니다.\n"
+            "/watch AAPL 로 추가하세요.\n"
+            "/signal list 로 지원 심볼 확인."
+        )
+        return
+
+    lines = [f"📊 관심 종목 ({len(items)}/5)", "─────────────"]
+    for i, it in enumerate(items, start=1):
+        ticker = it["ticker"]
+        added = it.get("added_at", "")[:10]   # "2026-04-15" 부분만
+        lines.append(f"{i}. {ticker} — {_symbol_name(ticker)} ({added} 추가)")
+    lines.append("")
+    lines.append("/unwatch <심볼> 로 제거")
+    lines.append("매일 07:00 자동 시그널 발송됩니다.")
+
+    await update.message.reply_text("\n".join(lines))
+
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """`/help`. 명령어 목록."""
     if update.message is None:
@@ -372,9 +535,11 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/start YYYY-MM-DD HH:MM — 생년월일시 등록\n"
         "/score [swing|scalp|long] — 오늘 사주 점수\n"
         "/signal [심볼] — 사주+차트 결합 신호\n"
-        "  · 심볼 생략: BTC\n"
         "  · 지원: BTCUSDT, AAPL, MSFT, GOOGL, NVDA, TSLA\n"
         "  · /signal list — 전체 목록\n"
+        "/watch <심볼> — 관심 종목 추가 (최대 5개)\n"
+        "/unwatch <심볼> — 관심 종목 제거\n"
+        "/watchlist — 내 관심 종목 + 매일 07:00 자동 시그널\n"
         "/me — 등록된 정보 확인\n"
         "/forget — 내 정보 삭제\n"
         "/help — 이 도움말\n"

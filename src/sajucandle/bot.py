@@ -14,6 +14,9 @@ from sajucandle.handlers import (
     score_command,
     signal_command,
     start_command,
+    unwatch_command,
+    watch_command,
+    watchlist_command,
 )
 
 
@@ -41,6 +44,9 @@ def main() -> None:
     app.add_handler(CommandHandler("me", me_command))
     app.add_handler(CommandHandler("forget", forget_command))
     app.add_handler(CommandHandler("help", help_command))
+    app.add_handler(CommandHandler("watch", watch_command))
+    app.add_handler(CommandHandler("unwatch", unwatch_command))
+    app.add_handler(CommandHandler("watchlist", watchlist_command))
 
     logging.info("SajuCandle bot starting (polling mode)...")
     app.run_polling()

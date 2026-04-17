@@ -519,3 +519,291 @@ async def test_signal_btc_card_has_no_badge_line(monkeypatch):
     sent = update.message.reply_text.call_args[0][0]
     assert "휴장" not in sent
     assert "장 중" not in sent
+
+
+# ─────────────────────────────────────────────
+# Week 7: /watch /unwatch /watchlist
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_watch_success(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_add(chat_id, ticker):
+        captured["ticker"] = ticker
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(
+            add_watchlist=fake_add,
+            get_watchlist=AsyncMock(return_value=[{"ticker": "AAPL"}]),
+        ),
+    )
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/watch AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    assert captured["ticker"] == "AAPL"
+    sent = update.message.reply_text.call_args[0][0]
+    assert "AAPL" in sent
+    assert "추가" in sent
+    assert "/5" in sent
+
+
+@pytest.mark.asyncio
+async def test_watch_normalizes_lowercase_and_dollar(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_add(chat_id, ticker):
+        captured["ticker"] = ticker
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(
+            add_watchlist=fake_add,
+            get_watchlist=AsyncMock(return_value=[]),
+        ),
+    )
+    context = MagicMock(args=["$aapl"])
+    update = _make_update(text="/watch $aapl", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    assert captured["ticker"] == "AAPL"
+
+
+@pytest.mark.asyncio
+async def test_watch_no_args_shows_usage(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setattr(handlers, "_api_client", MagicMock())
+    context = MagicMock(args=[])
+    update = _make_update(text="/watch", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "사용법" in sent
+
+
+@pytest.mark.asyncio
+async def test_watch_full_409(monkeypatch):
+    from sajucandle import handlers
+    from sajucandle.api_client import ApiError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_add(chat_id, ticker):
+        raise ApiError(409, "watchlist full (max 5)")
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(add_watchlist=fake_add),
+    )
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/watch AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "최대 5개" in sent
+
+
+@pytest.mark.asyncio
+async def test_watch_already_409(monkeypatch):
+    from sajucandle import handlers
+    from sajucandle.api_client import ApiError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_add(chat_id, ticker):
+        raise ApiError(409, "already in watchlist")
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(add_watchlist=fake_add),
+    )
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/watch AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "이미" in sent
+
+
+@pytest.mark.asyncio
+async def test_watch_unsupported_400(monkeypatch):
+    from sajucandle import handlers
+    from sajucandle.api_client import ApiError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_add(chat_id, ticker):
+        raise ApiError(400, "unsupported ticker: AMZN")
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(add_watchlist=fake_add),
+    )
+    context = MagicMock(args=["AMZN"])
+    update = _make_update(text="/watch AMZN", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "지원하지 않" in sent
+    assert "/signal list" in sent
+
+
+@pytest.mark.asyncio
+async def test_watch_user_not_registered_404(monkeypatch):
+    from sajucandle import handlers
+    from sajucandle.api_client import NotFoundError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_add(chat_id, ticker):
+        raise NotFoundError(404, "user not found")
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(add_watchlist=fake_add),
+    )
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/watch AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "생년월일" in sent
+
+
+@pytest.mark.asyncio
+async def test_unwatch_success(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    captured = {}
+    async def fake_remove(chat_id, ticker):
+        captured["ticker"] = ticker
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(remove_watchlist=fake_remove),
+    )
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/unwatch AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.unwatch_command(update, context)
+    assert captured["ticker"] == "AAPL"
+    sent = update.message.reply_text.call_args[0][0]
+    assert "🗑️" in sent or "제거" in sent
+
+
+@pytest.mark.asyncio
+async def test_unwatch_missing_404(monkeypatch):
+    from sajucandle import handlers
+    from sajucandle.api_client import NotFoundError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_remove(chat_id, ticker):
+        raise NotFoundError(404, "not in watchlist")
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(remove_watchlist=fake_remove),
+    )
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/unwatch AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.unwatch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "없습니다" in sent or "없" in sent
+
+
+@pytest.mark.asyncio
+async def test_unwatch_no_args_shows_usage(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setattr(handlers, "_api_client", MagicMock())
+    context = MagicMock(args=[])
+    update = _make_update(text="/unwatch", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.unwatch_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "사용법" in sent
+
+
+@pytest.mark.asyncio
+async def test_watchlist_empty(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_list(chat_id):
+        return []
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(get_watchlist=fake_list),
+    )
+    context = MagicMock(args=[])
+    update = _make_update(text="/watchlist", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watchlist_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "비어있" in sent
+    assert "/watch" in sent
+
+
+@pytest.mark.asyncio
+async def test_watchlist_renders_items(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_list(chat_id):
+        return [
+            {"ticker": "BTCUSDT", "added_at": "2026-04-15T09:00:00+09:00"},
+            {"ticker": "AAPL", "added_at": "2026-04-16T10:00:00+09:00"},
+            {"ticker": "TSLA", "added_at": "2026-04-17T11:00:00+09:00"},
+        ]
+
+    monkeypatch.setattr(
+        handlers, "_api_client",
+        MagicMock(get_watchlist=fake_list),
+    )
+    context = MagicMock(args=[])
+    update = _make_update(text="/watchlist", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.watchlist_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "3/5" in sent
+    assert "BTCUSDT" in sent
+    assert "AAPL" in sent
+    assert "TSLA" in sent
+    assert "Bitcoin" in sent or "Apple" in sent
+
+
+@pytest.mark.asyncio
+async def test_help_includes_watch_commands(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    context = MagicMock(args=[])
+    update = _make_update(text="/help", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.help_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "/watch" in sent
+    assert "/unwatch" in sent
+    assert "/watchlist" in sent
