@@ -120,3 +120,11 @@ class ApiClient:
             r = await c.get(f"/v1/users/{chat_id}/signal", params=params)
         await self._raise_for_status(r)
         return r.json()
+
+    async def get_supported_symbols(self) -> list[dict]:
+        """GET /v1/signal/symbols. 반환: [{ticker,name,category}, ...]."""
+        async with self._client() as c:
+            r = await c.get("/v1/signal/symbols")
+        await self._raise_for_status(r)
+        data = r.json()
+        return list(data.get("symbols", []))

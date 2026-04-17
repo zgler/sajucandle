@@ -185,3 +185,49 @@ async def test_get_admin_users_401_raises(client):
     with pytest.raises(ApiError) as exc_info:
         await client.get_admin_users()
     assert exc_info.value.status == 401
+
+
+# ─────────────────────────────────────────────
+# get_supported_symbols
+# ─────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_get_supported_symbols_returns_list():
+    """지원 심볼 목록 API 응답을 파싱."""
+    import respx as _respx
+    from httpx import Response
+
+    with _respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/signal/symbols").mock(
+            return_value=Response(
+                200,
+                json={
+                    "symbols": [
+                        {"ticker": "BTCUSDT", "name": "Bitcoin", "category": "crypto"},
+                        {"ticker": "AAPL", "name": "Apple", "category": "us_stock"},
+                    ]
+                },
+            )
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        out = await c.get_supported_symbols()
+    assert out == [
+        {"ticker": "BTCUSDT", "name": "Bitcoin", "category": "crypto"},
+        {"ticker": "AAPL", "name": "Apple", "category": "us_stock"},
+    ]
+
+
+@pytest.mark.asyncio
+async def test_get_supported_symbols_401():
+    """인증 실패 시 ApiError."""
+    import respx as _respx
+    from httpx import Response
+
+    with _respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/signal/symbols").mock(
+            return_value=Response(401, json={"detail": "invalid key"})
+        )
+        c = ApiClient(base_url="http://test", api_key="wrong")
+        with pytest.raises(ApiError) as exc:
+            await c.get_supported_symbols()
+    assert exc.value.status == 401
