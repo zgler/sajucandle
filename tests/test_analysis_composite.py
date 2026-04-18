@@ -4,7 +4,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from sajucandle.analysis.composite import AnalysisResult, analyze
-from sajucandle.analysis.structure import MarketStructure
 from sajucandle.analysis.timeframe import TrendDirection
 from sajucandle.market_data import Kline
 

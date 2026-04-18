@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-import pytest
 
 from sajucandle.analysis.swing import SwingPoint, detect_swings
 from sajucandle.market_data import Kline
@@ -13,10 +12,10 @@ def _mk_klines(prices: list[tuple[float, float, float, float]]) -> list[Kline]:
     """Each tuple = (open, high, low, close). volume=1000."""
     out = []
     base_ts = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    for i, (o, h, l, c) in enumerate(prices):
+    for i, (o, h, lo, c) in enumerate(prices):
         out.append(Kline(
             open_time=base_ts.replace(day=1 + i % 28),
-            open=o, high=h, low=l, close=c, volume=1000.0,
+            open=o, high=h, low=lo, close=c, volume=1000.0,
         ))
     return out
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from sajucandle.analysis.multi_timeframe import Alignment, compute_alignment
+from sajucandle.analysis.multi_timeframe import compute_alignment
 from sajucandle.analysis.timeframe import TrendDirection
 from sajucandle.market_data import Kline
 

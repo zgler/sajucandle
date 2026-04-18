@@ -5,7 +5,6 @@ from datetime import datetime, timezone
 
 from sajucandle.analysis.structure import (
     MarketStructure,
-    StructureAnalysis,
     classify_structure,
 )
 from sajucandle.analysis.swing import SwingPoint

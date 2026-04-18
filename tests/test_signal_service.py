@@ -90,7 +90,6 @@ def _make_aligned_uptrend_analysis():
     """강진입 조건을 만족하는 aligned+uptrend AnalysisResult stub."""
     from unittest.mock import MagicMock
     from sajucandle.analysis.structure import MarketStructure
-    from sajucandle.analysis.timeframe import TrendDirection
 
     a = MagicMock()
     a.alignment.aligned = True
@@ -303,7 +302,7 @@ def _make_score_service():
 def _make_score_service_with_fixed_composite(composite: int):
     """테스트용 ScoreService. 어떤 입력이든 지정된 composite 반환."""
     from unittest.mock import MagicMock
-    from sajucandle.models import AxisScore, HourRecommendation, SajuScoreResponse
+    from sajucandle.models import AxisScore, SajuScoreResponse
 
     svc = MagicMock()
     def fake_compute(profile, target_date, asset_class):

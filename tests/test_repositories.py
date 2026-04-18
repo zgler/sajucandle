@@ -3,16 +3,21 @@ from __future__ import annotations
 
 import pytest
 
+from datetime import date, datetime, timedelta, timezone
+
 from sajucandle.repositories import (
     UserProfile,
     add_to_watchlist,
     count_watchlist,
     delete_user,
     get_user,
+    insert_signal_log,
     list_all_watchlist_tickers,
     list_chat_ids,
+    list_pending_tracking,
     list_watchlist,
     remove_from_watchlist,
+    update_signal_tracking,
     upsert_user,
 )
 
@@ -195,15 +200,6 @@ async def test_delete_user_cascades_watchlist(db_conn):
 # ─────────────────────────────────────────────
 # Week 8: signal_log CRUD
 # ─────────────────────────────────────────────
-
-from datetime import date, datetime, timezone, timedelta
-
-from sajucandle.repositories import (
-    SignalLogRow,
-    insert_signal_log,
-    list_pending_tracking,
-    update_signal_tracking,
-)
 
 
 async def test_insert_signal_log_returns_id(db_conn):
