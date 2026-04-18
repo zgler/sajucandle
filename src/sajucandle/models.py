@@ -143,17 +143,42 @@ class MarketStatus(BaseModel):
     category: Literal["crypto", "us_stock"]
 
 
+class StructureSummary(BaseModel):
+    state: Literal["uptrend", "downtrend", "range", "breakout", "breakdown"]
+    score: int = Field(ge=0, le=100)
+
+
+class AlignmentSummary(BaseModel):
+    tf_1h: Literal["up", "down", "flat"]
+    tf_4h: Literal["up", "down", "flat"]
+    tf_1d: Literal["up", "down", "flat"]
+    aligned: bool
+    bias: Literal["bullish", "mixed", "bearish"]
+    score: int = Field(ge=0, le=100)
+
+
+class AnalysisSummary(BaseModel):
+    """Week 8: 시장 구조 + 멀티 TF + 보조지표 요약."""
+    structure: StructureSummary
+    alignment: AlignmentSummary
+    rsi_1h: float
+    volume_ratio_1d: float
+    composite_score: int = Field(ge=0, le=100)
+    reason: str
+
+
 class SignalResponse(BaseModel):
     chat_id: int
     ticker: str
     date: str             # "2026-04-16"
     price: PricePoint
     saju: SajuSummary
-    chart: ChartSummary
+    chart: ChartSummary   # 하위호환 (Week 7-). 내부는 analysis 값으로 채움.
     composite_score: int = Field(ge=0, le=100)
     signal_grade: str     # "강진입" | "진입" | "관망" | "회피"
     best_hours: List[HourRecommendation]
     market_status: MarketStatus
+    analysis: Optional["AnalysisSummary"] = None   # Week 8 신규 (기본 None)
 
 
 # ─────────────────────────────────────────────
