@@ -1,7 +1,13 @@
-"""명식(사주) 카드 렌더러. Telegram plain text 모드용."""
+"""명식(사주) 카드 렌더러 + 공통 메시지 상수.
+
+Week 8: disclaimer를 "엔터테인먼트 목적" → "정보 제공 목적"으로 톤 상향.
+"""
 from __future__ import annotations
 
 from sajucandle.saju_engine import BaziChart
+
+
+DISCLAIMER = "정보 제공 목적. 투자 판단과 손실 책임은 본인에게 있습니다."
 
 
 def _pillar(gan: str | None, zhi: str | None) -> str:
@@ -36,6 +42,6 @@ def render_bazi_card(chart: BaziChart, birth_str: str) -> str:
         f"일주: {day}  ← 일간 {chart.day_gan}",
         f"시주: {hour}",
         "",
-        "※ 엔터테인먼트 목적. 투자 추천 아님.",
+        f"※ {DISCLAIMER}",
     ]
     return "\n".join(lines)

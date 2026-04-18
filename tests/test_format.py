@@ -1,5 +1,28 @@
-from sajucandle.format import render_bazi_card
+from sajucandle.format import DISCLAIMER, render_bazi_card
 from sajucandle.saju_engine import SajuEngine
+
+
+# ─────────────────────────────────────────────
+# Week 8: DISCLAIMER 상수
+# ─────────────────────────────────────────────
+
+def test_disclaimer_is_info_purpose_not_entertainment():
+    assert "정보 제공" in DISCLAIMER
+    assert "엔터테인먼트" not in DISCLAIMER
+    assert "본인" in DISCLAIMER
+
+
+def test_disclaimer_is_single_line():
+    assert "\n" not in DISCLAIMER
+
+
+def test_render_bazi_card_uses_new_disclaimer():
+    """Week 8: render_bazi_card도 새 DISCLAIMER 사용."""
+    engine = SajuEngine()
+    chart = engine.calc_bazi(1990, 3, 15, 14)
+    card = render_bazi_card(chart, birth_str="1990-03-15 14:00")
+    assert DISCLAIMER in card
+    assert "엔터테인먼트" not in card
 
 
 def test_render_bazi_card_contains_four_pillars():
