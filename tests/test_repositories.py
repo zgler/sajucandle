@@ -190,3 +190,126 @@ async def test_delete_user_cascades_watchlist(db_conn):
     await delete_user(db_conn, 100010)
     items = await list_watchlist(db_conn, 100010)
     assert items == []
+
+
+# ─────────────────────────────────────────────
+# Week 8: signal_log CRUD
+# ─────────────────────────────────────────────
+
+from datetime import date, datetime, timezone, timedelta
+
+from sajucandle.repositories import (
+    SignalLogRow,
+    insert_signal_log,
+    list_pending_tracking,
+    update_signal_tracking,
+)
+
+
+async def test_insert_signal_log_returns_id(db_conn):
+    await _register_user(db_conn, 200001)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand",
+        telegram_chat_id=200001,
+        ticker="BTCUSDT",
+        target_date=date(2026, 4, 19),
+        entry_price=72000.0,
+        saju_score=56,
+        analysis_score=72,
+        structure_state="uptrend",
+        alignment_bias="bullish",
+        rsi_1h=62.5,
+        volume_ratio_1d=1.35,
+        composite_score=70,
+        signal_grade="진입",
+    )
+    assert row_id > 0
+
+
+async def test_list_pending_tracking_returns_recent_not_done(db_conn):
+    await _register_user(db_conn, 200002)
+    await db_conn.execute("""
+        INSERT INTO signal_log (sent_at, source, telegram_chat_id,
+            ticker, target_date, entry_price,
+            saju_score, analysis_score, structure_state, alignment_bias,
+            composite_score, signal_grade, tracking_done)
+        VALUES ($1, 'ondemand', $2, 'BTCUSDT', $3, 72000,
+                50, 70, 'uptrend', 'bullish', 68, '진입', FALSE)
+    """,
+    datetime.now(timezone.utc) - timedelta(hours=2),
+    200002, date(2026, 4, 19))
+
+    pending = await list_pending_tracking(db_conn, now=datetime.now(timezone.utc))
+    assert len(pending) >= 1
+    assert all(p.tracking_done is False for p in pending)
+
+
+async def test_list_pending_excludes_done(db_conn):
+    await _register_user(db_conn, 200003)
+    await db_conn.execute("""
+        INSERT INTO signal_log (sent_at, source, telegram_chat_id,
+            ticker, target_date, entry_price,
+            saju_score, analysis_score, structure_state, alignment_bias,
+            composite_score, signal_grade, tracking_done)
+        VALUES ($1, 'ondemand', $2, 'BTCUSDT', $3, 72000,
+                50, 70, 'uptrend', 'bullish', 68, '진입', TRUE)
+    """,
+    datetime.now(timezone.utc) - timedelta(hours=2),
+    200003, date(2026, 4, 19))
+    pending = await list_pending_tracking(db_conn, now=datetime.now(timezone.utc))
+    for p in pending:
+        assert p.telegram_chat_id != 200003
+
+
+async def test_update_signal_tracking_sets_mfe_mae(db_conn):
+    await _register_user(db_conn, 200004)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand", telegram_chat_id=200004,
+        ticker="BTCUSDT", target_date=date(2026, 4, 19),
+        entry_price=72000.0,
+        saju_score=56, analysis_score=72,
+        structure_state="uptrend", alignment_bias="bullish",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=70, signal_grade="진입",
+    )
+    await update_signal_tracking(
+        db_conn, row_id,
+        mfe_pct=3.5, mae_pct=-1.2,
+        close_24h=73000.0, close_7d=None,
+        tracking_done=False,
+    )
+    row = await db_conn.fetchrow(
+        "SELECT mfe_7d_pct, mae_7d_pct, close_24h, close_7d, tracking_done "
+        "FROM signal_log WHERE id = $1", row_id
+    )
+    assert float(row["mfe_7d_pct"]) == 3.5
+    assert float(row["mae_7d_pct"]) == -1.2
+    assert float(row["close_24h"]) == 73000.0
+    assert row["close_7d"] is None
+    assert row["tracking_done"] is False
+
+
+async def test_update_signal_tracking_done(db_conn):
+    await _register_user(db_conn, 200005)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand", telegram_chat_id=200005,
+        ticker="BTCUSDT", target_date=date(2026, 4, 19),
+        entry_price=72000.0,
+        saju_score=56, analysis_score=72,
+        structure_state="uptrend", alignment_bias="bullish",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=70, signal_grade="진입",
+    )
+    await update_signal_tracking(
+        db_conn, row_id,
+        mfe_pct=5.0, mae_pct=-2.0,
+        close_24h=73000.0, close_7d=75000.0,
+        tracking_done=True,
+    )
+    row = await db_conn.fetchrow(
+        "SELECT tracking_done FROM signal_log WHERE id = $1", row_id
+    )
+    assert row["tracking_done"] is True

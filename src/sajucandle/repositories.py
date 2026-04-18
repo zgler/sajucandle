@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import date, datetime
 from typing import Optional
 
 import asyncpg
@@ -178,3 +178,156 @@ async def list_all_watchlist_tickers(
     """모든 사용자 watchlist ticker union. broadcast precompute용."""
     rows = await conn.fetch("SELECT DISTINCT ticker FROM user_watchlist")
     return {r["ticker"] for r in rows}
+
+
+# ─────────────────────────────────────────────
+# Week 8: signal_log
+# ─────────────────────────────────────────────
+
+
+@dataclass
+class SignalLogRow:
+    id: int
+    sent_at: datetime
+    source: str
+    telegram_chat_id: Optional[int]
+    ticker: str
+    target_date: date
+    entry_price: float
+    saju_score: int
+    analysis_score: int
+    structure_state: str
+    alignment_bias: str
+    rsi_1h: Optional[float]
+    volume_ratio_1d: Optional[float]
+    composite_score: int
+    signal_grade: str
+    mfe_7d_pct: Optional[float]
+    mae_7d_pct: Optional[float]
+    close_24h: Optional[float]
+    close_7d: Optional[float]
+    last_tracked_at: Optional[datetime]
+    tracking_done: bool
+
+
+async def insert_signal_log(
+    conn: asyncpg.Connection,
+    *,
+    source: str,
+    telegram_chat_id: Optional[int],
+    ticker: str,
+    target_date,
+    entry_price: float,
+    saju_score: int,
+    analysis_score: int,
+    structure_state: str,
+    alignment_bias: str,
+    rsi_1h: Optional[float],
+    volume_ratio_1d: Optional[float],
+    composite_score: int,
+    signal_grade: str,
+) -> int:
+    """signal_log INSERT → id 반환."""
+    row = await conn.fetchrow(
+        """
+        INSERT INTO signal_log (
+            source, telegram_chat_id,
+            ticker, target_date, entry_price,
+            saju_score, analysis_score,
+            structure_state, alignment_bias,
+            rsi_1h, volume_ratio_1d,
+            composite_score, signal_grade
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+        ) RETURNING id
+        """,
+        source, telegram_chat_id,
+        ticker, target_date, entry_price,
+        saju_score, analysis_score,
+        structure_state, alignment_bias,
+        rsi_1h, volume_ratio_1d,
+        composite_score, signal_grade,
+    )
+    return int(row["id"])
+
+
+async def list_pending_tracking(
+    conn: asyncpg.Connection,
+    now: datetime,
+    max_rows: int = 500,
+) -> list[SignalLogRow]:
+    """tracking_done=FALSE AND sent_at > now-7d AND sent_at < now-1h."""
+    from datetime import timedelta as _td
+    rows = await conn.fetch(
+        """
+        SELECT id, sent_at, source, telegram_chat_id,
+               ticker, target_date, entry_price,
+               saju_score, analysis_score,
+               structure_state, alignment_bias,
+               rsi_1h, volume_ratio_1d,
+               composite_score, signal_grade,
+               mfe_7d_pct, mae_7d_pct,
+               close_24h, close_7d,
+               last_tracked_at, tracking_done
+        FROM signal_log
+        WHERE tracking_done = FALSE
+          AND sent_at > $1
+          AND sent_at < $2
+        ORDER BY sent_at ASC
+        LIMIT $3
+        """,
+        now - _td(days=7),
+        now - _td(hours=1),
+        max_rows,
+    )
+    result: list[SignalLogRow] = []
+    for r in rows:
+        result.append(SignalLogRow(
+            id=int(r["id"]),
+            sent_at=r["sent_at"],
+            source=r["source"],
+            telegram_chat_id=r["telegram_chat_id"],
+            ticker=r["ticker"],
+            target_date=r["target_date"],
+            entry_price=float(r["entry_price"]),
+            saju_score=int(r["saju_score"]),
+            analysis_score=int(r["analysis_score"]),
+            structure_state=r["structure_state"],
+            alignment_bias=r["alignment_bias"],
+            rsi_1h=float(r["rsi_1h"]) if r["rsi_1h"] is not None else None,
+            volume_ratio_1d=float(r["volume_ratio_1d"]) if r["volume_ratio_1d"] is not None else None,
+            composite_score=int(r["composite_score"]),
+            signal_grade=r["signal_grade"],
+            mfe_7d_pct=float(r["mfe_7d_pct"]) if r["mfe_7d_pct"] is not None else None,
+            mae_7d_pct=float(r["mae_7d_pct"]) if r["mae_7d_pct"] is not None else None,
+            close_24h=float(r["close_24h"]) if r["close_24h"] is not None else None,
+            close_7d=float(r["close_7d"]) if r["close_7d"] is not None else None,
+            last_tracked_at=r["last_tracked_at"],
+            tracking_done=r["tracking_done"],
+        ))
+    return result
+
+
+async def update_signal_tracking(
+    conn: asyncpg.Connection,
+    signal_id: int,
+    *,
+    mfe_pct: float,
+    mae_pct: float,
+    close_24h: Optional[float],
+    close_7d: Optional[float],
+    tracking_done: bool,
+) -> None:
+    await conn.execute(
+        """
+        UPDATE signal_log SET
+            mfe_7d_pct = $2,
+            mae_7d_pct = $3,
+            close_24h = $4,
+            close_7d = $5,
+            tracking_done = $6,
+            last_tracked_at = now()
+        WHERE id = $1
+        """,
+        signal_id, mfe_pct, mae_pct, close_24h, close_7d, tracking_done,
+    )
