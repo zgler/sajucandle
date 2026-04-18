@@ -26,6 +26,7 @@ from typing import Awaitable, Callable, Optional
 import httpx
 
 from sajucandle.api_client import ApiClient, ApiError, NotFoundError
+from sajucandle.format import DISCLAIMER
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,10 @@ class BroadcastSummary:
     watchlist_failed: int = 0
     precompute_ok: int = 0
     precompute_failed: int = 0
+    # Week 8: tracking
+    tracking_updated: int = 0
+    tracking_completed: int = 0
+    tracking_failed: int = 0
 
     def total(self) -> int:
         return self.sent + self.failed + self.blocked + self.not_found + self.bad_request
@@ -64,14 +69,36 @@ class BroadcastSummary:
 _WEEKDAY_KR = ["월", "화", "수", "목", "금", "토", "일"]
 
 
+def _dominant_axis_comment(axes: dict) -> str:
+    """4축 중 50에서 가장 먼 축의 짧은 코멘트."""
+    if not axes:
+        return ""
+    try:
+        ranked = sorted(
+            axes.items(),
+            key=lambda kv: abs(kv[1].get("score", 50) - 50),
+            reverse=True,
+        )
+    except Exception:
+        return ""
+    key, _ = ranked[0]
+    return {
+        "wealth": "재물 흐름 주의",
+        "decision": "결단 주의",
+        "volatility": "변동성 주의",
+        "flow": "합運 우세",
+    }.get(key, "")
+
+
 def format_morning_card(score: dict, target_date: date) -> str:
     """score_endpoint 응답 dict → 모닝 카드 텍스트.
 
     Plain text, no HTML. 이모지만 사용.
     """
     weekday = _WEEKDAY_KR[target_date.weekday()]
-    header = f"☀️ {target_date.isoformat()} ({weekday}) 사주캔들"
+    header = f"☀️ {target_date.isoformat()} ({weekday}) 오늘의 명식 참고"
     axes = score["axes"]
+    dominant = _dominant_axis_comment(score.get("axes") or {})
     lines = [
         header,
         f"── {score['iljin']} [{score['asset_class']}] ──",
@@ -80,17 +107,20 @@ def format_morning_card(score: dict, target_date: date) -> str:
         f"충돌운: {axes['volatility']['score']:>3}  | {axes['volatility']['reason']}",
         f"합  운: {axes['flow']['score']:>3}  | {axes['flow']['reason']}",
         "────────────",
-        f"종합: {score['composite_score']:>3}  | {score['signal_grade']}",
     ]
+    if dominant:
+        lines.append(f"성향: {score['signal_grade']}  ({dominant})")
+    else:
+        lines.append(f"성향: {score['signal_grade']}")
     if score.get("best_hours"):
         hrs = ", ".join(
             f"{h['shichen']}시 {h['time_range']}" for h in score["best_hours"]
         )
         lines.append(f"추천 시진: {hrs}")
     lines.append("")
-    lines.append("오늘 BTC는 /signal 로 확인하세요.")
+    lines.append("오늘 BTC는 /signal, 관심 종목은 /watchlist 확인.")
     lines.append("")
-    lines.append("※ 엔터테인먼트 목적. 투자 추천 아님.")
+    lines.append(f"※ {DISCLAIMER}")
     return "\n".join(lines)
 
 
@@ -139,7 +169,7 @@ def format_watchlist_summary(signals: list[dict], target_date) -> Optional[str]:
         )
     lines.append("")
     lines.append("상세: /signal <심볼>")
-    lines.append("※ 엔터테인먼트 목적. 투자 추천 아님.")
+    lines.append(f"※ {DISCLAIMER}")
     return "\n".join(lines)
 
 

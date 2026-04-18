@@ -43,15 +43,14 @@ def test_format_morning_card_contains_header_and_score():
     text = format_morning_card(_score_fixture(), date(2026, 4, 16))
     assert "2026-04-16" in text
     assert "(목)" in text           # 요일
-    assert "사주캔들" in text
+    assert "오늘의 명식 참고" in text
     assert "己未" in text
     assert "swing" in text
-    assert "64" in text             # composite
     assert "관망" in text
     assert "재물운" in text
     assert "결단운" in text
     assert "/signal" in text        # CTA
-    assert "엔터테인먼트" in text   # disclaimer
+    assert "정보 제공" in text      # disclaimer
 
 
 def test_format_morning_card_without_best_hours():
@@ -275,7 +274,7 @@ def test_format_watchlist_summary_renders_open_stock():
     assert "184.12" in card
     assert "+1.23" in card
     assert "🕐" not in card
-    assert "엔터테인먼트" in card
+    assert "정보 제공" in card
 
 
 def test_format_watchlist_summary_closed_stock_shows_clock():
@@ -701,3 +700,70 @@ def test_cli_default_skip_watchlist_false():
     from sajucandle.broadcast import _parse_args
     args = _parse_args([])
     assert args.skip_watchlist is False
+
+
+# ─────────────────────────────────────────────
+# Week 8: 톤 완화 + BroadcastSummary 확장
+# ─────────────────────────────────────────────
+
+
+def test_format_morning_card_title_changed_to_myeongsik_reference():
+    """제목이 '사주캔들' → '오늘의 명식 참고'."""
+    from datetime import date
+    from sajucandle.broadcast import format_morning_card
+
+    card = format_morning_card(_score_fixture(), date(2026, 4, 19))
+    assert "오늘의 명식 참고" in card
+    assert "사주캔들" not in card
+
+
+def test_format_morning_card_uses_new_disclaimer():
+    """끝이 '정보 제공' disclaimer."""
+    from datetime import date
+    from sajucandle.broadcast import format_morning_card
+
+    card = format_morning_card(_score_fixture(), date(2026, 4, 19))
+    assert "정보 제공" in card
+    assert "엔터테인먼트" not in card
+
+
+def test_format_morning_card_has_seongyang_line():
+    """'종합: N | grade' 대신 '성향: grade'."""
+    from datetime import date
+    from sajucandle.broadcast import format_morning_card
+
+    card = format_morning_card(_score_fixture(), date(2026, 4, 19))
+    assert "성향:" in card
+
+
+def test_format_morning_card_cta_includes_watchlist():
+    """CTA 줄에 /watchlist 포함."""
+    from datetime import date
+    from sajucandle.broadcast import format_morning_card
+
+    card = format_morning_card(_score_fixture(), date(2026, 4, 19))
+    assert "/watchlist" in card
+
+
+def test_format_watchlist_summary_uses_new_disclaimer():
+    from datetime import date
+    from sajucandle.broadcast import format_watchlist_summary
+
+    signals = [{
+        "ticker": "AAPL",
+        "price": {"current": 184.12, "change_pct_24h": 1.23},
+        "composite_score": 66, "signal_grade": "진입",
+        "market_status": {"is_open": True, "category": "us_stock",
+                           "last_session_date": "2026-04-18"},
+    }]
+    card = format_watchlist_summary(signals, date(2026, 4, 19))
+    assert "정보 제공" in card
+    assert "엔터테인먼트" not in card
+
+
+def test_broadcast_summary_has_tracking_fields():
+    from sajucandle.broadcast import BroadcastSummary
+    s = BroadcastSummary()
+    assert s.tracking_updated == 0
+    assert s.tracking_completed == 0
+    assert s.tracking_failed == 0
