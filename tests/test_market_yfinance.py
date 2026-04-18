@@ -236,3 +236,99 @@ def test_last_session_date_returns_last_kline_ny_date():
         d = client.last_session_date("AAPL")
     assert isinstance(d, date_cls)
     assert d == date_cls(2026, 4, 16)
+
+
+# ─────────────────────────────────────────────
+# Week 8: 1h/4h/1d interval 지원
+# ─────────────────────────────────────────────
+
+def test_fetch_klines_1h_interval_calls_yf_with_1h():
+    """interval='1h' → yf.Ticker.history(interval='1h') 호출."""
+    idx = pd.date_range(end="2026-04-19", periods=120, freq="1h", tz="America/New_York")
+    df = pd.DataFrame({
+        "Open": [180.0] * 120,
+        "High": [181.0] * 120,
+        "Low": [179.0] * 120,
+        "Close": [180.5] * 120,
+        "Volume": [1_000_000] * 120,
+    }, index=idx)
+    fake_ticker = MagicMock()
+    fake_ticker.history.return_value = df
+
+    client = YFinanceClient()
+    with patch("sajucandle.market.yfinance.yf.Ticker", return_value=fake_ticker):
+        klines = client.fetch_klines("AAPL", interval="1h", limit=120)
+
+    _, kwargs = fake_ticker.history.call_args
+    assert kwargs["interval"] == "1h"
+    assert len(klines) == 120
+
+
+def test_fetch_klines_4h_resamples_from_1h():
+    """interval='4h' → 내부에서 1h fetch 후 4h로 resample."""
+    idx = pd.date_range(end="2026-04-19 20:00:00+00:00",
+                        periods=96, freq="1h", tz="UTC")
+    opens = [100.0 + i * 0.1 for i in range(96)]
+    highs = [101.0 + i * 0.1 for i in range(96)]
+    lows = [99.0 + i * 0.1 for i in range(96)]
+    closes = [100.5 + i * 0.1 for i in range(96)]
+    volumes = [1_000_000] * 96
+    df = pd.DataFrame({
+        "Open": opens, "High": highs, "Low": lows,
+        "Close": closes, "Volume": volumes,
+    }, index=idx)
+    fake_ticker = MagicMock()
+    fake_ticker.history.return_value = df
+
+    client = YFinanceClient()
+    with patch("sajucandle.market.yfinance.yf.Ticker", return_value=fake_ticker):
+        klines = client.fetch_klines("AAPL", interval="4h", limit=24)
+
+    # 호출 인자는 1h (내부 resample)
+    _, kwargs = fake_ticker.history.call_args
+    assert kwargs["interval"] == "1h"
+    assert len(klines) <= 24
+    assert len(klines) >= 20
+
+
+def test_fetch_klines_1d_interval_unchanged():
+    idx = pd.date_range(end="2026-04-16", periods=100, freq="B", tz="America/New_York")
+    df = pd.DataFrame({
+        "Open": [180.0] * 100,
+        "High": [181.0] * 100,
+        "Low": [179.0] * 100,
+        "Close": [180.5] * 100,
+        "Volume": [50_000_000] * 100,
+    }, index=idx)
+    fake_ticker = MagicMock()
+    fake_ticker.history.return_value = df
+
+    client = YFinanceClient()
+    with patch("sajucandle.market.yfinance.yf.Ticker", return_value=fake_ticker):
+        klines = client.fetch_klines("AAPL", interval="1d")
+    _, kwargs = fake_ticker.history.call_args
+    assert kwargs["interval"] == "1d"
+    assert len(klines) == 100
+
+
+def test_fetch_klines_4h_cache_key_distinct():
+    """4h 캐시 키와 1d 캐시 키 분리."""
+    import fakeredis
+    r = fakeredis.FakeStrictRedis()
+
+    idx = pd.date_range(end="2026-04-19 20:00:00+00:00",
+                        periods=24, freq="1h", tz="UTC")
+    df_1h = pd.DataFrame({
+        "Open": [100.0] * 24, "High": [101.0] * 24,
+        "Low": [99.0] * 24, "Close": [100.5] * 24,
+        "Volume": [1_000_000] * 24,
+    }, index=idx)
+    fake_ticker = MagicMock()
+    fake_ticker.history.return_value = df_1h
+
+    client = YFinanceClient(redis_client=r)
+    with patch("sajucandle.market.yfinance.yf.Ticker", return_value=fake_ticker):
+        client.fetch_klines("AAPL", interval="4h", limit=6)
+
+    assert r.exists("ohlcv:AAPL:4h:fresh")
+    assert not r.exists("ohlcv:AAPL:1d:fresh")

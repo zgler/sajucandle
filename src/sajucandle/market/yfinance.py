@@ -102,12 +102,46 @@ class YFinanceClient:
     # ─────────────────────────────────────────────
 
     def _yf_fetch(self, symbol: str, interval: str, limit: int) -> list[Kline]:
-        """yfinance.Ticker.history() → list[Kline]."""
+        """interval='1d' → yfinance 직접.
+        interval='1h' → yfinance 1h (60일 제한).
+        interval='4h' → 1h fetch 후 pandas resample."""
         ticker = yf.Ticker(symbol)
-        # period="{limit}d"로 요청. 주말/휴장 포함되지 않으므로 limit 근처의 거래일 반환.
-        df = ticker.history(period=f"{limit}d", interval=interval, auto_adjust=False)
-        if df is None or df.empty:
-            return []
+
+        if interval == "4h":
+            period_days = max(1, limit * 4 // 24 + 1)
+            df = ticker.history(
+                period=f"{period_days}d",
+                interval="1h",
+                auto_adjust=False,
+            )
+            if df is None or df.empty:
+                return []
+            df = df.resample("4h", origin="epoch").agg({
+                "Open": "first",
+                "High": "max",
+                "Low": "min",
+                "Close": "last",
+                "Volume": "sum",
+            }).dropna()
+        elif interval == "1h":
+            period_days = max(2, limit // 24 + 2)
+            period_days = min(period_days, 60)
+            df = ticker.history(
+                period=f"{period_days}d",
+                interval="1h",
+                auto_adjust=False,
+            )
+            if df is None or df.empty:
+                return []
+        else:
+            df = ticker.history(
+                period=f"{limit}d",
+                interval=interval,
+                auto_adjust=False,
+            )
+            if df is None or df.empty:
+                return []
+
         klines: list[Kline] = []
         for idx, row in df.iterrows():
             ts = idx.to_pydatetime() if hasattr(idx, "to_pydatetime") else idx
@@ -121,6 +155,8 @@ class YFinanceClient:
                     volume=float(row["Volume"]),
                 )
             )
+        if len(klines) > limit:
+            klines = klines[-limit:]
         return klines
 
     def _redis_get(self, key: str) -> Optional[list[Kline]]:
