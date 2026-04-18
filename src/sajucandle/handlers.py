@@ -11,6 +11,7 @@ from telegram import Update
 from telegram.ext import ContextTypes
 
 from sajucandle.api_client import ApiClient, ApiError, NotFoundError
+from sajucandle.format import DISCLAIMER
 
 logger = logging.getLogger(__name__)
 
@@ -293,17 +294,39 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text(_format_signal_card(data))
 
 
-def _format_signal_card(data: dict) -> str:
-    """/signal 응답 dict → 카드 문자열.
+_STRUCTURE_LABEL = {
+    "uptrend": "상승추세 (HH-HL)",
+    "downtrend": "하락추세 (LH-LL)",
+    "range": "횡보 (박스)",
+    "breakout": "상승 돌파",
+    "breakdown": "하락 이탈",
+}
 
-    BTC(crypto): 배지 줄 생략 (기존 포맷 유지)
-    US stocks: `🟢 장 중` 또는 `🕐 휴장 중 · 기준: YYYY-MM-DD` 배지 표시
+_TF_ARROW_UI = {"up": "↑", "down": "↓", "flat": "→"}
+
+
+def _format_signal_card(data: dict) -> str:
+    """/signal 응답 dict → 카드 문자열 (Week 8 포맷).
+
+    구조:
+      ── date ticker ──
+      (장 배지 — Week 6)
+      현재가: ...
+
+      구조: ...
+      정렬: 1d↑ 4h↑ 1h↑ (강정렬)
+      진입조건: RSI(1h) 35 · 거래량 1.5x
+
+      종합: N | grade
+      사주: N (grade)
+
+      ※ DISCLAIMER
     """
     price = data["price"]
     saju = data["saju"]
-    chart = data["chart"]
     status = data.get("market_status") or {}
     category = status.get("category", "crypto")
+    analysis = data.get("analysis")
 
     change_sign = "+" if price["change_pct_24h"] >= 0 else ""
     lines = [f"── {data['date']} {data['ticker']} ──"]
@@ -315,22 +338,45 @@ def _format_signal_card(data: dict) -> str:
             last = status.get("last_session_date", "")
             lines.append(f"🕐 휴장 중 · 기준: {last} 종가")
 
-    lines.extend([
+    lines.append(
         f"현재가: ${price['current']:,.2f} "
-        f"({change_sign}{price['change_pct_24h']:.2f}%)",
-        "────────────────",
-        f"사주 점수: {saju['composite']:>3} ({saju['grade']})",
-        f"차트 점수: {chart['score']:>3} ({chart['reason']})",
-        "────────────────",
-        f"종합: {data['composite_score']:>3} | {data['signal_grade']}",
-    ])
+        f"({change_sign}{price['change_pct_24h']:.2f}%)"
+    )
+
+    # 분석 3줄 (analysis 있을 때만)
+    if analysis:
+        lines.append("")
+        struct_state = analysis["structure"]["state"]
+        lines.append(f"구조: {_STRUCTURE_LABEL.get(struct_state, struct_state)}")
+        align = analysis["alignment"]
+        tf_str = (
+            f"1d{_TF_ARROW_UI.get(align['tf_1d'], '?')} "
+            f"4h{_TF_ARROW_UI.get(align['tf_4h'], '?')} "
+            f"1h{_TF_ARROW_UI.get(align['tf_1h'], '?')}"
+        )
+        if align["aligned"]:
+            align_tag = "강정렬"
+        elif align["bias"] == "mixed":
+            align_tag = "혼조"
+        else:
+            align_tag = "부분정렬"
+        lines.append(f"정렬: {tf_str}  ({align_tag})")
+        rsi_v = analysis.get("rsi_1h", 50.0)
+        vr = analysis.get("volume_ratio_1d", 1.0)
+        lines.append(f"진입조건: RSI(1h) {rsi_v:.0f} · 거래량 {vr:.1f}x")
+
+    lines.append("")
+    lines.append(f"종합: {data['composite_score']:>3} | {data['signal_grade']}")
+    lines.append(f"사주: {saju['composite']:>3} ({saju['grade']})")
+
     if data.get("best_hours"):
         hrs = ", ".join(
             f"{h['shichen']}시 {h['time_range']}" for h in data["best_hours"]
         )
         lines.append(f"추천 시진: {hrs}")
+
     lines.append("")
-    lines.append("※ 엔터테인먼트 목적. 투자 추천 아님.")
+    lines.append(f"※ {DISCLAIMER}")
     return "\n".join(lines)
 
 

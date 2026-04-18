@@ -221,6 +221,17 @@ def _signal_payload():
         "best_hours": [
             {"shichen": "寅", "time_range": "03:00~05:00", "multiplier": 1.1},
         ],
+        "analysis": {
+            "structure": {"state": "uptrend", "score": 70},
+            "alignment": {
+                "tf_1h": "up", "tf_4h": "up", "tf_1d": "up",
+                "aligned": True, "bias": "bullish", "score": 90,
+            },
+            "rsi_1h": 58.2,
+            "volume_ratio_1d": 1.3,
+            "composite_score": 72,
+            "reason": "1d↑ 4h↑ 1h↑ (강정렬) · RSI(1h) 58 · 볼륨→",
+        },
     }
 
 
@@ -313,6 +324,17 @@ def _btc_signal_payload() -> dict:
         "best_hours": [],
         "market_status": {"is_open": True, "last_session_date": "2026-04-16",
                           "category": "crypto"},
+        "analysis": {
+            "structure": {"state": "uptrend", "score": 70},
+            "alignment": {
+                "tf_1h": "up", "tf_4h": "up", "tf_1d": "up",
+                "aligned": True, "bias": "bullish", "score": 90,
+            },
+            "rsi_1h": 60.0,
+            "volume_ratio_1d": 1.2,
+            "composite_score": 72,
+            "reason": "1d↑ 4h↑ 1h↑ (강정렬) · RSI(1h) 60 · 볼륨→",
+        },
     }
 
 
@@ -330,6 +352,17 @@ def _aapl_signal_payload() -> dict:
         "best_hours": [],
         "market_status": {"is_open": True, "last_session_date": "2026-04-16",
                           "category": "us_stock"},
+        "analysis": {
+            "structure": {"state": "uptrend", "score": 70},
+            "alignment": {
+                "tf_1h": "up", "tf_4h": "up", "tf_1d": "up",
+                "aligned": True, "bias": "bullish", "score": 90,
+            },
+            "rsi_1h": 62.0,
+            "volume_ratio_1d": 1.1,
+            "composite_score": 72,
+            "reason": "1d↑ 4h↑ 1h↑ (강정렬) · RSI(1h) 62 · 볼륨→",
+        },
     }
 
 
@@ -807,3 +840,105 @@ async def test_help_includes_watch_commands(monkeypatch):
     assert "/watch" in sent
     assert "/unwatch" in sent
     assert "/watchlist" in sent
+
+
+# ─────────────────────────────────────────────
+# Week 8: 새 카드 포맷 (구조/정렬/진입조건 + DISCLAIMER 교체)
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_signal_card_shows_structure_alignment_entry(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["analysis"] = {
+        "structure": {"state": "uptrend", "score": 70},
+        "alignment": {
+            "tf_1h": "up", "tf_4h": "up", "tf_1d": "up",
+            "aligned": True, "bias": "bullish", "score": 90,
+        },
+        "rsi_1h": 35.0,
+        "volume_ratio_1d": 1.5,
+        "composite_score": 75,
+        "reason": "1d↑ 4h↑ 1h↑ (강정렬) · RSI(1h) 35 · 볼륨↑",
+    }
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "구조:" in sent
+    assert "상승추세" in sent
+    assert "정렬:" in sent
+    assert "1d" in sent
+    assert "진입조건:" in sent or "RSI" in sent
+
+
+@pytest.mark.asyncio
+async def test_signal_card_uses_new_disclaimer(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["analysis"] = {
+        "structure": {"state": "range", "score": 50},
+        "alignment": {
+            "tf_1h": "flat", "tf_4h": "flat", "tf_1d": "flat",
+            "aligned": False, "bias": "mixed", "score": 50,
+        },
+        "rsi_1h": 50.0, "volume_ratio_1d": 1.0,
+        "composite_score": 50, "reason": "...",
+    }
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "정보 제공" in sent
+    assert "엔터테인먼트" not in sent
+
+
+@pytest.mark.asyncio
+async def test_signal_card_shows_saju_compact_line(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["saju"] = {"composite": 56, "grade": "😐 관망"}
+    payload["analysis"] = {
+        "structure": {"state": "uptrend", "score": 70},
+        "alignment": {"tf_1h": "up", "tf_4h": "up", "tf_1d": "up",
+                      "aligned": True, "bias": "bullish", "score": 90},
+        "rsi_1h": 40.0, "volume_ratio_1d": 1.2,
+        "composite_score": 72, "reason": "...",
+    }
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "사주" in sent
+    assert "56" in sent
