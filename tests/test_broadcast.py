@@ -767,3 +767,162 @@ def test_broadcast_summary_has_tracking_fields():
     assert s.tracking_updated == 0
     assert s.tracking_completed == 0
     assert s.tracking_failed == 0
+
+
+# ─────────────────────────────────────────────
+# Week 8: Phase 0 tracking
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_run_phase0_tracking_computes_mfe_mae():
+    """run_phase0_tracking: pending row 조회 → MFE/MAE 계산 → update."""
+    from datetime import date as _d, datetime, timezone, timedelta
+    from unittest.mock import AsyncMock
+    from sajucandle.broadcast import run_phase0_tracking
+    from sajucandle.repositories import SignalLogRow
+    from sajucandle.market_data import Kline
+
+    two_hours_ago = datetime.now(timezone.utc) - timedelta(hours=2)
+    pending = [
+        SignalLogRow(
+            id=101, sent_at=two_hours_ago, source="ondemand",
+            telegram_chat_id=99, ticker="BTCUSDT",
+            target_date=_d(2026, 4, 19), entry_price=70000.0,
+            saju_score=50, analysis_score=70,
+            structure_state="uptrend", alignment_bias="bullish",
+            rsi_1h=None, volume_ratio_1d=None,
+            composite_score=68, signal_grade="진입",
+            mfe_7d_pct=None, mae_7d_pct=None,
+            close_24h=None, close_7d=None,
+            last_tracked_at=None, tracking_done=False,
+        ),
+    ]
+
+    # post-entry klines: entry=70000 → high=72500, low=69500
+    post = [
+        Kline(open_time=two_hours_ago + timedelta(minutes=30),
+              open=71000, high=72000, low=69500, close=71500, volume=1000),
+        Kline(open_time=two_hours_ago + timedelta(hours=1, minutes=30),
+              open=71500, high=72500, low=71000, close=72000, volume=1000),
+    ]
+
+    list_pending = AsyncMock(return_value=pending)
+    update_tracking = AsyncMock()
+    get_klines = AsyncMock(return_value=post)
+
+    result = await run_phase0_tracking(
+        list_pending=list_pending,
+        update_tracking=update_tracking,
+        get_klines=get_klines,
+        now=datetime.now(timezone.utc),
+    )
+    assert result["updated"] == 1
+    assert result["completed"] == 0
+    # update_tracking 호출 인자 검증
+    _, kwargs = update_tracking.call_args
+    # mfe = (72500/70000 - 1) * 100 ≈ 3.571
+    assert kwargs["mfe_pct"] == pytest.approx(3.571, abs=0.01)
+    # mae = (69500/70000 - 1) * 100 ≈ -0.714
+    assert kwargs["mae_pct"] == pytest.approx(-0.714, abs=0.01)
+    assert kwargs["tracking_done"] is False
+
+
+@pytest.mark.asyncio
+async def test_run_phase0_tracking_marks_done_after_7d():
+    from datetime import date as _d, datetime, timezone, timedelta
+    from unittest.mock import AsyncMock
+    from sajucandle.broadcast import run_phase0_tracking
+    from sajucandle.repositories import SignalLogRow
+    from sajucandle.market_data import Kline
+
+    eight_days_ago = datetime.now(timezone.utc) - timedelta(days=8)
+    pending = [
+        SignalLogRow(
+            id=102, sent_at=eight_days_ago, source="ondemand",
+            telegram_chat_id=99, ticker="BTCUSDT",
+            target_date=_d(2026, 4, 10), entry_price=70000.0,
+            saju_score=50, analysis_score=70,
+            structure_state="uptrend", alignment_bias="bullish",
+            rsi_1h=None, volume_ratio_1d=None,
+            composite_score=68, signal_grade="진입",
+            mfe_7d_pct=None, mae_7d_pct=None,
+            close_24h=None, close_7d=None,
+            last_tracked_at=None, tracking_done=False,
+        ),
+    ]
+    post = [
+        Kline(open_time=eight_days_ago + timedelta(hours=1),
+              open=70000, high=75000, low=69000, close=74000, volume=1000),
+    ]
+
+    list_pending = AsyncMock(return_value=pending)
+    update_tracking = AsyncMock()
+    get_klines = AsyncMock(return_value=post)
+
+    result = await run_phase0_tracking(
+        list_pending=list_pending,
+        update_tracking=update_tracking,
+        get_klines=get_klines,
+        now=datetime.now(timezone.utc),
+    )
+    _, kwargs = update_tracking.call_args
+    assert kwargs["tracking_done"] is True
+    assert result["completed"] == 1
+
+
+@pytest.mark.asyncio
+async def test_run_phase0_tracking_list_pending_exception_returns_empty_summary():
+    """list_pending 실패 시 updated=failed=completed=0."""
+    from datetime import datetime, timezone
+    from unittest.mock import AsyncMock
+    from sajucandle.broadcast import run_phase0_tracking
+
+    async def fail_list(**kwargs):
+        raise RuntimeError("db down")
+
+    result = await run_phase0_tracking(
+        list_pending=fail_list,
+        update_tracking=AsyncMock(),
+        get_klines=AsyncMock(),
+        now=datetime.now(timezone.utc),
+    )
+    assert result["updated"] == 0
+    assert result["failed"] == 0
+
+
+@pytest.mark.asyncio
+async def test_run_phase0_tracking_per_row_exception_counts_failed():
+    """row별 update 실패 → failed 카운트."""
+    from datetime import date as _d, datetime, timezone, timedelta
+    from unittest.mock import AsyncMock
+    from sajucandle.broadcast import run_phase0_tracking
+    from sajucandle.repositories import SignalLogRow
+
+    two_hours_ago = datetime.now(timezone.utc) - timedelta(hours=2)
+    pending = [
+        SignalLogRow(
+            id=103, sent_at=two_hours_ago, source="ondemand",
+            telegram_chat_id=99, ticker="BTCUSDT",
+            target_date=_d(2026, 4, 19), entry_price=70000.0,
+            saju_score=50, analysis_score=70,
+            structure_state="uptrend", alignment_bias="bullish",
+            rsi_1h=None, volume_ratio_1d=None,
+            composite_score=68, signal_grade="진입",
+            mfe_7d_pct=None, mae_7d_pct=None,
+            close_24h=None, close_7d=None,
+            last_tracked_at=None, tracking_done=False,
+        ),
+    ]
+
+    async def fail_get_klines(ticker, sent_at):
+        raise RuntimeError("network")
+
+    result = await run_phase0_tracking(
+        list_pending=AsyncMock(return_value=pending),
+        update_tracking=AsyncMock(),
+        get_klines=fail_get_klines,
+        now=datetime.now(timezone.utc),
+    )
+    assert result["failed"] == 1
+    assert result["updated"] == 0

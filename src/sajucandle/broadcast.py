@@ -173,6 +173,71 @@ def format_watchlist_summary(signals: list[dict], target_date) -> Optional[str]:
     return "\n".join(lines)
 
 
+async def run_phase0_tracking(
+    *,
+    list_pending,       # async callable(now=...) → list[SignalLogRow]
+    update_tracking,    # async callable(signal_id=..., mfe_pct=..., ...)
+    get_klines,         # async callable(ticker, sent_at) → list[Kline]
+    now: datetime,
+) -> dict:
+    """Phase 0: pending signal_log row들의 MFE/MAE 업데이트.
+
+    Returns: {"updated": N, "completed": N, "failed": N}
+    """
+    summary = {"updated": 0, "completed": 0, "failed": 0}
+    try:
+        pending = await list_pending(now=now)
+    except Exception as e:
+        logger.warning("phase0 list_pending failed: %s", e)
+        return summary
+
+    from datetime import timedelta as _td
+
+    for row in pending:
+        try:
+            post_bars = await get_klines(row.ticker, row.sent_at)
+            if not post_bars:
+                continue
+            highs = [k.high for k in post_bars]
+            lows = [k.low for k in post_bars]
+            entry = row.entry_price
+            if entry <= 0:
+                continue
+            mfe_pct = (max(highs) / entry - 1.0) * 100.0
+            mae_pct = (min(lows) / entry - 1.0) * 100.0
+
+            close_24h = None
+            close_7d = None
+            t_24h = row.sent_at + _td(hours=24)
+            t_7d = row.sent_at + _td(days=7)
+            for k in post_bars:
+                if close_24h is None and k.open_time >= t_24h:
+                    close_24h = k.close
+                if close_7d is None and k.open_time >= t_7d:
+                    close_7d = k.close
+                    break
+
+            hours_since = (now - row.sent_at).total_seconds() / 3600
+            done = hours_since >= 168
+
+            await update_tracking(
+                signal_id=row.id,
+                mfe_pct=mfe_pct,
+                mae_pct=mae_pct,
+                close_24h=close_24h,
+                close_7d=close_7d,
+                tracking_done=done,
+            )
+            summary["updated"] += 1
+            if done:
+                summary["completed"] += 1
+        except Exception as e:
+            logger.warning("phase0 update failed signal_id=%s: %s", row.id, e)
+            summary["failed"] += 1
+
+    return summary
+
+
 async def run_broadcast(
     api_client: ApiClient,
     send_message: SendMessage,
@@ -185,6 +250,10 @@ async def run_broadcast(
     send_delay: float = _SEND_DELAY_SEC,
     admin_chat_id: Optional[int] = None,   # Week 7: Phase 1 precompute
     skip_watchlist: bool = False,           # Week 7: Phase 3 toggle
+    # Week 8
+    list_pending_tracking_fn=None,
+    update_signal_tracking_fn=None,
+    get_klines_for_tracking_fn=None,
 ) -> BroadcastSummary:
     """chat_ids 순회하며 카드 발송. 예외는 잡아서 summary에 누적.
 
@@ -193,6 +262,51 @@ async def run_broadcast(
       테스트에서는 주입 안 하면 해당 분기 안 탐.
     """
     summary = BroadcastSummary()
+
+    # ─── Phase 0: MFE/MAE tracking (skeleton) ───
+    from datetime import datetime as _dt, timezone as _tz
+
+    if list_pending_tracking_fn is None or update_signal_tracking_fn is None:
+        from sajucandle import db as _db, repositories as _repo
+
+        async def _default_list_pending(*, now):
+            if _db.get_pool() is None:
+                return []
+            try:
+                async with _db.acquire() as conn:
+                    return await _repo.list_pending_tracking(conn, now)
+            except Exception as e:
+                logger.warning("default list_pending failed: %s", e)
+                return []
+
+        async def _default_update(*, signal_id, **kwargs):
+            if _db.get_pool() is None:
+                return
+            async with _db.acquire() as conn:
+                await _repo.update_signal_tracking(conn, signal_id, **kwargs)
+
+        list_pending_tracking_fn = list_pending_tracking_fn or _default_list_pending
+        update_signal_tracking_fn = update_signal_tracking_fn or _default_update
+
+    if get_klines_for_tracking_fn is None:
+        async def _default_get_klines(ticker, sent_at):
+            # skeleton: admin OHLCV 엔드포인트가 없어 빈 리스트 반환.
+            # Week 9에서 실데이터 연결 예정.
+            return []
+        get_klines_for_tracking_fn = _default_get_klines
+
+    try:
+        phase0 = await run_phase0_tracking(
+            list_pending=list_pending_tracking_fn,
+            update_tracking=update_signal_tracking_fn,
+            get_klines=get_klines_for_tracking_fn,
+            now=_dt.now(_tz.utc),
+        )
+        summary.tracking_updated = phase0["updated"]
+        summary.tracking_completed = phase0["completed"]
+        summary.tracking_failed = phase0["failed"]
+    except Exception as e:
+        logger.warning("phase 0 failed: %s", e)
 
     # ─── Phase 1: Precompute (watchlist 심볼 캐시 워밍) ───
     if admin_chat_id is not None:
