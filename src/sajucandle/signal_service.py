@@ -1,14 +1,12 @@
-"""사주 + 차트 결합 신호 서비스.
+"""사주 + 차트 결합 신호 서비스 (Week 8 개편).
 
 책임:
-1. ScoreService.compute() → 사주 composite
-2. BinanceClient.fetch_klines() → OHLCV
-3. tech_analysis.score_chart() → chart_score
-4. 가중합 (0.4 * saju + 0.6 * chart) → final_score + grade
-5. SignalResponse 조립 + Redis 캐시 (signal:*, TTL=300)
-
-사주는 자체 캐시(score:*, KST 자정 TTL)가 있어서 재활용됨.
-차트는 가격 변동이 있어서 짧은 TTL(5분) 씌움.
+1. ScoreService.compute() → 사주 composite (가중치 0.1)
+2. MarketRouter → 1h/4h/1d 3개 TF fetch
+3. analysis.composite.analyze() → AnalysisResult (가중치 0.9)
+4. 가중합 → final_score + grade (grade는 추가 조건 필요)
+5. SignalResponse 조립 (analysis 필드 + chart 하위호환)
+6. Redis 캐시 (signal:*, TTL=300)
 """
 from __future__ import annotations
 
@@ -17,32 +15,60 @@ import logging
 from datetime import date
 from typing import Optional
 
+from sajucandle.analysis.composite import AnalysisResult, analyze
+from sajucandle.analysis.structure import MarketStructure
 from sajucandle.market.router import MarketRouter
 from sajucandle.market_data import Kline
 from sajucandle.models import (
+    AlignmentSummary,
+    AnalysisSummary,
     ChartSummary,
     MarketStatus,
     PricePoint,
     SajuSummary,
     SignalResponse,
+    StructureSummary,
 )
 from sajucandle.repositories import UserProfile
 from sajucandle.score_service import ScoreService
-from sajucandle.tech_analysis import score_chart
 
 logger = logging.getLogger(__name__)
 
 _SIGNAL_TTL = 300
 
 
-def _grade_signal(score: int) -> str:
-    if score >= 75:
+def _grade_signal(score: int, analysis: AnalysisResult) -> str:
+    """Week 8: 강진입은 점수 + 정렬 + 상승구조 3조건 모두 만족."""
+    if (score >= 75
+            and analysis.alignment.aligned
+            and analysis.structure.state in (MarketStructure.UPTREND, MarketStructure.BREAKOUT)):
         return "강진입"
     if score >= 60:
         return "진입"
     if score >= 40:
         return "관망"
     return "회피"
+
+
+def _analysis_to_summary(a: AnalysisResult) -> AnalysisSummary:
+    return AnalysisSummary(
+        structure=StructureSummary(
+            state=a.structure.state.value,
+            score=a.structure.score,
+        ),
+        alignment=AlignmentSummary(
+            tf_1h=a.alignment.tf_1h.value,
+            tf_4h=a.alignment.tf_4h.value,
+            tf_1d=a.alignment.tf_1d.value,
+            aligned=a.alignment.aligned,
+            bias=a.alignment.bias,
+            score=a.alignment.score,
+        ),
+        rsi_1h=a.rsi_1h,
+        volume_ratio_1d=a.volume_ratio_1d,
+        composite_score=a.composite_score,
+        reason=a.reason,
+    )
 
 
 class SignalService:
@@ -65,7 +91,6 @@ class SignalService:
         cache_key = (
             f"signal:{profile.telegram_chat_id}:{target_date.isoformat()}:{ticker}"
         )
-
         cached = self._redis_get(cache_key)
         if cached is not None:
             return cached
@@ -73,30 +98,38 @@ class SignalService:
         saju_resp = self._score.compute(
             profile, target_date, profile.asset_class_pref
         )
-
-        # ticker → provider 라우팅 (UnsupportedTicker는 상위로 전파)
         provider = self._router.get_provider(ticker)
 
-        klines: list[Kline] = provider.fetch_klines(ticker, interval="1d", limit=100)
-        closes = [k.close for k in klines]
-        volumes = [k.volume for k in klines]
-        chart_b = score_chart(closes, volumes)
+        # 3개 TF fetch
+        klines_1d: list[Kline] = provider.fetch_klines(ticker, interval="1d", limit=100)
+        klines_4h: list[Kline] = provider.fetch_klines(ticker, interval="4h", limit=150)
+        klines_1h: list[Kline] = provider.fetch_klines(ticker, interval="1h", limit=200)
 
-        current = klines[-1].close
-        prev = klines[-2].close if len(klines) >= 2 else current
+        # 분석
+        analysis = analyze(klines_1h, klines_4h, klines_1d)
+
+        # 가격 (1d 기준)
+        current = klines_1d[-1].close
+        prev = klines_1d[-2].close if len(klines_1d) >= 2 else current
         change_pct = ((current / prev) - 1.0) * 100 if prev else 0.0
 
-        final = round(0.4 * saju_resp.composite_score + 0.6 * chart_b.score)
+        # 최종 점수 + 등급
+        final = round(0.1 * saju_resp.composite_score + 0.9 * analysis.composite_score)
         final = max(0, min(100, final))
-        grade = _grade_signal(final)
+        grade = _grade_signal(final, analysis)
 
-        # market_status 채우기
         is_crypto = ticker.upper().lstrip("$") == "BTCUSDT"
         market_status = MarketStatus(
             is_open=provider.is_market_open(ticker),
             last_session_date=provider.last_session_date(ticker).isoformat(),
             category="crypto" if is_crypto else "us_stock",
         )
+
+        analysis_summary = _analysis_to_summary(analysis)
+
+        # ma_trend 매핑 (하위호환 ChartSummary용)
+        tf_1d_value = analysis.alignment.tf_1d.value
+        ma_trend_map = {"up": "up", "down": "down", "flat": "flat"}
 
         resp = SignalResponse(
             chat_id=profile.telegram_chat_id,
@@ -108,18 +141,19 @@ class SignalService:
                 grade=saju_resp.signal_grade,
             ),
             chart=ChartSummary(
-                score=chart_b.score,
-                rsi=chart_b.rsi_value,
-                ma20=chart_b.ma20,
-                ma50=chart_b.ma50,
-                ma_trend=chart_b.ma_trend,  # type: ignore[arg-type]
-                volume_ratio=chart_b.volume_ratio_value,
-                reason=chart_b.reason,
+                score=analysis.composite_score,
+                rsi=analysis.rsi_1h,
+                ma20=current,   # 하위호환 placeholder
+                ma50=current,
+                ma_trend=ma_trend_map.get(tf_1d_value, "flat"),  # type: ignore[arg-type]
+                volume_ratio=analysis.volume_ratio_1d,
+                reason=analysis.reason,
             ),
             composite_score=final,
             signal_grade=grade,
             best_hours=saju_resp.best_hours,
             market_status=market_status,
+            analysis=analysis_summary,
         )
 
         self._redis_set(cache_key, resp)

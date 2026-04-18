@@ -47,17 +47,20 @@ def _make_klines(
 
 
 class _FakeMarketClient:
-    """BinanceClient 대체. fetch_klines 호출 수 카운트."""
+    """BinanceClient 대체. interval별 다른 시리즈 지원."""
 
     def __init__(self, klines: Optional[list[Kline]] = None, raise_exc: Exception = None):
         self.klines = klines or _make_klines()
         self.raise_exc = raise_exc
         self.call_count = 0
+        self.klines_by_interval: dict[str, list] = {}  # interval → klines
 
     def fetch_klines(self, symbol: str, interval: str = "1d", limit: int = 100):
         self.call_count += 1
         if self.raise_exc is not None:
             raise self.raise_exc
+        if interval in self.klines_by_interval:
+            return self.klines_by_interval[interval]
         return self.klines
 
 
@@ -83,6 +86,18 @@ def _make_router(fake_client) -> MarketRouter:
 # grade boundaries
 # ─────────────────────────────────────────────
 
+def _make_aligned_uptrend_analysis():
+    """강진입 조건을 만족하는 aligned+uptrend AnalysisResult stub."""
+    from unittest.mock import MagicMock
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.analysis.timeframe import TrendDirection
+
+    a = MagicMock()
+    a.alignment.aligned = True
+    a.structure.state = MarketStructure.UPTREND
+    return a
+
+
 @pytest.mark.parametrize("score,expected", [
     (100, "강진입"), (75, "강진입"),
     (74, "진입"), (60, "진입"),
@@ -90,7 +105,8 @@ def _make_router(fake_client) -> MarketRouter:
     (39, "회피"), (0, "회피"),
 ])
 def test_grade_boundaries(score, expected):
-    assert _grade_signal(score) == expected
+    analysis = _make_aligned_uptrend_analysis()
+    assert _grade_signal(score, analysis) == expected
 
 
 # ─────────────────────────────────────────────
@@ -132,7 +148,7 @@ def test_compute_cache_hit_on_second_call():
 
     r1 = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
     first_calls = market.call_count
-    assert first_calls == 1
+    assert first_calls == 3  # 1d + 4h + 1h 3개 TF fetch
 
     r2 = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
     # 두 번째는 signal:* 캐시 히트 → market 호출 없음
@@ -205,28 +221,27 @@ class _FixedScoreService:
 
 
 def test_compute_final_weighting_saju_only():
-    """saju=100, chart=? → final = 0.4*100 + 0.6*chart. chart=0이 아니면 40보다 큼."""
+    """saju=100, chart=analysis.composite_score → final = 0.1*100 + 0.9*analysis."""
     score_svc = _FixedScoreService(composite=100)
-    market = _make_fake_market_client()  # chart는 _make_klines 기반 (상승세)
+    market = _make_fake_market_client()
     svc = SignalService(
         score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
-    # saju=100 기여분만 최소 40점
-    assert resp.composite_score >= 40
+    # 0.1*100 + 0.9*analysis = 10 + 0.9*analysis. analysis >= 0 → final >= 10
+    assert resp.composite_score >= 10
 
 
 def test_compute_final_weighting_chart_dominant():
-    """saju=0 → final = 0.6*chart. chart=50 근처면 final ~30."""
+    """saju=0 → final = 0.1*0 + 0.9*analysis = round(0.9 * chart.score)."""
     score_svc = _FixedScoreService(composite=0)
     market = _make_fake_market_client()
     svc = SignalService(
         score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
-    # saju 기여 0, chart가 전부. 0.6 비중.
-    # chart score가 어느 정도든 final = round(0.6 * chart_score)
-    expected = round(0.6 * resp.chart.score)
+    # chart.score == analysis.composite_score; final = round(0.9 * chart.score)
+    expected = round(0.9 * resp.chart.score)
     assert resp.composite_score == expected
 
 
@@ -237,8 +252,8 @@ def test_compute_final_weighting_50_50():
         score_service=score_svc, market_router=_make_router(market), redis_client=None
     )
     resp = svc.compute(_profile(), target_date=date(2026, 4, 16), ticker="BTCUSDT")
-    # final = round(0.4*50 + 0.6*chart) = round(20 + 0.6*chart)
-    expected = round(0.4 * 50 + 0.6 * resp.chart.score)
+    # final = round(0.1*50 + 0.9*analysis) = round(5 + 0.9*chart.score)
+    expected = round(0.1 * 50 + 0.9 * resp.chart.score)
     assert resp.composite_score == expected
 
 
@@ -271,3 +286,104 @@ def test_signal_compute_populates_market_status():
     assert resp.market_status.is_open is True
     assert resp.market_status.category in ("crypto", "us_stock")
     assert len(resp.market_status.last_session_date) == 10
+
+
+# ─────────────────────────────────────────────
+# Week 8: 가중치 재조정 + grade_signal 추가조건 + analysis 필드
+# ─────────────────────────────────────────────
+
+
+def _make_score_service():
+    """실제 ScoreService (CachedSajuEngine 기반, redis=None)."""
+    cache = BaziCache(redis_client=None)
+    engine = CachedSajuEngine(cache=cache)
+    return ScoreService(engine=engine, redis_client=None)
+
+
+def _make_score_service_with_fixed_composite(composite: int):
+    """테스트용 ScoreService. 어떤 입력이든 지정된 composite 반환."""
+    from unittest.mock import MagicMock
+    from sajucandle.models import AxisScore, HourRecommendation, SajuScoreResponse
+
+    svc = MagicMock()
+    def fake_compute(profile, target_date, asset_class):
+        return SajuScoreResponse(
+            chat_id=profile.telegram_chat_id,
+            date=target_date.isoformat(),
+            asset_class=asset_class,
+            iljin="庚申",
+            composite_score=composite,
+            signal_grade="진입" if composite >= 60 else "관망",
+            axes={
+                "wealth": AxisScore(score=composite, reason=""),
+                "decision": AxisScore(score=composite, reason=""),
+                "volatility": AxisScore(score=composite, reason=""),
+                "flow": AxisScore(score=composite, reason=""),
+            },
+            best_hours=[],
+        )
+    svc.compute = fake_compute
+    return svc
+
+
+def test_week8_analysis_field_populated():
+    """SignalResponse.analysis 필드가 채워짐."""
+    fake = _make_fake_market_client()
+    score_svc = _make_score_service()
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    assert resp.analysis is not None
+    assert resp.analysis.structure.state in (
+        "uptrend", "downtrend", "range", "breakout", "breakdown"
+    )
+    assert resp.analysis.alignment.tf_1d in ("up", "down", "flat")
+    assert 0 <= resp.analysis.composite_score <= 100
+
+
+def test_week8_chart_field_backward_compat():
+    """기존 chart 필드는 analysis 값으로 채워짐."""
+    fake = _make_fake_market_client()
+    score_svc = _make_score_service()
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    assert resp.chart is not None
+    assert resp.chart.score == resp.analysis.composite_score
+
+
+def test_week8_strong_grade_requires_aligned_and_uptrend():
+    """점수만 75+ 해도 aligned=False면 '진입' 이하."""
+    # mixed TF: 1h up / 4h flat / 1d down → aligned=False
+    fake = _make_fake_market_client()
+    up = _make_klines(n=200, base_close=100.0, drift=0.5)
+    flat = _make_klines(n=200, base_close=100.0, drift=0.0)
+    dn = _make_klines(n=200, base_close=150.0, drift=-0.3)
+    fake.klines_by_interval = {"1h": up, "4h": flat, "1d": dn}
+    score_svc = _make_score_service_with_fixed_composite(80)
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    assert resp.signal_grade != "강진입"
+
+
+def test_week8_weights_01_09():
+    """새 가중치: 0.1 saju + 0.9 analysis."""
+    fake = _make_fake_market_client()
+    # 강한 상승 데이터로 analysis 점수 높게
+    strong_up = _make_klines(n=200, base_close=100.0, drift=0.5)
+    fake.klines_by_interval = {"1h": strong_up, "4h": strong_up, "1d": strong_up}
+    score_svc = _make_score_service_with_fixed_composite(40)   # 사주=40
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    # composite = round(0.1*40 + 0.9*analysis) — analysis 60~90 예상 → composite 58~85
+    assert 55 <= resp.composite_score <= 90
