@@ -453,6 +453,28 @@ def create_app(
             result.composite_score, result.signal_grade,
             result.saju.composite, result.chart.score, elapsed_ms,
         )
+        # Week 8: signal_log 기록 (best effort)
+        try:
+            if db.get_pool() is not None and result.analysis is not None:
+                async with db.acquire() as conn:
+                    await repositories.insert_signal_log(
+                        conn,
+                        source="ondemand",
+                        telegram_chat_id=chat_id,
+                        ticker=ticker,
+                        target_date=target,
+                        entry_price=result.price.current,
+                        saju_score=result.saju.composite,
+                        analysis_score=result.analysis.composite_score,
+                        structure_state=result.analysis.structure.state,
+                        alignment_bias=result.analysis.alignment.bias,
+                        rsi_1h=result.analysis.rsi_1h,
+                        volume_ratio_1d=result.analysis.volume_ratio_1d,
+                        composite_score=result.composite_score,
+                        signal_grade=result.signal_grade,
+                    )
+        except Exception as e:
+            logger.warning("signal_log insert failed chat_id=%s: %s", chat_id, e)
         return result
 
     return app

@@ -231,6 +231,47 @@ def test_signal_endpoint_rejects_unsupported_ticker(client):
         client.delete("/v1/users/720006", headers=HDR)
 
 
+@pytest.fixture
+def db_registered_user(client):
+    """임시 사용자(chat_id=720099) 등록 후 yield, 테스트 후 삭제."""
+    chat_id = 720099
+    _create(client, chat_id)
+    yield chat_id
+    client.delete(f"/v1/users/{chat_id}", headers=HDR)
+
+
+def test_signal_endpoint_succeeds_even_if_logging_fails(monkeypatch, client,
+                                                         stub_yfinance,
+                                                         db_registered_user):
+    """insert_signal_log가 raise해도 시그널은 정상 반환."""
+    import sajucandle.repositories as repo_mod
+
+    async def fake_insert(*args, **kwargs):
+        raise RuntimeError("db down")
+    monkeypatch.setattr(repo_mod, "insert_signal_log", fake_insert)
+
+    resp = client.get(
+        f"/v1/users/{db_registered_user}/signal",
+        params={"ticker": "AAPL"},
+        headers={"X-SAJUCANDLE-KEY": "test-key"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["ticker"] == "AAPL"
+
+
+def test_signal_response_has_analysis_field(client, stub_yfinance, db_registered_user):
+    """응답에 analysis 필드 있어야."""
+    resp = client.get(
+        f"/v1/users/{db_registered_user}/signal",
+        params={"ticker": "AAPL"},
+        headers={"X-SAJUCANDLE-KEY": "test-key"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body.get("analysis") is not None
+    assert 0 <= body["analysis"]["composite_score"] <= 100
+
+
 def test_signal_endpoint_accepts_aapl(monkeypatch, stub_yfinance, redis):
     """AAPL은 정상 처리되어 market_status.category='us_stock' 반환."""
     monkeypatch.setenv("SAJUCANDLE_API_KEY", "test-key")
