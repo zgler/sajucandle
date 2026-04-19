@@ -1051,3 +1051,118 @@ async def test_card_gwanmang_without_sr_levels_shows_no_block(monkeypatch):
     sent = update.message.reply_text.call_args[0][0]
     assert "주요 레벨" not in sent
     assert "손절" not in sent
+
+
+# ─────────────────────────────────────────────
+# Week 10 Phase 1: /stats admin 명령
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_stats_rejects_non_admin(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("SAJUCANDLE_ADMIN_CHAT_ID", "99999")
+    monkeypatch.setattr(handlers, "_api_client", MagicMock())
+    context = MagicMock(args=[])
+    update = _make_update(text="/stats", chat_id=12345)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.stats_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "관리자" in sent or "권한" in sent
+
+
+@pytest.mark.asyncio
+async def test_stats_admin_calls_api(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("SAJUCANDLE_ADMIN_CHAT_ID", "12345")
+
+    async def fake_stats(**kwargs):
+        return {
+            "since": "2026-03-20T00:00:00+00:00",
+            "filters": {"ticker": None, "grade": None},
+            "total": 5,
+            "by_grade": {"진입": 2, "관망": 3},
+            "tracking": {"completed": 1, "pending": 4},
+            "mfe_mae": {
+                "sample_size": 1, "mfe_avg": 2.5, "mfe_median": 2.5,
+                "mae_avg": -1.0, "mae_median": -1.0,
+            },
+        }
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal_stats=fake_stats))
+    context = MagicMock(args=[])
+    update = _make_update(text="/stats", chat_id=12345)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.stats_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "총 발송" in sent
+    assert "5" in sent
+    assert "진입" in sent
+
+
+@pytest.mark.asyncio
+async def test_stats_with_ticker_and_grade_args(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("SAJUCANDLE_ADMIN_CHAT_ID", "12345")
+    captured = {}
+
+    async def fake_stats(*, ticker=None, grade=None, since=None):
+        captured["ticker"] = ticker
+        captured["grade"] = grade
+        return {
+            "since": "2026-03-20T00:00:00+00:00",
+            "filters": {"ticker": ticker, "grade": grade},
+            "total": 0,
+            "by_grade": {},
+            "tracking": {"completed": 0, "pending": 0},
+            "mfe_mae": {"sample_size": 0, "mfe_avg": None, "mfe_median": None,
+                        "mae_avg": None, "mae_median": None},
+        }
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal_stats=fake_stats))
+    context = MagicMock(args=["AAPL", "진입"])
+    update = _make_update(text="/stats AAPL 진입", chat_id=12345)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.stats_command(update, context)
+    assert captured["ticker"] == "AAPL"
+    assert captured["grade"] == "진입"
+
+
+@pytest.mark.asyncio
+async def test_stats_empty_shows_no_history(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    monkeypatch.setenv("SAJUCANDLE_ADMIN_CHAT_ID", "12345")
+
+    async def fake_stats(**kwargs):
+        return {
+            "since": "2026-03-20T00:00:00+00:00",
+            "filters": {"ticker": None, "grade": None},
+            "total": 0,
+            "by_grade": {},
+            "tracking": {"completed": 0, "pending": 0},
+            "mfe_mae": {"sample_size": 0, "mfe_avg": None, "mfe_median": None,
+                        "mae_avg": None, "mae_median": None},
+        }
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal_stats=fake_stats))
+    context = MagicMock(args=[])
+    update = _make_update(text="/stats", chat_id=12345)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.stats_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "없" in sent or "0건" in sent

@@ -631,6 +631,97 @@ async def watchlist_command(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     await update.message.reply_text("\n".join(lines))
 
 
+async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/stats [심볼] [등급]` — 관리자 전용."""
+    if update.message is None:
+        return
+    chat_id = update.effective_chat.id
+
+    admin_chat_id_env = os.environ.get("SAJUCANDLE_ADMIN_CHAT_ID")
+    if not admin_chat_id_env or str(chat_id) != admin_chat_id_env:
+        await update.message.reply_text("관리자 전용 명령입니다.")
+        return
+
+    args = list(context.args or [])
+    ticker: Optional[str] = None
+    grade: Optional[str] = None
+    if len(args) >= 1:
+        ticker = args[0].upper().lstrip("$")
+    if len(args) >= 2:
+        grade = args[1]
+
+    try:
+        stats = await _api_client.get_signal_stats(ticker=ticker, grade=grade)
+    except httpx.TimeoutException:
+        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        return
+    except httpx.TransportError:
+        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        return
+    except ApiError as e:
+        logger.warning("stats api error status=%s", e.status)
+        await update.message.reply_text(f"서버 오류 ({e.status}).")
+        return
+
+    await update.message.reply_text(_format_stats_card(stats))
+
+
+def _format_stats_card(stats: dict) -> str:
+    total = stats.get("total", 0)
+    by_grade = stats.get("by_grade") or {}
+    tracking = stats.get("tracking") or {}
+    mfe_mae = stats.get("mfe_mae") or {}
+    filters = stats.get("filters") or {}
+
+    filter_parts = []
+    if filters.get("ticker"):
+        filter_parts.append(filters["ticker"])
+    if filters.get("grade"):
+        filter_parts.append(filters["grade"])
+    filter_str = " · ".join(filter_parts) if filter_parts else "전체"
+
+    lines = [
+        "📊 신호 통계 (최근 30일)",
+        "─────────────",
+        f"필터: {filter_str}",
+        f"총 발송: {total}건",
+    ]
+
+    if total == 0:
+        lines.append("")
+        lines.append("해당 조건의 발송 이력이 없습니다.")
+        return "\n".join(lines)
+
+    lines.append("")
+    lines.append("등급별:")
+    for grade_name in ["강진입", "진입", "관망", "회피"]:
+        cnt = by_grade.get(grade_name, 0)
+        if cnt > 0:
+            lines.append(f"  {grade_name:<4}  {cnt}건")
+
+    completed = tracking.get("completed", 0)
+    pending = tracking.get("pending", 0)
+    pct = int(completed / total * 100) if total > 0 else 0
+    lines.append("")
+    lines.append(f"추적 완료: {completed}/{total} ({pct}%)")
+
+    sample_size = mfe_mae.get("sample_size", 0)
+    if sample_size > 0:
+        mfe_avg = mfe_mae.get("mfe_avg") or 0.0
+        mfe_med = mfe_mae.get("mfe_median") or 0.0
+        mae_avg = mfe_mae.get("mae_avg") or 0.0
+        mae_med = mfe_mae.get("mae_median") or 0.0
+        lines.append("")
+        lines.append(f"MFE/MAE 평균 (n={sample_size}):")
+        lines.append(f"  MFE  {mfe_avg:+.1f}% (중앙 {mfe_med:+.1f}%)")
+        lines.append(f"  MAE  {mae_avg:+.1f}% (중앙 {mae_med:+.1f}%)")
+    else:
+        lines.append("")
+        lines.append("MFE/MAE: 샘플 부족 (추적 완료 0건)")
+
+    return "\n".join(lines)
+
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """`/help`. 명령어 목록."""
     if update.message is None:
