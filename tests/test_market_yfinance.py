@@ -38,7 +38,7 @@ def test_fetch_klines_rejects_unsupported_symbol():
     """화이트리스트 외 심볼은 UnsupportedTicker."""
     client = YFinanceClient()
     with pytest.raises(UnsupportedTicker):
-        client.fetch_klines("AMZN")
+        client.fetch_klines("ZZZZ")
 
 
 def test_fetch_klines_returns_klines_for_supported_symbol():

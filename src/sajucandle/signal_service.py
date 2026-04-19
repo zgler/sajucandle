@@ -157,7 +157,8 @@ class SignalService:
                 sr_levels=analysis.sr_levels,
             )
 
-        is_crypto = ticker.upper().lstrip("$") == "BTCUSDT"
+        from sajucandle.market.router import _CRYPTO_SYMBOLS
+        is_crypto = ticker.upper().lstrip("$") in _CRYPTO_SYMBOLS
         market_status = MarketStatus(
             is_open=provider.is_market_open(ticker),
             last_session_date=provider.last_session_date(ticker).isoformat(),

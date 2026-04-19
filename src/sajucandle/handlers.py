@@ -474,11 +474,16 @@ async def _show_symbol_list(update: Update) -> None:
 
 _SYMBOL_NAMES = {
     "BTCUSDT": "Bitcoin",
+    "ETHUSDT": "Ethereum",
+    "XRPUSDT": "XRP",
     "AAPL": "Apple",
     "MSFT": "Microsoft",
     "GOOGL": "Alphabet",
     "NVDA": "NVIDIA",
     "TSLA": "Tesla",
+    "AMD": "AMD",
+    "META": "Meta",
+    "AMZN": "Amazon",
 }
 
 
@@ -731,7 +736,7 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/start YYYY-MM-DD HH:MM — 생년월일시 등록\n"
         "/score [swing|scalp|long] — 오늘 사주 점수\n"
         "/signal [심볼] — 사주+차트 결합 신호\n"
-        "  · 지원: BTCUSDT, AAPL, MSFT, GOOGL, NVDA, TSLA\n"
+        "  · 지원: BTCUSDT/ETHUSDT/XRPUSDT, AAPL/MSFT/GOOGL/NVDA/TSLA/AMD/META/AMZN\n"
         "  · /signal list — 전체 목록\n"
         "/watch <심볼> — 관심 종목 추가 (최대 5개)\n"
         "/unwatch <심볼> — 관심 종목 제거\n"

@@ -679,14 +679,14 @@ async def test_watch_unsupported_400(monkeypatch):
     from unittest.mock import AsyncMock, MagicMock
 
     async def fake_add(chat_id, ticker):
-        raise ApiError(400, "unsupported ticker: AMZN")
+        raise ApiError(400, "unsupported ticker: ZZZZ")
 
     monkeypatch.setattr(
         handlers, "_api_client",
         MagicMock(add_watchlist=fake_add),
     )
-    context = MagicMock(args=["AMZN"])
-    update = _make_update(text="/watch AMZN", chat_id=42)
+    context = MagicMock(args=["ZZZZ"])
+    update = _make_update(text="/watch ZZZZ", chat_id=42)
     update.message.reply_text = AsyncMock()
 
     await handlers.watch_command(update, context)

@@ -217,12 +217,12 @@ def stub_yfinance():
 
 
 def test_signal_endpoint_rejects_unsupported_ticker(client):
-    """AMZN 같은 화이트리스트 외 심볼은 400."""
+    """ZZZZ 같은 화이트리스트 외 심볼은 400."""
     _create(client, 720006)
     try:
         resp = client.get(
             "/v1/users/720006/signal",
-            params={"ticker": "AMZN"},
+            params={"ticker": "ZZZZ"},
             headers=HDR,
         )
         assert resp.status_code == 400

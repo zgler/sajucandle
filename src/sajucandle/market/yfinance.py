@@ -23,7 +23,8 @@ from sajucandle.market_data import Kline, MarketDataUnavailable
 logger = logging.getLogger(__name__)
 
 _NY_TZ = ZoneInfo("America/New_York")
-_SUPPORTED = frozenset({"AAPL", "MSFT", "GOOGL", "NVDA", "TSLA"})
+_SUPPORTED = frozenset({"AAPL", "MSFT", "GOOGL", "NVDA", "TSLA",
+                          "AMD", "META", "AMZN"})
 _FRESH_TTL = 3600
 _BACKUP_TTL = 86400
 

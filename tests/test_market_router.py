@@ -31,7 +31,7 @@ def test_unknown_ticker_raises():
     b, y = _fake_providers()
     r = MarketRouter(binance=b, yfinance=y)
     with pytest.raises(UnsupportedTicker):
-        r.get_provider("AMZN")
+        r.get_provider("ZZZZ")
 
 
 def test_lowercase_is_normalized():

@@ -15,8 +15,8 @@ def test_unsupported_ticker_is_exception():
 
 def test_unsupported_ticker_carries_symbol_in_str():
     """에러 메시지에 심볼이 포함되어야 한다."""
-    e = UnsupportedTicker("AMZN")
-    assert "AMZN" in str(e)
+    e = UnsupportedTicker("ZZZZ")
+    assert "ZZZZ" in str(e)
 
 
 def test_market_data_provider_is_protocol():

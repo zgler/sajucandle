@@ -34,7 +34,7 @@ def test_ohlcv_requires_api_key(client):
 def test_ohlcv_rejects_unsupported_ticker(client):
     r = client.get(
         "/v1/admin/ohlcv",
-        params={"ticker": "AMZN"},
+        params={"ticker": "ZZZZ"},
         headers=HEADERS,
     )
     assert r.status_code == 400

@@ -106,7 +106,7 @@ def test_add_watchlist_unsupported_ticker_400(client):
     try:
         r = client.post(
             f"/v1/users/{CHAT_ID}/watchlist",
-            json={"ticker": "AMZN"},
+            json={"ticker": "ZZZZ"},
             headers=HEADERS,
         )
         assert r.status_code == 400

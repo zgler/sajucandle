@@ -314,11 +314,11 @@ async def test_add_watchlist_unsupported_400():
 
     with respx.mock(base_url="http://test") as mock:
         mock.post("/v1/users/42/watchlist").mock(
-            return_value=Response(400, json={"detail": "unsupported ticker: AMZN"})
+            return_value=Response(400, json={"detail": "unsupported ticker: ZZZZ"})
         )
         c = ApiClient(base_url="http://test", api_key="k")
         with pytest.raises(ApiError) as exc:
-            await c.add_watchlist(42, "AMZN")
+            await c.add_watchlist(42, "ZZZZ")
     assert exc.value.status == 400
 
 

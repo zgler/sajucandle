@@ -9,8 +9,9 @@ from dataclasses import dataclass
 from sajucandle.market.base import MarketDataProvider, UnsupportedTicker
 
 
-_CRYPTO_SYMBOLS = frozenset({"BTCUSDT"})
-_STOCK_SYMBOLS = frozenset({"AAPL", "MSFT", "GOOGL", "NVDA", "TSLA"})
+_CRYPTO_SYMBOLS = frozenset({"BTCUSDT", "ETHUSDT", "XRPUSDT"})
+_STOCK_SYMBOLS = frozenset({"AAPL", "MSFT", "GOOGL", "NVDA", "TSLA",
+                              "AMD", "META", "AMZN"})
 
 
 @dataclass
@@ -31,9 +32,14 @@ class MarketRouter:
         """전체 지원 심볼 카탈로그. /v1/signal/symbols 및 /signal list용."""
         return [
             {"ticker": "BTCUSDT", "name": "Bitcoin", "category": "crypto"},
+            {"ticker": "ETHUSDT", "name": "Ethereum", "category": "crypto"},
+            {"ticker": "XRPUSDT", "name": "XRP", "category": "crypto"},
             {"ticker": "AAPL", "name": "Apple", "category": "us_stock"},
             {"ticker": "MSFT", "name": "Microsoft", "category": "us_stock"},
             {"ticker": "GOOGL", "name": "Alphabet", "category": "us_stock"},
             {"ticker": "NVDA", "name": "NVIDIA", "category": "us_stock"},
             {"ticker": "TSLA", "name": "Tesla", "category": "us_stock"},
+            {"ticker": "AMD", "name": "AMD", "category": "us_stock"},
+            {"ticker": "META", "name": "Meta", "category": "us_stock"},
+            {"ticker": "AMZN", "name": "Amazon", "category": "us_stock"},
         ]
