@@ -348,3 +348,79 @@ async def update_signal_tracking(
         """,
         signal_id, mfe_pct, mae_pct, close_24h, close_7d, tracking_done,
     )
+
+
+# ─────────────────────────────────────────────
+# Week 10 Phase 1: signal_log 집계
+# ─────────────────────────────────────────────
+
+
+async def aggregate_signal_stats(
+    conn: asyncpg.Connection,
+    *,
+    since: datetime,
+    ticker: Optional[str] = None,
+    grade: Optional[str] = None,
+) -> dict:
+    """signal_log 집계 — total, by_grade, tracking, MFE/MAE 통계."""
+    conditions = ["sent_at >= $1"]
+    params: list = [since]
+    if ticker is not None:
+        params.append(ticker)
+        conditions.append(f"ticker = ${len(params)}")
+    if grade is not None:
+        params.append(grade)
+        conditions.append(f"signal_grade = ${len(params)}")
+    where = " AND ".join(conditions)
+
+    total_row = await conn.fetchval(
+        f"SELECT COUNT(*) FROM signal_log WHERE {where}",
+        *params,
+    )
+    total = int(total_row or 0)
+
+    by_grade_rows = await conn.fetch(
+        f"SELECT signal_grade, COUNT(*) AS cnt FROM signal_log "
+        f"WHERE {where} GROUP BY signal_grade",
+        *params,
+    )
+    by_grade = {r["signal_grade"]: int(r["cnt"]) for r in by_grade_rows}
+
+    tracking_row = await conn.fetchrow(
+        f"SELECT "
+        f"  COUNT(*) FILTER (WHERE tracking_done) AS done, "
+        f"  COUNT(*) FILTER (WHERE NOT tracking_done) AS pending "
+        f"FROM signal_log WHERE {where}",
+        *params,
+    )
+    tracking_completed = int(tracking_row["done"] or 0)
+    tracking_pending = int(tracking_row["pending"] or 0)
+
+    stats_row = await conn.fetchrow(
+        f"SELECT "
+        f"  COUNT(*) AS n, "
+        f"  AVG(mfe_7d_pct) AS mfe_avg, "
+        f"  AVG(mae_7d_pct) AS mae_avg, "
+        f"  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY mfe_7d_pct) AS mfe_median, "
+        f"  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY mae_7d_pct) AS mae_median "
+        f"FROM signal_log "
+        f"WHERE {where} AND tracking_done = TRUE "
+        f"AND mfe_7d_pct IS NOT NULL AND mae_7d_pct IS NOT NULL",
+        *params,
+    )
+    sample_size = int(stats_row["n"] or 0)
+
+    def _f(v):
+        return float(v) if v is not None else None
+
+    return {
+        "total": total,
+        "by_grade": by_grade,
+        "tracking_completed": tracking_completed,
+        "tracking_pending": tracking_pending,
+        "sample_size": sample_size,
+        "mfe_avg": _f(stats_row["mfe_avg"]),
+        "mfe_median": _f(stats_row["mfe_median"]),
+        "mae_avg": _f(stats_row["mae_avg"]),
+        "mae_median": _f(stats_row["mae_median"]),
+    }

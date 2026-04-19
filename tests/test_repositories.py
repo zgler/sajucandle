@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from sajucandle.repositories import (
     UserProfile,
     add_to_watchlist,
+    aggregate_signal_stats,
     count_watchlist,
     delete_user,
     get_user,
@@ -383,3 +384,118 @@ async def test_insert_signal_log_without_trade_setup_nulls(db_conn):
     assert row["stop_loss"] is None
     assert row["risk_pct"] is None
     assert row["sl_basis"] is None
+
+
+# ─────────────────────────────────────────────
+# Week 10 Phase 1: aggregate_signal_stats
+# ─────────────────────────────────────────────
+
+
+async def test_aggregate_signal_stats_empty(db_conn):
+    now = datetime.now(timezone.utc)
+    stats = await aggregate_signal_stats(db_conn, since=now - timedelta(days=30))
+    assert stats["total"] == 0
+    assert stats["by_grade"] == {}
+    assert stats["tracking_completed"] == 0
+    assert stats["tracking_pending"] == 0
+    assert stats["sample_size"] == 0
+
+
+async def test_aggregate_signal_stats_counts_by_grade(db_conn):
+    await _register_user(db_conn, 400001)
+    now = datetime.now(timezone.utc)
+    for grade in ["진입", "진입", "진입", "관망", "회피"]:
+        await insert_signal_log(
+            db_conn,
+            source="ondemand", telegram_chat_id=400001,
+            ticker="BTCUSDT", target_date=date(2026, 4, 19),
+            entry_price=70000.0,
+            saju_score=50, analysis_score=60,
+            structure_state="range", alignment_bias="mixed",
+            rsi_1h=None, volume_ratio_1d=None,
+            composite_score=60, signal_grade=grade,
+        )
+    stats = await aggregate_signal_stats(db_conn, since=now - timedelta(days=30))
+    assert stats["total"] == 5
+    assert stats["by_grade"]["진입"] == 3
+    assert stats["by_grade"]["관망"] == 1
+    assert stats["by_grade"]["회피"] == 1
+
+
+async def test_aggregate_signal_stats_ticker_filter(db_conn):
+    await _register_user(db_conn, 400002)
+    now = datetime.now(timezone.utc)
+    for ticker in ["BTCUSDT", "BTCUSDT", "AAPL"]:
+        await insert_signal_log(
+            db_conn,
+            source="ondemand", telegram_chat_id=400002,
+            ticker=ticker, target_date=date(2026, 4, 19),
+            entry_price=100.0,
+            saju_score=50, analysis_score=60,
+            structure_state="range", alignment_bias="mixed",
+            rsi_1h=None, volume_ratio_1d=None,
+            composite_score=60, signal_grade="관망",
+        )
+    stats = await aggregate_signal_stats(
+        db_conn, since=now - timedelta(days=30), ticker="BTCUSDT"
+    )
+    assert stats["total"] == 2
+
+
+async def test_aggregate_signal_stats_grade_filter(db_conn):
+    await _register_user(db_conn, 400003)
+    now = datetime.now(timezone.utc)
+    for grade in ["진입", "관망", "관망"]:
+        await insert_signal_log(
+            db_conn,
+            source="ondemand", telegram_chat_id=400003,
+            ticker="BTCUSDT", target_date=date(2026, 4, 19),
+            entry_price=100.0,
+            saju_score=50, analysis_score=60,
+            structure_state="range", alignment_bias="mixed",
+            rsi_1h=None, volume_ratio_1d=None,
+            composite_score=60, signal_grade=grade,
+        )
+    stats = await aggregate_signal_stats(
+        db_conn, since=now - timedelta(days=30), grade="관망"
+    )
+    assert stats["total"] == 2
+    assert stats["by_grade"] == {"관망": 2}
+
+
+async def test_aggregate_signal_stats_mfe_mae_only_from_tracking_done(db_conn):
+    await _register_user(db_conn, 400004)
+    now = datetime.now(timezone.utc)
+    id1 = await insert_signal_log(
+        db_conn,
+        source="ondemand", telegram_chat_id=400004,
+        ticker="BTCUSDT", target_date=date(2026, 4, 19),
+        entry_price=100.0,
+        saju_score=50, analysis_score=60,
+        structure_state="range", alignment_bias="mixed",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=60, signal_grade="진입",
+    )
+    await update_signal_tracking(
+        db_conn, id1,
+        mfe_pct=3.0, mae_pct=-1.0,
+        close_24h=None, close_7d=None,
+        tracking_done=True,
+    )
+    await insert_signal_log(
+        db_conn,
+        source="ondemand", telegram_chat_id=400004,
+        ticker="BTCUSDT", target_date=date(2026, 4, 19),
+        entry_price=100.0,
+        saju_score=50, analysis_score=60,
+        structure_state="range", alignment_bias="mixed",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=60, signal_grade="진입",
+    )
+    stats = await aggregate_signal_stats(db_conn, since=now - timedelta(days=30))
+    assert stats["total"] == 2
+    assert stats["tracking_completed"] == 1
+    assert stats["tracking_pending"] == 1
+    assert stats["sample_size"] == 1
+    assert stats["mfe_avg"] == 3.0
+    assert stats["mae_avg"] == -1.0
