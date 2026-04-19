@@ -294,6 +294,56 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     await update.message.reply_text(_format_signal_card(data))
 
 
+def _append_trade_setup_block(lines: list, ts: dict) -> None:
+    """진입/강진입 등급에 '세팅' 블록 삽입."""
+    entry = ts["entry"]
+    sl = ts["stop_loss"]
+    tp1 = ts["take_profit_1"]
+    tp2 = ts["take_profit_2"]
+    risk = ts["risk_pct"]
+    rr1 = ts["rr_tp1"]
+    rr2 = ts["rr_tp2"]
+
+    sl_pct = (sl - entry) / entry * 100 if entry else 0.0
+    tp1_pct = (tp1 - entry) / entry * 100 if entry else 0.0
+    tp2_pct = (tp2 - entry) / entry * 100 if entry else 0.0
+
+    lines.append("")
+    lines.append("세팅:")
+    lines.append(f" 진입 ${entry:,.2f}")
+    lines.append(f" 손절 ${sl:,.2f} ({sl_pct:+.1f}%)")
+    lines.append(
+        f" 익절1 ${tp1:,.2f} ({tp1_pct:+.1f}%)  "
+        f"익절2 ${tp2:,.2f} ({tp2_pct:+.1f}%)"
+    )
+    lines.append(f" R:R {rr1:.1f} / {rr2:.1f}   리스크 {risk:.1f}%")
+
+
+def _append_sr_levels_block(lines: list, levels: list) -> None:
+    """관망/회피 등급에 '주요 레벨' 블록 삽입."""
+    if not levels:
+        return
+    resistances = sorted(
+        [l for l in levels if l["kind"] == "resistance"],
+        key=lambda l: l["price"],
+    )
+    supports = sorted(
+        [l for l in levels if l["kind"] == "support"],
+        key=lambda l: l["price"],
+        reverse=True,
+    )
+    if not resistances and not supports:
+        return
+    lines.append("")
+    lines.append("주요 레벨:")
+    if resistances:
+        prices = " · ".join(f"${l['price']:,.2f}" for l in resistances)
+        lines.append(f" 저항 {prices}")
+    if supports:
+        prices = " · ".join(f"${l['price']:,.2f}" for l in supports)
+        lines.append(f" 지지 {prices}")
+
+
 _STRUCTURE_LABEL = {
     "uptrend": "상승추세 (HH-HL)",
     "downtrend": "하락추세 (LH-LL)",
@@ -364,6 +414,16 @@ def _format_signal_card(data: dict) -> str:
         rsi_v = analysis.get("rsi_1h", 50.0)
         vr = analysis.get("volume_ratio_1d", 1.0)
         lines.append(f"진입조건: RSI(1h) {rsi_v:.0f} · 거래량 {vr:.1f}x")
+
+        # Week 9: 등급별 블록
+        grade = data.get("signal_grade", "")
+        ts = analysis.get("trade_setup")
+        sr_levels = analysis.get("sr_levels") or []
+
+        if grade in ("강진입", "진입") and ts:
+            _append_trade_setup_block(lines, ts)
+        elif sr_levels:
+            _append_sr_levels_block(lines, sr_levels)
 
     lines.append("")
     lines.append(f"종합: {data['composite_score']:>3} | {data['signal_grade']}")

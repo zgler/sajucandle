@@ -362,6 +362,8 @@ def _aapl_signal_payload() -> dict:
             "volume_ratio_1d": 1.1,
             "composite_score": 72,
             "reason": "1d↑ 4h↑ 1h↑ (강정렬) · RSI(1h) 62 · 볼륨→",
+            "sr_levels": [],            # Week 9 default
+            "trade_setup": None,        # Week 9 default
         },
     }
 
@@ -942,3 +944,110 @@ async def test_signal_card_shows_saju_compact_line(monkeypatch):
     sent = update.message.reply_text.call_args[0][0]
     assert "사주" in sent
     assert "56" in sent
+
+
+# ─────────────────────────────────────────────
+# Week 9: 등급별 카드 블록 (세팅 vs 주요 레벨)
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_card_shows_trade_setup_on_entry_grade(monkeypatch):
+    """'진입' 등급일 때 '세팅' 블록 표시."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["signal_grade"] = "진입"
+    payload["analysis"]["trade_setup"] = {
+        "entry": 184.12,
+        "stop_loss": 180.50,
+        "take_profit_1": 188.50,
+        "take_profit_2": 193.00,
+        "risk_pct": 2.0,
+        "rr_tp1": 1.2,
+        "rr_tp2": 2.4,
+        "sl_basis": "atr",
+        "tp1_basis": "sr_snap",
+        "tp2_basis": "atr",
+    }
+    payload["analysis"]["sr_levels"] = []
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "세팅" in sent or "진입" in sent
+    assert "손절" in sent
+    assert "180.50" in sent
+    assert "익절" in sent
+    assert "R:R" in sent
+    assert "리스크" in sent
+    assert "2.0" in sent
+
+
+@pytest.mark.asyncio
+async def test_card_shows_sr_levels_on_gwanmang_grade(monkeypatch):
+    """'관망' 등급일 때 '주요 레벨' 블록 표시."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["signal_grade"] = "관망"
+    payload["analysis"]["trade_setup"] = None
+    payload["analysis"]["sr_levels"] = [
+        {"price": 188.50, "kind": "resistance", "strength": "high"},
+        {"price": 193.00, "kind": "resistance", "strength": "medium"},
+        {"price": 180.50, "kind": "support", "strength": "high"},
+        {"price": 177.00, "kind": "support", "strength": "low"},
+    ]
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "주요 레벨" in sent or "저항" in sent
+    assert "188.50" in sent
+    assert "180.50" in sent
+    # 세팅 블록은 없어야
+    assert "손절" not in sent
+
+
+@pytest.mark.asyncio
+async def test_card_gwanmang_without_sr_levels_shows_no_block(monkeypatch):
+    """관망 + sr_levels 빈 리스트면 주요 레벨 블록도 생략."""
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    payload = _aapl_signal_payload()
+    payload["signal_grade"] = "관망"
+    payload["analysis"]["trade_setup"] = None
+    payload["analysis"]["sr_levels"] = []
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        return payload
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["AAPL"])
+    update = _make_update(text="/signal AAPL", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "주요 레벨" not in sent
+    assert "손절" not in sent
