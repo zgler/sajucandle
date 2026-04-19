@@ -926,3 +926,61 @@ async def test_run_phase0_tracking_per_row_exception_counts_failed():
     )
     assert result["failed"] == 1
     assert result["updated"] == 0
+
+
+# ─────────────────────────────────────────────
+# Week 9: Phase 0 default callback이 admin ohlcv 호출
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_phase0_default_get_klines_calls_admin_ohlcv():
+    """run_broadcast default _get_klines가 api_client.get_admin_ohlcv 호출."""
+    from datetime import date, datetime, timezone, timedelta
+    from unittest.mock import AsyncMock, MagicMock
+    from sajucandle.broadcast import run_broadcast
+    from sajucandle.repositories import SignalLogRow
+
+    two_hours_ago = datetime.now(timezone.utc) - timedelta(hours=2)
+    pending_row = SignalLogRow(
+        id=401, sent_at=two_hours_ago, source="ondemand",
+        telegram_chat_id=99, ticker="BTCUSDT",
+        target_date=date(2026, 4, 19), entry_price=70000.0,
+        saju_score=50, analysis_score=70,
+        structure_state="uptrend", alignment_bias="bullish",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=68, signal_grade="진입",
+        mfe_7d_pct=None, mae_7d_pct=None,
+        close_24h=None, close_7d=None,
+        last_tracked_at=None, tracking_done=False,
+    )
+
+    api_client = MagicMock()
+    api_client.get_admin_users = AsyncMock(return_value=[])
+    api_client.get_admin_watchlist_symbols = AsyncMock(return_value=[])
+    api_client.get_admin_ohlcv = AsyncMock(return_value=[
+        {
+            "open_time": (two_hours_ago + timedelta(minutes=30)).isoformat(),
+            "open": 71000, "high": 72000, "low": 70500,
+            "close": 71500, "volume": 1000,
+        },
+    ])
+    list_pending = AsyncMock(return_value=[pending_row])
+    update_tracking = AsyncMock()
+
+    send = AsyncMock()
+    summary = await run_broadcast(
+        api_client=api_client,
+        send_message=send,
+        chat_ids=[],
+        target_date=date(2026, 4, 19),
+        dry_run=True,
+        admin_chat_id=None,
+        skip_watchlist=True,
+        list_pending_tracking_fn=list_pending,
+        update_signal_tracking_fn=update_tracking,
+        # get_klines_for_tracking_fn 미제공 → default 사용 → api_client.get_admin_ohlcv 호출
+    )
+    api_client.get_admin_ohlcv.assert_called()
+    update_tracking.assert_called()
+    assert summary.tracking_updated >= 1

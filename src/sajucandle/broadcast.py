@@ -290,9 +290,29 @@ async def run_broadcast(
 
     if get_klines_for_tracking_fn is None:
         async def _default_get_klines(ticker, sent_at):
-            # skeleton: admin OHLCV 엔드포인트가 없어 빈 리스트 반환.
-            # Week 9에서 실데이터 연결 예정.
-            return []
+            """Week 9: admin OHLCV 엔드포인트 호출."""
+            try:
+                raw = await api_client.get_admin_ohlcv(
+                    ticker,
+                    interval="1h",
+                    since=sent_at.isoformat(),
+                    limit=168,
+                )
+            except Exception as e:
+                logger.warning(
+                    "phase0 ohlcv fetch failed ticker=%s: %s", ticker, e
+                )
+                return []
+            from sajucandle.market_data import Kline
+            result = []
+            for d in raw:
+                try:
+                    result.append(Kline.from_dict(d))
+                except Exception as e:
+                    logger.warning(
+                        "phase0 kline parse failed: %s", e
+                    )
+            return result
         get_klines_for_tracking_fn = _default_get_klines
 
     try:
