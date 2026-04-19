@@ -17,6 +17,7 @@ from typing import Optional
 
 from sajucandle.analysis.composite import AnalysisResult, analyze
 from sajucandle.analysis.structure import MarketStructure
+from sajucandle.analysis.trade_setup import TradeSetup, compute_trade_setup
 from sajucandle.market.router import MarketRouter
 from sajucandle.market_data import Kline
 from sajucandle.models import (
@@ -27,7 +28,9 @@ from sajucandle.models import (
     PricePoint,
     SajuSummary,
     SignalResponse,
+    SRLevelSummary,
     StructureSummary,
+    TradeSetupSummary,
 )
 from sajucandle.repositories import UserProfile
 from sajucandle.score_service import ScoreService
@@ -50,7 +53,32 @@ def _grade_signal(score: int, analysis: AnalysisResult) -> str:
     return "회피"
 
 
-def _analysis_to_summary(a: AnalysisResult) -> AnalysisSummary:
+def _analysis_to_summary(
+    a: AnalysisResult,
+    trade_setup: Optional[TradeSetup] = None,
+) -> AnalysisSummary:
+    sr_summaries = [
+        SRLevelSummary(
+            price=lvl.price,
+            kind=lvl.kind.value,
+            strength=lvl.strength,
+        )
+        for lvl in a.sr_levels
+    ]
+    ts_summary = None
+    if trade_setup is not None:
+        ts_summary = TradeSetupSummary(
+            entry=trade_setup.entry,
+            stop_loss=trade_setup.stop_loss,
+            take_profit_1=trade_setup.take_profit_1,
+            take_profit_2=trade_setup.take_profit_2,
+            risk_pct=trade_setup.risk_pct,
+            rr_tp1=trade_setup.rr_tp1,
+            rr_tp2=trade_setup.rr_tp2,
+            sl_basis=trade_setup.sl_basis,
+            tp1_basis=trade_setup.tp1_basis,
+            tp2_basis=trade_setup.tp2_basis,
+        )
     return AnalysisSummary(
         structure=StructureSummary(
             state=a.structure.state.value,
@@ -68,6 +96,8 @@ def _analysis_to_summary(a: AnalysisResult) -> AnalysisSummary:
         volume_ratio_1d=a.volume_ratio_1d,
         composite_score=a.composite_score,
         reason=a.reason,
+        sr_levels=sr_summaries,
+        trade_setup=ts_summary,
     )
 
 
@@ -118,6 +148,15 @@ class SignalService:
         final = max(0, min(100, final))
         grade = _grade_signal(final, analysis)
 
+        # Week 9: TradeSetup 조건부 생성
+        trade_setup: Optional[TradeSetup] = None
+        if grade in ("강진입", "진입") and analysis.atr_1d > 0:
+            trade_setup = compute_trade_setup(
+                entry=current,
+                atr_1d=analysis.atr_1d,
+                sr_levels=analysis.sr_levels,
+            )
+
         is_crypto = ticker.upper().lstrip("$") == "BTCUSDT"
         market_status = MarketStatus(
             is_open=provider.is_market_open(ticker),
@@ -125,7 +164,7 @@ class SignalService:
             category="crypto" if is_crypto else "us_stock",
         )
 
-        analysis_summary = _analysis_to_summary(analysis)
+        analysis_summary = _analysis_to_summary(analysis, trade_setup)
 
         # ma_trend 매핑 (하위호환 ChartSummary용)
         tf_1d_value = analysis.alignment.tf_1d.value

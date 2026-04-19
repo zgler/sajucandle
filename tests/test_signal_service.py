@@ -386,3 +386,59 @@ def test_week8_weights_01_09():
     resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
     # composite = round(0.1*40 + 0.9*analysis) — analysis 60~90 예상 → composite 58~85
     assert 55 <= resp.composite_score <= 90
+
+
+# ─────────────────────────────────────────────
+# Week 9: TradeSetup 조건부 생성
+# ─────────────────────────────────────────────
+
+
+def test_week9_trade_setup_on_entry_grade():
+    """'진입'/'강진입' 등급일 때 trade_setup 채워짐."""
+    fake = _make_fake_market_client()
+    strong = _make_klines(n=200, base_close=100.0, drift=0.5)
+    fake.klines_by_interval = {"1h": strong, "4h": strong, "1d": strong}
+    score_svc = _make_score_service()
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    if resp.signal_grade in ("강진입", "진입"):
+        assert resp.analysis is not None
+        assert resp.analysis.trade_setup is not None
+        ts = resp.analysis.trade_setup
+        assert ts.entry > 0
+        assert ts.stop_loss < ts.entry
+        assert ts.take_profit_1 > ts.entry
+        assert ts.risk_pct > 0
+        assert ts.sl_basis in ("atr", "sr_snap")
+
+
+def test_week9_trade_setup_none_on_lower_grade():
+    """'관망'/'회피'에서는 trade_setup=None."""
+    fake = _make_fake_market_client()
+    flat = _make_klines(n=200, base_close=100.0, drift=0.0)
+    fake.klines_by_interval = {"1h": flat, "4h": flat, "1d": flat}
+    score_svc = _make_score_service_with_fixed_composite(30)
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    if resp.signal_grade in ("관망", "회피"):
+        assert resp.analysis is not None
+        assert resp.analysis.trade_setup is None
+
+
+def test_week9_sr_levels_always_in_response():
+    """sr_levels는 등급 무관 list (빈 리스트 가능)."""
+    fake = _make_fake_market_client()
+    score_svc = _make_score_service()
+    svc = SignalService(
+        score_service=score_svc,
+        market_router=_make_router(fake),
+    )
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    assert resp.analysis is not None
+    assert isinstance(resp.analysis.sr_levels, list)
