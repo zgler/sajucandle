@@ -157,6 +157,25 @@ class AlignmentSummary(BaseModel):
     score: int = Field(ge=0, le=100)
 
 
+class SRLevelSummary(BaseModel):
+    price: float
+    kind: Literal["support", "resistance"]
+    strength: Literal["low", "medium", "high"]
+
+
+class TradeSetupSummary(BaseModel):
+    entry: float
+    stop_loss: float
+    take_profit_1: float
+    take_profit_2: float
+    risk_pct: float
+    rr_tp1: float
+    rr_tp2: float
+    sl_basis: Literal["atr", "sr_snap"]
+    tp1_basis: Literal["atr", "sr_snap"]
+    tp2_basis: Literal["atr", "sr_snap"]
+
+
 class AnalysisSummary(BaseModel):
     """Week 8: 시장 구조 + 멀티 TF + 보조지표 요약."""
     structure: StructureSummary
@@ -165,6 +184,9 @@ class AnalysisSummary(BaseModel):
     volume_ratio_1d: float
     composite_score: int = Field(ge=0, le=100)
     reason: str
+    # Week 9
+    sr_levels: List[SRLevelSummary] = Field(default_factory=list)
+    trade_setup: Optional[TradeSetupSummary] = None
 
 
 class SignalResponse(BaseModel):
