@@ -58,7 +58,7 @@ pip install -e ".[dev]"
 ```bash
 pytest -v
 ```
-Week 9 기준 **293 passed + 61 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
+Week 10 Phase 1 기준 **299 passed + 69 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
 
 ### 봇 로컬 실행
 ```bash
@@ -516,6 +516,46 @@ Supabase Studio → SQL Editor → `migrations/004_signal_log_sl_tp.sql` 전체 
 - 시그널 발송 거부 규칙 (BREAKDOWN에서 매수 차단)
 - MFE/MAE 통계 집계 API + 카드에 백테스트 프루프
 - 튜닝 상수 최적화
+
+---
+
+## Week 10 Phase 1: 관측성 도구
+
+signal_log 집계로 누적 상황 확인. 운영 중 `/stats` 한 번으로 진행상황 체크.
+
+### 새 API
+- `GET /v1/admin/signal-stats?ticker=&grade=&since=` — 집계 관측 (인증 필요)
+
+### 새 봇 명령 (관리자만)
+- `/stats` — 최근 30일 전체
+- `/stats AAPL` — AAPL 30일
+- `/stats AAPL 진입` — AAPL 진입 등급 30일
+
+### 카드 예시
+```
+📊 신호 통계 (최근 30일)
+─────────────
+필터: 전체
+총 발송: 42건
+
+등급별:
+  강진입  5건
+  진입    12건
+  관망    20건
+  회피    5건
+
+추적 완료: 15/42 (35%)
+
+MFE/MAE 평균 (n=15):
+  MFE  +2.8% (중앙 +2.3%)
+  MAE  -1.4% (중앙 -1.1%)
+```
+
+### 권한
+`SAJUCANDLE_ADMIN_CHAT_ID` env의 chat_id만 `/stats` 사용 가능. **bot 서비스 Variables에도 이 값 설정 필요** (broadcast 서비스에는 Week 7에서 이미 설정됨).
+
+### Phase 2 (데이터 쌓인 후)
+발송 거부 규칙 (BREAKDOWN 매수 차단), 카드 세밀 조정, 에러 메시지 개선.
 
 ---
 

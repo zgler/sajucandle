@@ -700,7 +700,6 @@ def _format_stats_card(stats: dict) -> str:
             lines.append(f"  {grade_name:<4}  {cnt}건")
 
     completed = tracking.get("completed", 0)
-    pending = tracking.get("pending", 0)
     pct = int(completed / total * 100) if total > 0 else 0
     lines.append("")
     lines.append(f"추적 완료: {completed}/{total} ({pct}%)")
