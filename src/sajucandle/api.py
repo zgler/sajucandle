@@ -470,6 +470,56 @@ def create_app(
             "klines": [k.to_dict() for k in klines],
         }
 
+    @app.get("/v1/admin/signal-stats")
+    async def admin_signal_stats_endpoint(
+        request: Request,
+        ticker: Optional[str] = None,
+        grade: Optional[str] = None,
+        since: Optional[str] = None,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ):
+        """Week 10: signal_log 집계 관측 도구."""
+        from datetime import timedelta, timezone as _tz
+        _require_api_key(request, x_sajucandle_key)
+        if db.get_pool() is None:
+            raise HTTPException(503, detail="database not available")
+
+        if since:
+            try:
+                since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+            except ValueError:
+                raise HTTPException(400, detail="since must be ISO 8601")
+        else:
+            since_dt = datetime.now(_tz.utc) - timedelta(days=30)
+
+        async with db.acquire() as conn:
+            stats = await repositories.aggregate_signal_stats(
+                conn, since=since_dt, ticker=ticker, grade=grade
+            )
+
+        logger.info(
+            "signal stats ticker=%s grade=%s since=%s total=%s",
+            ticker, grade, since_dt.isoformat(), stats["total"],
+        )
+
+        return {
+            "since": since_dt.isoformat(),
+            "filters": {"ticker": ticker, "grade": grade},
+            "total": stats["total"],
+            "by_grade": stats["by_grade"],
+            "tracking": {
+                "completed": stats["tracking_completed"],
+                "pending": stats["tracking_pending"],
+            },
+            "mfe_mae": {
+                "sample_size": stats["sample_size"],
+                "mfe_avg": stats["mfe_avg"],
+                "mfe_median": stats["mfe_median"],
+                "mae_avg": stats["mae_avg"],
+                "mae_median": stats["mae_median"],
+            },
+        }
+
     @app.get("/v1/users/{chat_id}/signal", response_model=SignalResponse)
     async def signal_endpoint(
         chat_id: int,
