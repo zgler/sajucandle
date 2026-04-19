@@ -58,7 +58,7 @@ pip install -e ".[dev]"
 ```bash
 pytest -v
 ```
-Week 8 기준 **255 passed + 59 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
+Week 9 기준 **293 passed + 61 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
 
 ### 봇 로컬 실행
 ```bash
@@ -134,12 +134,15 @@ src/sajucandle/
 │   ├── yfinance.py     #   YFinanceClient (Redis 2단 캐시, fresh 1h / backup 24h)
 │   └── router.py       #   MarketRouter.get_provider() / all_symbols()
 ├── signal_service.py   # saju 0.1 + analysis 0.9 결합 + TTL 5분 캐시 (Week 8 재설계)
-├── analysis/           # Week 8: 시장 구조 + 멀티 타임프레임 + 수급 엔진 (5모듈)
+├── analysis/           # Week 8~9: 시장 구조 + 멀티 타임프레임 + 수급 + S/R + SL/TP 엔진
 │   ├── swing.py        #   Fractals + ATR prominence 필터 기반 swing high/low 감지
 │   ├── structure.py    #   UPTREND/DOWNTREND/RANGE/BREAKOUT/BREAKDOWN 분류
 │   ├── multi_timeframe.py #  1h/4h/1d 정렬 (Alignment + bias)
 │   ├── timeframe.py    #   TrendDirection enum + 단일 TF 분석
-│   └── composite.py    #   analyze() 진입점 — 0.45*structure + 0.35*alignment + 0.10*rsi + 0.10*volume
+│   ├── composite.py    #   analyze() 진입점 — 0.45*structure + 0.35*alignment + 0.10*rsi + 0.10*volume
+│   ├── volume_profile.py # Week 9: VPVR 매물대 상위 N개 (VolumeProfile)
+│   ├── support_resistance.py # Week 9: Swing + Volume 융합 → SRLevel
+│   └── trade_setup.py  #   Week 9: 하이브리드 ATR + S/R snap SL/TP 제안
 ├── broadcast.py        # 데일리 푸시 CLI (Railway Cron에서 매일 07:00 KST 실행)
 ├── api.py              # FastAPI 앱 + 엔드포인트
 ├── api_main.py         # uvicorn 엔트리 (Railway PORT 읽기)
@@ -150,7 +153,8 @@ src/sajucandle/
 migrations/
 ├── 001_init.sql        # Supabase 초기 스키마
 ├── 002_watchlist.sql   # user_watchlist 테이블 (Week 7)
-└── 003_signal_log.sql  # signal_log 테이블 + MFE/MAE 추적 컬럼 (Week 8)
+├── 003_signal_log.sql  # signal_log 테이블 + MFE/MAE 추적 컬럼 (Week 8)
+└── 004_signal_log_sl_tp.sql  # SL/TP + R:R 컬럼 확장 (Week 9)
 
 tests/
 ├── test_api.py / test_api_users.py / test_api_score.py / test_api_signal.py
@@ -161,6 +165,8 @@ tests/
 ├── test_tech_analysis.py / test_market_data.py / test_signal_service.py
 ├── test_market_base.py / test_market_yfinance.py / test_market_router.py  # Week 6
 ├── test_broadcast.py
+├── test_analysis_volume_profile.py / test_analysis_support_resistance.py  # Week 9
+├── test_analysis_trade_setup.py / test_api_ohlcv.py                       # Week 9
 └── conftest.py         # db_pool, db_conn 롤백 fixture
 
 docs/superpowers/
@@ -452,9 +458,64 @@ Supabase Studio → SQL Editor → `migrations/003_signal_log.sql` 전체 붙여
 
 ### 범위 밖 (Week 9~11)
 
-- **Week 9:** 지지/저항 자동 식별, SL/TP 자동 제안, admin OHLCV 엔드포인트 (Phase 0 실데이터 연결)
+- **Week 9:** 지지/저항 자동 식별, SL/TP 자동 제안, admin OHLCV 엔드포인트 → **완료 (Week 9 섹션 참조)**
 - **Week 10:** 시그널 발송 거부 규칙 (BREAKDOWN에서 매수 차단), 카드 세밀 조정
 - **Week 11:** MFE/MAE 통계 집계 API, 카드에 백테스트 프루프 노출, 등급 임계값 재조정
+
+---
+
+## Week 9 Phase 2: S/R + SL/TP + admin OHLCV
+
+Week 8의 "왜 진입?"에서 Week 9는 **"어디에 진입/손절/익절?"**로 격상. 지지/저항 자동 식별 + 하이브리드 ATR·S/R SL/TP 제안.
+
+### 새 분석 모듈
+- `analysis/volume_profile.py` — VPVR 매물대 상위 N개
+- `analysis/support_resistance.py` — Swing + Volume 융합 → SRLevel
+- `analysis/trade_setup.py` — 하이브리드 ATR + S/R snap SL/TP
+
+### 새 카드 포맷
+
+**진입/강진입:**
+```
+구조: 상승추세 (HH-HL)
+정렬: 1d↑ 4h↑ 1h↑  (강정렬)
+진입조건: RSI(1h) 35 · 거래량 1.5x
+
+세팅:
+ 진입 $184.12
+ 손절 $180.50 (-2.0%)
+ 익절1 $188.50 (+2.4%)  익절2 $193.00 (+4.8%)
+ R:R 1.2 / 2.4   리스크 2.0%
+
+종합: 72 | 진입
+```
+
+**관망/회피:**
+```
+주요 레벨:
+ 저항 $188.50 · $193.00 · $196.50
+ 지지 $180.50 · $177.00 · $172.00
+
+종합: 48 | 관망
+```
+
+### 새 API 엔드포인트
+- `GET /v1/admin/ohlcv?ticker=&interval=&since=&limit=` — Phase 0 tracking용 OHLCV 조회 (인증 필요)
+
+### Phase 0 실데이터 연결
+Week 8의 `_default_get_klines` skeleton이 admin OHLCV 호출로 교체되어 **signal_log의 MFE/MAE가 실제로 채워지기 시작**.
+
+### signal_log 확장 컬럼 (migration 004)
+`stop_loss`, `take_profit_1`, `take_profit_2`, `risk_pct`, `rr_tp1`, `rr_tp2`, `sl_basis`, `tp1_basis`, `tp2_basis`.
+
+### 수동 단계 (Supabase)
+
+Supabase Studio → SQL Editor → `migrations/004_signal_log_sl_tp.sql` 전체 붙여넣고 Run.
+
+### 범위 밖 (Week 10~11)
+- 시그널 발송 거부 규칙 (BREAKDOWN에서 매수 차단)
+- MFE/MAE 통계 집계 API + 카드에 백테스트 프루프
+- 튜닝 상수 최적화
 
 ---
 
