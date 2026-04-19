@@ -119,7 +119,7 @@ def create_app(
 
     score_service = _build_score_service()
 
-    def _build_signal_service() -> SignalService:
+    def _build_market_router() -> MarketRouter:
         redis_url = os.environ.get("REDIS_URL")
         redis_client = None
         if redis_url:
@@ -131,10 +131,23 @@ def create_app(
                 redis_client = None
         binance = BinanceClient(redis_client=redis_client, timeout=3.0)
         yfinance_client = YFinanceClient(redis_client=redis_client)
-        router = MarketRouter(binance=binance, yfinance=yfinance_client)
+        return MarketRouter(binance=binance, yfinance=yfinance_client)
+
+    market_router = _build_market_router()
+
+    def _build_signal_service() -> SignalService:
+        redis_url = os.environ.get("REDIS_URL")
+        redis_client = None
+        if redis_url:
+            try:
+                import redis as redis_lib
+                redis_client = redis_lib.from_url(redis_url)
+                redis_client.ping()
+            except Exception:
+                redis_client = None
         return SignalService(
             score_service=score_service,
-            market_router=router,
+            market_router=market_router,
             redis_client=redis_client,
         )
 
@@ -408,6 +421,55 @@ def create_app(
         _require_api_key(request, x_sajucandle_key)
         return {"symbols": MarketRouter.all_symbols()}
 
+    @app.get("/v1/admin/ohlcv")
+    async def admin_ohlcv_endpoint(
+        request: Request,
+        ticker: str,
+        interval: str = "1h",
+        since: Optional[str] = None,
+        limit: int = 168,
+        x_sajucandle_key: Optional[str] = Header(default=None),
+    ):
+        """Week 9: Phase 0 tracking용 OHLCV 조회."""
+        _require_api_key(request, x_sajucandle_key)
+        if interval not in ("1h", "4h", "1d"):
+            raise HTTPException(400, detail=f"unsupported interval: {interval}")
+        if limit <= 0 or limit > 500:
+            raise HTTPException(400, detail="limit must be 1..500")
+
+        since_dt = None
+        if since:
+            try:
+                since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
+            except ValueError:
+                raise HTTPException(400, detail="since must be ISO 8601")
+
+        ticker_norm = ticker.upper().lstrip("$")
+        try:
+            provider = market_router.get_provider(ticker_norm)
+        except UnsupportedTicker as e:
+            raise HTTPException(400, detail=f"unsupported ticker: {e.symbol}")
+
+        try:
+            klines = provider.fetch_klines(
+                ticker_norm, interval=interval, limit=limit
+            )
+        except MarketDataUnavailable:
+            raise HTTPException(502, detail="market data unavailable")
+
+        if since_dt is not None:
+            klines = [k for k in klines if k.open_time >= since_dt]
+
+        logger.info(
+            "admin ohlcv ticker=%s interval=%s count=%s since=%s",
+            ticker_norm, interval, len(klines), since,
+        )
+        return {
+            "ticker": ticker_norm,
+            "interval": interval,
+            "klines": [k.to_dict() for k in klines],
+        }
+
     @app.get("/v1/users/{chat_id}/signal", response_model=SignalResponse)
     async def signal_endpoint(
         chat_id: int,
@@ -453,10 +515,11 @@ def create_app(
             result.composite_score, result.signal_grade,
             result.saju.composite, result.chart.score, elapsed_ms,
         )
-        # Week 8: signal_log 기록 (best effort)
+        # Week 8/9: signal_log 기록 (best effort)
         try:
             if db.get_pool() is not None and result.analysis is not None:
                 async with db.acquire() as conn:
+                    ts = result.analysis.trade_setup if result.analysis else None
                     await repositories.insert_signal_log(
                         conn,
                         source="ondemand",
@@ -472,6 +535,16 @@ def create_app(
                         volume_ratio_1d=result.analysis.volume_ratio_1d,
                         composite_score=result.composite_score,
                         signal_grade=result.signal_grade,
+                        # Week 9
+                        stop_loss=ts.stop_loss if ts else None,
+                        take_profit_1=ts.take_profit_1 if ts else None,
+                        take_profit_2=ts.take_profit_2 if ts else None,
+                        risk_pct=ts.risk_pct if ts else None,
+                        rr_tp1=ts.rr_tp1 if ts else None,
+                        rr_tp2=ts.rr_tp2 if ts else None,
+                        sl_basis=ts.sl_basis if ts else None,
+                        tp1_basis=ts.tp1_basis if ts else None,
+                        tp2_basis=ts.tp2_basis if ts else None,
                     )
         except Exception as e:
             logger.warning("signal_log insert failed chat_id=%s: %s", chat_id, e)
