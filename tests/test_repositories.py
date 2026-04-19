@@ -309,3 +309,77 @@ async def test_update_signal_tracking_done(db_conn):
         "SELECT tracking_done FROM signal_log WHERE id = $1", row_id
     )
     assert row["tracking_done"] is True
+
+
+# ─────────────────────────────────────────────
+# Week 9: insert_signal_log SL/TP 필드
+# ─────────────────────────────────────────────
+
+
+async def test_insert_signal_log_with_trade_setup(db_conn):
+    await _register_user(db_conn, 300001)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand",
+        telegram_chat_id=300001,
+        ticker="BTCUSDT",
+        target_date=date(2026, 4, 19),
+        entry_price=72000.0,
+        saju_score=56,
+        analysis_score=72,
+        structure_state="uptrend",
+        alignment_bias="bullish",
+        rsi_1h=60.0,
+        volume_ratio_1d=1.2,
+        composite_score=70,
+        signal_grade="진입",
+        # Week 9
+        stop_loss=70000.0,
+        take_profit_1=74000.0,
+        take_profit_2=76000.0,
+        risk_pct=2.78,
+        rr_tp1=1.0,
+        rr_tp2=2.0,
+        sl_basis="atr",
+        tp1_basis="sr_snap",
+        tp2_basis="atr",
+    )
+    row = await db_conn.fetchrow(
+        "SELECT stop_loss, take_profit_1, take_profit_2, risk_pct, "
+        "rr_tp1, rr_tp2, sl_basis, tp1_basis, tp2_basis "
+        "FROM signal_log WHERE id = $1", row_id
+    )
+    assert float(row["stop_loss"]) == 70000.0
+    assert float(row["take_profit_1"]) == 74000.0
+    assert float(row["take_profit_2"]) == 76000.0
+    assert float(row["rr_tp1"]) == 1.0
+    assert row["sl_basis"] == "atr"
+    assert row["tp1_basis"] == "sr_snap"
+
+
+async def test_insert_signal_log_without_trade_setup_nulls(db_conn):
+    """SL/TP 미제공 시 NULL 저장."""
+    await _register_user(db_conn, 300002)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand",
+        telegram_chat_id=300002,
+        ticker="BTCUSDT",
+        target_date=date(2026, 4, 19),
+        entry_price=72000.0,
+        saju_score=56,
+        analysis_score=50,
+        structure_state="range",
+        alignment_bias="mixed",
+        rsi_1h=None,
+        volume_ratio_1d=None,
+        composite_score=50,
+        signal_grade="관망",
+    )
+    row = await db_conn.fetchrow(
+        "SELECT stop_loss, risk_pct, sl_basis FROM signal_log WHERE id = $1",
+        row_id
+    )
+    assert row["stop_loss"] is None
+    assert row["risk_pct"] is None
+    assert row["sl_basis"] is None

@@ -226,6 +226,16 @@ async def insert_signal_log(
     volume_ratio_1d: Optional[float],
     composite_score: int,
     signal_grade: str,
+    # Week 9
+    stop_loss: Optional[float] = None,
+    take_profit_1: Optional[float] = None,
+    take_profit_2: Optional[float] = None,
+    risk_pct: Optional[float] = None,
+    rr_tp1: Optional[float] = None,
+    rr_tp2: Optional[float] = None,
+    sl_basis: Optional[str] = None,
+    tp1_basis: Optional[str] = None,
+    tp2_basis: Optional[str] = None,
 ) -> int:
     """signal_log INSERT → id 반환."""
     row = await conn.fetchrow(
@@ -236,9 +246,13 @@ async def insert_signal_log(
             saju_score, analysis_score,
             structure_state, alignment_bias,
             rsi_1h, volume_ratio_1d,
-            composite_score, signal_grade
+            composite_score, signal_grade,
+            stop_loss, take_profit_1, take_profit_2,
+            risk_pct, rr_tp1, rr_tp2,
+            sl_basis, tp1_basis, tp2_basis
         ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+            $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
+            $14, $15, $16, $17, $18, $19, $20, $21, $22
         ) RETURNING id
         """,
         source, telegram_chat_id,
@@ -247,6 +261,9 @@ async def insert_signal_log(
         structure_state, alignment_bias,
         rsi_1h, volume_ratio_1d,
         composite_score, signal_grade,
+        stop_loss, take_profit_1, take_profit_2,
+        risk_pct, rr_tp1, rr_tp2,
+        sl_basis, tp1_basis, tp2_basis,
     )
     return int(row["id"])
 
