@@ -362,3 +362,77 @@ async def test_get_admin_watchlist_symbols_returns_list():
         c = ApiClient(base_url="http://test", api_key="k")
         syms = await c.get_admin_watchlist_symbols()
     assert syms == ["AAPL", "TSLA"]
+
+
+# ─────────────────────────────────────────────
+# Week 9: get_admin_ohlcv
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_get_admin_ohlcv_returns_klines():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/admin/ohlcv").mock(
+            return_value=Response(
+                200,
+                json={
+                    "ticker": "BTCUSDT",
+                    "interval": "1h",
+                    "klines": [
+                        {"open_time": "2026-04-19T10:00:00+00:00",
+                         "open": 70000, "high": 70500, "low": 69800,
+                         "close": 70200, "volume": 100},
+                        {"open_time": "2026-04-19T11:00:00+00:00",
+                         "open": 70200, "high": 70800, "low": 70100,
+                         "close": 70700, "volume": 120},
+                    ],
+                },
+            )
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        klines = await c.get_admin_ohlcv("BTCUSDT")
+    assert len(klines) == 2
+
+
+@pytest.mark.asyncio
+async def test_get_admin_ohlcv_with_since_and_limit():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        route = mock.get("/v1/admin/ohlcv").mock(
+            return_value=Response(200, json={"ticker": "AAPL",
+                                              "interval": "4h",
+                                              "klines": []})
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        await c.get_admin_ohlcv(
+            "AAPL", interval="4h",
+            since="2026-04-19T10:00:00+00:00",
+            limit=50,
+        )
+    req = route.calls.last.request
+    assert "since=" in str(req.url)
+    assert "limit=50" in str(req.url)
+    assert "interval=4h" in str(req.url)
+
+
+@pytest.mark.asyncio
+async def test_get_admin_ohlcv_401_raises():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient, ApiError
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/admin/ohlcv").mock(
+            return_value=Response(401, json={"detail": "invalid key"})
+        )
+        c = ApiClient(base_url="http://test", api_key="wrong")
+        with pytest.raises(ApiError) as exc:
+            await c.get_admin_ohlcv("BTCUSDT")
+    assert exc.value.status == 401

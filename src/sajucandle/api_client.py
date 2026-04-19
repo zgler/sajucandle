@@ -157,3 +157,24 @@ class ApiClient:
             r = await c.get("/v1/admin/watchlist-symbols")
         await self._raise_for_status(r)
         return list(r.json().get("symbols", []))
+
+    async def get_admin_ohlcv(
+        self,
+        ticker: str,
+        *,
+        interval: str = "1h",
+        since: Optional[str] = None,
+        limit: int = 168,
+    ) -> list[dict]:
+        """GET /v1/admin/ohlcv. Phase 0 tracking용."""
+        params: Dict[str, str] = {
+            "ticker": ticker,
+            "interval": interval,
+            "limit": str(limit),
+        }
+        if since:
+            params["since"] = since
+        async with self._client() as c:
+            r = await c.get("/v1/admin/ohlcv", params=params)
+        await self._raise_for_status(r)
+        return list(r.json().get("klines", []))
