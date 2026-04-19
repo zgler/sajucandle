@@ -178,3 +178,23 @@ class ApiClient:
             r = await c.get("/v1/admin/ohlcv", params=params)
         await self._raise_for_status(r)
         return list(r.json().get("klines", []))
+
+    async def get_signal_stats(
+        self,
+        *,
+        ticker: Optional[str] = None,
+        grade: Optional[str] = None,
+        since: Optional[str] = None,
+    ) -> dict:
+        """GET /v1/admin/signal-stats. 집계 관측 도구."""
+        params: Dict[str, str] = {}
+        if ticker:
+            params["ticker"] = ticker
+        if grade:
+            params["grade"] = grade
+        if since:
+            params["since"] = since
+        async with self._client() as c:
+            r = await c.get("/v1/admin/signal-stats", params=params)
+        await self._raise_for_status(r)
+        return r.json()

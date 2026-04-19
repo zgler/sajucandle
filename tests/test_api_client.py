@@ -436,3 +436,50 @@ async def test_get_admin_ohlcv_401_raises():
         with pytest.raises(ApiError) as exc:
             await c.get_admin_ohlcv("BTCUSDT")
     assert exc.value.status == 401
+
+
+@pytest.mark.asyncio
+async def test_get_signal_stats_returns_dict():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        mock.get("/v1/admin/signal-stats").mock(
+            return_value=Response(200, json={
+                "since": "2026-03-20T00:00:00+00:00",
+                "filters": {"ticker": None, "grade": None},
+                "total": 10,
+                "by_grade": {"진입": 3, "관망": 7},
+                "tracking": {"completed": 2, "pending": 8},
+                "mfe_mae": {
+                    "sample_size": 2, "mfe_avg": 2.5, "mfe_median": 2.5,
+                    "mae_avg": -1.0, "mae_median": -1.0,
+                },
+            })
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        stats = await c.get_signal_stats()
+    assert stats["total"] == 10
+    assert stats["by_grade"]["진입"] == 3
+
+
+@pytest.mark.asyncio
+async def test_get_signal_stats_with_filters():
+    import respx
+    from httpx import Response
+    from sajucandle.api_client import ApiClient
+
+    with respx.mock(base_url="http://test") as mock:
+        route = mock.get("/v1/admin/signal-stats").mock(
+            return_value=Response(200, json={
+                "since": "x", "filters": {}, "total": 0,
+                "by_grade": {}, "tracking": {"completed": 0, "pending": 0},
+                "mfe_mae": {"sample_size": 0, "mfe_avg": None, "mfe_median": None,
+                            "mae_avg": None, "mae_median": None},
+            })
+        )
+        c = ApiClient(base_url="http://test", api_key="k")
+        await c.get_signal_stats(ticker="AAPL", grade="진입")
+    req = route.calls.last.request
+    assert "ticker=AAPL" in str(req.url)
