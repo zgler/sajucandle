@@ -8,11 +8,12 @@ Weights:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from sajucandle.analysis.multi_timeframe import Alignment, compute_alignment
 from sajucandle.analysis.structure import StructureAnalysis, classify_structure
-from sajucandle.analysis.swing import detect_swings
+from sajucandle.analysis.support_resistance import SRLevel, identify_sr_levels
+from sajucandle.analysis.swing import _atr, detect_swings
 from sajucandle.analysis.timeframe import TrendDirection
 from sajucandle.market_data import Kline
 from sajucandle.tech_analysis import (
@@ -37,6 +38,9 @@ class AnalysisResult:
     volume_ratio_1d: float
     composite_score: int
     reason: str
+    # Week 9
+    sr_levels: list[SRLevel] = field(default_factory=list)
+    atr_1d: float = 0.0
 
 
 def _safe_rsi(klines: list[Kline], period: int = 14) -> float:
@@ -106,6 +110,15 @@ def analyze(
     vol_label = "볼륨↑" if vr_1d >= 1.5 else "볼륨→" if vr_1d >= 0.8 else "볼륨↓"
     reason = f"{tf_str} ({align_label}) · RSI(1h) {rsi_1h:.0f} · {vol_label}"
 
+    # Week 9: S/R + ATR(1d)
+    current = klines_1d[-1].close if klines_1d else 0.0
+    sr_levels = (
+        identify_sr_levels(klines_1d, swings, current)
+        if klines_1d and current > 0
+        else []
+    )
+    atr_1d_value = _atr(klines_1d, 14) if len(klines_1d) >= 15 else 0.0
+
     return AnalysisResult(
         structure=structure,
         alignment=alignment,
@@ -113,4 +126,6 @@ def analyze(
         volume_ratio_1d=vr_1d,
         composite_score=composite,
         reason=reason,
+        sr_levels=sr_levels,
+        atr_1d=atr_1d_value,
     )
