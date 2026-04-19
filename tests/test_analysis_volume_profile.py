@@ -11,11 +11,11 @@ def _mk_klines(triples: list[tuple[float, float, float]]) -> list[Kline]:
     """Each tuple = (high, low, volume). open=close=(h+l)/2."""
     out = []
     base = datetime(2026, 1, 1, tzinfo=timezone.utc)
-    for i, (h, l, v) in enumerate(triples):
-        mid = (h + l) / 2
+    for i, (h, lo, v) in enumerate(triples):
+        mid = (h + lo) / 2
         out.append(Kline(
             open_time=base.replace(day=(i % 28) + 1),
-            open=mid, high=h, low=l, close=mid, volume=v,
+            open=mid, high=h, low=lo, close=mid, volume=v,
         ))
     return out
 

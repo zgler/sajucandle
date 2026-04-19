@@ -324,12 +324,12 @@ def _append_sr_levels_block(lines: list, levels: list) -> None:
     if not levels:
         return
     resistances = sorted(
-        [l for l in levels if l["kind"] == "resistance"],
-        key=lambda l: l["price"],
+        [lvl for lvl in levels if lvl["kind"] == "resistance"],
+        key=lambda lvl: lvl["price"],
     )
     supports = sorted(
-        [l for l in levels if l["kind"] == "support"],
-        key=lambda l: l["price"],
+        [lvl for lvl in levels if lvl["kind"] == "support"],
+        key=lambda lvl: lvl["price"],
         reverse=True,
     )
     if not resistances and not supports:
@@ -337,10 +337,10 @@ def _append_sr_levels_block(lines: list, levels: list) -> None:
     lines.append("")
     lines.append("주요 레벨:")
     if resistances:
-        prices = " · ".join(f"${l['price']:,.2f}" for l in resistances)
+        prices = " · ".join(f"${lvl['price']:,.2f}" for lvl in resistances)
         lines.append(f" 저항 {prices}")
     if supports:
-        prices = " · ".join(f"${l['price']:,.2f}" for l in supports)
+        prices = " · ".join(f"${lvl['price']:,.2f}" for lvl in supports)
         lines.append(f" 지지 {prices}")
 
 

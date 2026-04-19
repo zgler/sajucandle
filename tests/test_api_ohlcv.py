@@ -1,7 +1,6 @@
 """api: /v1/admin/ohlcv 엔드포인트."""
 from __future__ import annotations
 
-import os
 from unittest.mock import patch, MagicMock
 
 import pandas as pd
