@@ -499,3 +499,59 @@ async def test_aggregate_signal_stats_mfe_mae_only_from_tracking_done(db_conn):
     assert stats["sample_size"] == 1
     assert stats["mfe_avg"] == 3.0
     assert stats["mae_avg"] == -1.0
+
+
+# ─────────────────────────────────────────────
+# Phase 1: insert_signal_log run_id
+# ─────────────────────────────────────────────
+
+
+async def test_insert_signal_log_with_run_id(db_conn):
+    await _register_user(db_conn, 500001)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="backtest",
+        telegram_chat_id=None,
+        ticker="BTCUSDT",
+        target_date=date(2026, 4, 19),
+        entry_price=70000.0,
+        saju_score=50,
+        analysis_score=72,
+        structure_state="uptrend",
+        alignment_bias="bullish",
+        rsi_1h=60.0,
+        volume_ratio_1d=1.2,
+        composite_score=70,
+        signal_grade="진입",
+        run_id="phase1-abc1234-baseline",
+    )
+    row = await db_conn.fetchrow(
+        "SELECT run_id, source FROM signal_log WHERE id = $1", row_id
+    )
+    assert row["run_id"] == "phase1-abc1234-baseline"
+    assert row["source"] == "backtest"
+
+
+async def test_insert_signal_log_run_id_default_none(db_conn):
+    """기존 호출 (run_id 미지정) 하위호환 — NULL 저장."""
+    await _register_user(db_conn, 500002)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand",
+        telegram_chat_id=500002,
+        ticker="BTCUSDT",
+        target_date=date(2026, 4, 19),
+        entry_price=70000.0,
+        saju_score=50,
+        analysis_score=50,
+        structure_state="range",
+        alignment_bias="mixed",
+        rsi_1h=None,
+        volume_ratio_1d=None,
+        composite_score=50,
+        signal_grade="관망",
+    )
+    row = await db_conn.fetchrow(
+        "SELECT run_id FROM signal_log WHERE id = $1", row_id
+    )
+    assert row["run_id"] is None
