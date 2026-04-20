@@ -555,3 +555,53 @@ async def test_insert_signal_log_run_id_default_none(db_conn):
         "SELECT run_id FROM signal_log WHERE id = $1", row_id
     )
     assert row["run_id"] is None
+
+
+async def test_aggregate_signal_stats_default_excludes_backtest(db_conn):
+    """run_id 미지정 시 backtest row 제외, 운영(NULL)만 집계."""
+    await _register_user(db_conn, 500003)
+    # 운영 signal
+    await insert_signal_log(
+        db_conn, source="ondemand", telegram_chat_id=500003,
+        ticker="BTCUSDT", target_date=date(2026, 4, 19),
+        entry_price=70000.0, saju_score=50, analysis_score=60,
+        structure_state="range", alignment_bias="mixed",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=60, signal_grade="관망",
+    )
+    # 백테스트 signal (같은 사용자, 다른 날짜로 덮어쓰기 방지)
+    await insert_signal_log(
+        db_conn, source="backtest", telegram_chat_id=500003,
+        ticker="BTCUSDT", target_date=date(2026, 4, 18),
+        entry_price=70000.0, saju_score=50, analysis_score=60,
+        structure_state="range", alignment_bias="mixed",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=60, signal_grade="진입",
+        run_id="phase1-test-a",
+    )
+    now = datetime.now(timezone.utc)
+    stats = await aggregate_signal_stats(db_conn, since=now - timedelta(days=30))
+    # 운영 row 1개만 집계
+    assert stats["total"] == 1
+    assert stats["by_grade"].get("관망") == 1
+    assert "진입" not in stats["by_grade"] or stats["by_grade"]["진입"] == 0
+
+
+async def test_aggregate_signal_stats_with_run_id(db_conn):
+    """run_id 명시 시 해당 run만 집계."""
+    await _register_user(db_conn, 500004)
+    await insert_signal_log(
+        db_conn, source="backtest", telegram_chat_id=500004,
+        ticker="BTCUSDT", target_date=date(2026, 4, 19),
+        entry_price=70000.0, saju_score=50, analysis_score=72,
+        structure_state="uptrend", alignment_bias="bullish",
+        rsi_1h=None, volume_ratio_1d=None,
+        composite_score=70, signal_grade="진입",
+        run_id="phase1-test-b",
+    )
+    now = datetime.now(timezone.utc)
+    stats = await aggregate_signal_stats(
+        db_conn, since=now - timedelta(days=30), run_id="phase1-test-b"
+    )
+    assert stats["total"] == 1
+    assert stats["by_grade"]["진입"] == 1

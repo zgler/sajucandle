@@ -365,8 +365,12 @@ async def aggregate_signal_stats(
     since: datetime,
     ticker: Optional[str] = None,
     grade: Optional[str] = None,
+    run_id: Optional[str] = None,
 ) -> dict:
-    """signal_log 집계 — total, by_grade, tracking, MFE/MAE 통계."""
+    """signal_log 집계 — total, by_grade, tracking, MFE/MAE 통계.
+
+    Phase 1: run_id 처리 — None이면 운영만(run_id IS NULL), 값 있으면 해당 run만.
+    """
     conditions = ["sent_at >= $1"]
     params: list = [since]
     if ticker is not None:
@@ -375,6 +379,12 @@ async def aggregate_signal_stats(
     if grade is not None:
         params.append(grade)
         conditions.append(f"signal_grade = ${len(params)}")
+    # Phase 1: run_id 처리 — None이면 운영만(run_id IS NULL), 값 있으면 해당 run만
+    if run_id is None:
+        conditions.append("run_id IS NULL")
+    else:
+        params.append(run_id)
+        conditions.append(f"run_id = ${len(params)}")
     where = " AND ".join(conditions)
 
     total_row = await conn.fetchval(
