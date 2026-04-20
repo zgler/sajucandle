@@ -58,7 +58,7 @@ pip install -e ".[dev]"
 ```bash
 pytest -v
 ```
-Week 10 Phase 1 기준 **299 passed + 69 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
+Week 10 Phase 2 기준 **307 passed + 69 skipped** (DB 연결 없을 때). DB 테스트는 `TEST_DATABASE_URL` 환경변수 있을 때만 실행.
 
 ### 봇 로컬 실행
 ```bash
@@ -568,3 +568,31 @@ MFE/MAE 평균 (n=15):
 | 봇 실행 | `python -m sajucandle.bot` |
 | API 실행 | `python -m uvicorn sajucandle.api:app --host 0.0.0.0 --port 8000` |
 | 린트 | `ruff check .` |
+
+## Week 10 Phase 2: 게이팅 + /guide + 에러 UX
+
+운영 중 데이터 쌓이는 동안의 품질 다짐.
+
+### 등급 게이팅 강화
+
+`DOWNTREND` / `BREAKDOWN` 구조에서는 점수 60+여도 **"관망"으로 강등**. 구조가 뒷받침하는 장에서만 "진입" 등급 허용.
+
+### 새 봇 명령: `/guide`
+
+카드 해석법 (등급 4종 / 구조 5종 / 정렬 / 세팅 블록). 온보딩용. `/help`에도 노출.
+
+### 에러 메시지 분리
+
+| 상황 | 메시지 예시 |
+|------|-------------|
+| 타임아웃 | ⏱️ 서버 응답 지연. 잠시 후 다시. |
+| 네트워크 | 🔌 네트워크 연결 실패. |
+| 502 | 📉 시장 데이터 소스 일시 불가. 1~2분 후 재시도. |
+| 503 | 🛠️ 일시 점검 중. |
+| 5xx 기타 | ⚠️ 서버 오류 (N). 지속되면 관리자 문의. |
+
+### 범위 밖 (Week 11+)
+
+- 카드 세밀 조정 (이모지/정렬) — 실사용 피드백 기반
+- 등급 임계값 재조정 — MFE/MAE 누적 후 Week 11 백테스트
+- Rate limiting — 사용자 수 증가 후

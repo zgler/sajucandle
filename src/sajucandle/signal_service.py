@@ -41,11 +41,26 @@ _SIGNAL_TTL = 300
 
 
 def _grade_signal(score: int, analysis: AnalysisResult) -> str:
-    """Week 8: 강진입은 점수 + 정렬 + 상승구조 3조건 모두 만족."""
+    """등급 판정.
+
+    - 강진입: score>=75 + 정렬 aligned + UPTREND/BREAKOUT
+    - 진입: score>=60 (단 DOWNTREND/BREAKDOWN이면 관망으로 강등)
+    - 관망: score>=40
+    - 회피: 그 외
+    """
+    state = analysis.structure.state
+
+    # 강진입 (Week 8)
     if (score >= 75
             and analysis.alignment.aligned
-            and analysis.structure.state in (MarketStructure.UPTREND, MarketStructure.BREAKOUT)):
+            and state in (MarketStructure.UPTREND, MarketStructure.BREAKOUT)):
         return "강진입"
+
+    # Week 10 Phase 2: 하락/이탈 구조에서 진입 차단
+    if state in (MarketStructure.DOWNTREND, MarketStructure.BREAKDOWN):
+        if score >= 60:
+            return "관망"
+
     if score >= 60:
         return "진입"
     if score >= 40:

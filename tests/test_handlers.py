@@ -1166,3 +1166,86 @@ async def test_stats_empty_shows_no_history(monkeypatch):
     await handlers.stats_command(update, context)
     sent = update.message.reply_text.call_args[0][0]
     assert "없" in sent or "0건" in sent
+
+
+# ─────────────────────────────────────────────
+# Week 10 Phase 2: /guide + 에러 메시지 분리
+# ─────────────────────────────────────────────
+
+
+@pytest.mark.asyncio
+async def test_guide_command_returns_guide_text(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    context = MagicMock(args=[])
+    update = _make_update(text="/guide", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.guide_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    # 주요 섹션 키워드
+    assert "등급" in sent
+    assert "강진입" in sent
+    assert "구조" in sent
+    assert "상승추세" in sent
+    assert "세팅" in sent
+    assert "R:R" in sent
+    assert "정보 제공" in sent
+
+
+@pytest.mark.asyncio
+async def test_help_includes_guide_command_and_new_disclaimer(monkeypatch):
+    from sajucandle import handlers
+    from unittest.mock import AsyncMock, MagicMock
+
+    context = MagicMock(args=[])
+    update = _make_update(text="/help", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.help_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "/guide" in sent
+    assert "정보 제공" in sent
+    assert "엔터테인먼트" not in sent
+
+
+@pytest.mark.asyncio
+async def test_signal_502_error_message_improved(monkeypatch):
+    """502 에러 응답이 구체화된 메시지 포함."""
+    from sajucandle import handlers
+    from sajucandle.api_client import ApiError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        raise ApiError(502, "chart data unavailable")
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["BTCUSDT"])
+    update = _make_update(text="/signal BTCUSDT", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "시장 데이터" in sent or "Binance" in sent or "yfinance" in sent
+
+
+@pytest.mark.asyncio
+async def test_signal_503_error_message(monkeypatch):
+    from sajucandle import handlers
+    from sajucandle.api_client import ApiError
+    from unittest.mock import AsyncMock, MagicMock
+
+    async def fake_get_signal(chat_id, ticker="BTCUSDT", date=None):
+        raise ApiError(503, "db down")
+
+    monkeypatch.setattr(handlers, "_api_client",
+                        MagicMock(get_signal=fake_get_signal))
+    context = MagicMock(args=["BTCUSDT"])
+    update = _make_update(text="/signal BTCUSDT", chat_id=42)
+    update.message.reply_text = AsyncMock()
+
+    await handlers.signal_command(update, context)
+    sent = update.message.reply_text.call_args[0][0]
+    assert "점검" in sent or "503" in sent

@@ -9,6 +9,7 @@ from telegram.ext import Application, CommandHandler
 
 from sajucandle.handlers import (
     forget_command,
+    guide_command,
     help_command,
     me_command,
     score_command,
@@ -49,6 +50,7 @@ def main() -> None:
     app.add_handler(CommandHandler("unwatch", unwatch_command))
     app.add_handler(CommandHandler("watchlist", watchlist_command))
     app.add_handler(CommandHandler("stats", stats_command))
+    app.add_handler(CommandHandler("guide", guide_command))
 
     logging.info("SajuCandle bot starting (polling mode)...")
     app.run_polling()

@@ -262,10 +262,14 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         )
         return
     except httpx.TimeoutException:
-        await update.message.reply_text("서버 응답이 느립니다. 잠시 후 다시.")
+        await update.message.reply_text(
+            "⏱️ 서버 응답 지연 (타임아웃). 잠시 후 다시 시도하세요."
+        )
         return
     except httpx.TransportError:
-        await update.message.reply_text("서버에 연결할 수 없습니다.")
+        await update.message.reply_text(
+            "🔌 네트워크 연결 실패. 인터넷 상태 확인 후 재시도."
+        )
         return
     except ApiError as e:
         if e.status == 400 and "unsupported" in (e.detail or "").lower():
@@ -274,12 +278,26 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
                 f"/signal list 로 지원 심볼을 확인하세요."
             )
         elif e.status == 502:
-            await update.message.reply_text("시장 데이터 일시 불능. 잠시 후 다시.")
+            await update.message.reply_text(
+                "📉 시장 데이터 소스 일시 불가 (Binance/yfinance). "
+                "1~2분 후 재시도."
+            )
+        elif e.status == 503:
+            await update.message.reply_text(
+                "🛠️ 일시 점검 중. 잠시 후 다시 시도하세요."
+            )
+        elif e.status >= 500:
+            logger.warning(
+                "signal api error chat_id=%s status=%s", chat_id, e.status
+            )
+            await update.message.reply_text(
+                f"⚠️ 서버 오류 ({e.status}). 지속되면 관리자에게 문의."
+            )
         else:
             logger.warning(
                 "signal api error chat_id=%s status=%s", chat_id, e.status
             )
-            await update.message.reply_text(f"서버 오류 ({e.status}).")
+            await update.message.reply_text(f"요청 오류 ({e.status}).")
         return
     except Exception:
         logger.exception("signal_command unexpected error chat_id=%s", chat_id)
@@ -726,6 +744,45 @@ def _format_stats_card(stats: dict) -> str:
     return "\n".join(lines)
 
 
+_GUIDE_TEXT = """📖 사주캔들 가이드
+─────────────
+
+[등급]
+🔥 강진입: 점수 75+ AND 3TF 정렬 AND 상승추세
+👍 진입: 점수 60+ AND 우호 구조
+😐 관망: 점수 40-59 또는 하락추세
+🛑 회피: 점수 40 미만
+
+[구조]
+상승추세 (HH-HL): 지속 매수 유리
+하락추세 (LH-LL): 매수 불리, 관망
+횡보 (박스): 레벨 반응 대기
+상승 돌파: 추세 전환 가능성
+하락 이탈: 지지선 붕괴, 약세
+
+[정렬 (1d/4h/1h)]
+↑↑↑ 강정렬: 상위 TF 일관된 방향
+↑→↓ 혼조: TF 간 불일치, 리스크↑
+
+[세팅 블록 (진입 등급만)]
+진입 = 현재가
+손절 = 리스크 시작선
+익절1/2 = 부분 익절 가격
+R:R = 손실 1 대비 기대 수익
+리스크 = 진입~손절 거리 %
+
+계좌의 1~2%만 리스크로 배팅 권장.
+
+※ 정보 제공 목적. 투자 판단과 손실 책임은 본인에게 있습니다."""
+
+
+async def guide_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """`/guide`. 카드 해석법."""
+    if update.message is None:
+        return
+    await update.message.reply_text(_GUIDE_TEXT)
+
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """`/help`. 명령어 목록."""
     if update.message is None:
@@ -741,8 +798,9 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         "/watch <심볼> — 관심 종목 추가 (최대 5개)\n"
         "/unwatch <심볼> — 관심 종목 제거\n"
         "/watchlist — 내 관심 종목 + 매일 07:00 자동 시그널\n"
+        "/guide — 카드 해석법 (등급/구조/세팅)\n"
         "/me — 등록된 정보 확인\n"
         "/forget — 내 정보 삭제\n"
         "/help — 이 도움말\n"
-        "\n※ 엔터테인먼트 목적. 투자 추천 아님."
+        f"\n※ {DISCLAIMER}"
     )

@@ -442,3 +442,105 @@ def test_week9_sr_levels_always_in_response():
     resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
     assert resp.analysis is not None
     assert isinstance(resp.analysis.sr_levels, list)
+
+
+# ─────────────────────────────────────────────
+# Week 10 Phase 2: DOWNTREND/BREAKDOWN 진입 차단
+# ─────────────────────────────────────────────
+
+
+def test_week10_downtrend_entry_downgraded_to_gwanmang():
+    """DOWNTREND 구조에서는 점수 65여도 '관망'으로 강등."""
+    from sajucandle.analysis.composite import AnalysisResult
+    from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
+    from sajucandle.analysis.multi_timeframe import Alignment
+    from sajucandle.analysis.timeframe import TrendDirection
+    from sajucandle.signal_service import _grade_signal
+
+    analysis = AnalysisResult(
+        structure=StructureAnalysis(
+            state=MarketStructure.DOWNTREND,
+            last_high=None, last_low=None, score=20,
+        ),
+        alignment=Alignment(
+            tf_1h=TrendDirection.DOWN, tf_4h=TrendDirection.DOWN,
+            tf_1d=TrendDirection.DOWN, aligned=True,
+            bias="bearish", score=10,
+        ),
+        rsi_1h=40.0, volume_ratio_1d=1.0,
+        composite_score=65, reason="...",
+    )
+    grade = _grade_signal(65, analysis)
+    assert grade == "관망"
+
+
+def test_week10_breakdown_entry_downgraded_to_gwanmang():
+    """BREAKDOWN 구조에서도 진입 차단."""
+    from sajucandle.analysis.composite import AnalysisResult
+    from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
+    from sajucandle.analysis.multi_timeframe import Alignment
+    from sajucandle.analysis.timeframe import TrendDirection
+    from sajucandle.signal_service import _grade_signal
+
+    analysis = AnalysisResult(
+        structure=StructureAnalysis(
+            state=MarketStructure.BREAKDOWN,
+            last_high=None, last_low=None, score=30,
+        ),
+        alignment=Alignment(
+            tf_1h=TrendDirection.DOWN, tf_4h=TrendDirection.FLAT,
+            tf_1d=TrendDirection.UP, aligned=False,
+            bias="mixed", score=50,
+        ),
+        rsi_1h=55.0, volume_ratio_1d=1.2,
+        composite_score=68, reason="...",
+    )
+    assert _grade_signal(68, analysis) == "관망"
+
+
+def test_week10_uptrend_entry_stays_entry():
+    """UPTREND + score 65는 '진입' 유지 (회귀 확인)."""
+    from sajucandle.analysis.composite import AnalysisResult
+    from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
+    from sajucandle.analysis.multi_timeframe import Alignment
+    from sajucandle.analysis.timeframe import TrendDirection
+    from sajucandle.signal_service import _grade_signal
+
+    analysis = AnalysisResult(
+        structure=StructureAnalysis(
+            state=MarketStructure.UPTREND,
+            last_high=None, last_low=None, score=70,
+        ),
+        alignment=Alignment(
+            tf_1h=TrendDirection.UP, tf_4h=TrendDirection.UP,
+            tf_1d=TrendDirection.UP, aligned=True,
+            bias="bullish", score=90,
+        ),
+        rsi_1h=45.0, volume_ratio_1d=1.3,
+        composite_score=65, reason="...",
+    )
+    assert _grade_signal(65, analysis) == "진입"
+
+
+def test_week10_range_entry_stays_entry():
+    """RANGE는 차단 안 함 (DOWNTREND/BREAKDOWN만)."""
+    from sajucandle.analysis.composite import AnalysisResult
+    from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
+    from sajucandle.analysis.multi_timeframe import Alignment
+    from sajucandle.analysis.timeframe import TrendDirection
+    from sajucandle.signal_service import _grade_signal
+
+    analysis = AnalysisResult(
+        structure=StructureAnalysis(
+            state=MarketStructure.RANGE,
+            last_high=None, last_low=None, score=50,
+        ),
+        alignment=Alignment(
+            tf_1h=TrendDirection.FLAT, tf_4h=TrendDirection.UP,
+            tf_1d=TrendDirection.FLAT, aligned=False,
+            bias="bullish", score=60,
+        ),
+        rsi_1h=50.0, volume_ratio_1d=1.0,
+        composite_score=62, reason="...",
+    )
+    assert _grade_signal(62, analysis) == "진입"
