@@ -596,3 +596,47 @@ MFE/MAE 평균 (n=15):
 - 카드 세밀 조정 (이모지/정렬) — 실사용 피드백 기반
 - 등급 임계값 재조정 — MFE/MAE 누적 후 Week 11 백테스트
 - Rate limiting — 사용자 수 증가 후
+
+---
+
+## Phase 1: 백테스트 하네스
+
+운영 시그널이 쌓이는 시간 없이 **과거 OHLCV로 analyze() + _grade_signal() 재생산**하고, 등급별 승률/MFE/MAE를 즉시 확인할 수 있는 인프라.
+
+### 새 패키지
+`src/sajucandle/backtest/` — 9개 모듈 (cli, history, slicer, engine, tracker, saju_stub, aggregate, ...).
+
+### 새 명령
+```
+# 백테스트 실행 (결과는 signal_log에 source='backtest' + run_id로 저장)
+python -m sajucandle.backtest run --ticker BTCUSDT --from 2024-04-01 --to 2026-04-01 --run-id phase1-7681adb-baseline
+
+# 집계 결과 확인
+python -m sajucandle.backtest aggregate --run-id phase1-7681adb-baseline
+python -m sajucandle.backtest aggregate --run-id phase1-7681adb-baseline --json
+```
+
+### 출력 예시
+
+```
+Run: phase1-7681adb-baseline
+grade        n    win%  avg_mfe  avg_mae  rr_tp1
+------------------------------------------------
+강진입      12    83.3   +4.20%   -1.80%    1.50
+진입        48    58.3   +2.10%   -2.50%    1.40
+관망       410    45.1   +1.20%   -2.00%      -
+회피       150    30.0   +0.50%   -3.20%      -
+```
+
+### 새 SQL 컬럼 (migration 005)
+`signal_log.run_id TEXT NULL` — 운영 signal은 NULL 유지.
+
+### 서비스 코드 변경
+- `repositories.insert_signal_log`: `run_id` Optional 파라미터 추가 (백테스트만 사용)
+- `repositories.aggregate_signal_stats`: `run_id` 필터 — 기본 `run_id IS NULL`로 운영만 집계 (백테스트 오염 방지)
+- `api.py::admin_signal_stats_endpoint`: `run_id` query param 전달
+
+### Phase 2~4 활용
+- Phase 2: 숏 대칭 구현 후 `phase2-long-only` vs `phase2-symmetric` run 비교
+- Phase 3: RSI divergence 전/후 run 비교
+- Phase 4: 가중치/임계값 grid 튜닝
