@@ -53,3 +53,24 @@ def test_stats_rejects_bad_since(client):
         headers=HEADERS,
     )
     assert r.status_code == 400
+
+
+def test_stats_endpoint_run_id_param(client):
+    """?run_id=... 전달 시 aggregate_signal_stats에 반영."""
+    r = client.get(
+        "/v1/admin/signal-stats",
+        params={"run_id": "phase1-test-endpoint"},
+        headers=HEADERS,
+    )
+    assert r.status_code == 200
+    body = r.json()
+    # 빈 결과라도 필터 응답에 run_id 반영
+    assert body["filters"]["run_id"] == "phase1-test-endpoint"
+
+
+def test_stats_endpoint_run_id_null_default(client):
+    """run_id 미지정 기본 None → 응답 filters.run_id null."""
+    r = client.get("/v1/admin/signal-stats", headers=HEADERS)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["filters"]["run_id"] is None

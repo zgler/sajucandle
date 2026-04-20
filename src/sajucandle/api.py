@@ -476,6 +476,7 @@ def create_app(
         ticker: Optional[str] = None,
         grade: Optional[str] = None,
         since: Optional[str] = None,
+        run_id: Optional[str] = None,
         x_sajucandle_key: Optional[str] = Header(default=None),
     ):
         """Week 10: signal_log 집계 관측 도구."""
@@ -494,7 +495,7 @@ def create_app(
 
         async with db.acquire() as conn:
             stats = await repositories.aggregate_signal_stats(
-                conn, since=since_dt, ticker=ticker, grade=grade
+                conn, since=since_dt, ticker=ticker, grade=grade, run_id=run_id
             )
 
         logger.info(
@@ -504,7 +505,7 @@ def create_app(
 
         return {
             "since": since_dt.isoformat(),
-            "filters": {"ticker": ticker, "grade": grade},
+            "filters": {"ticker": ticker, "grade": grade, "run_id": run_id},
             "total": stats["total"],
             "by_grade": stats["by_grade"],
             "tracking": {
