@@ -19,7 +19,7 @@ class VolumeNode:
 def compute_volume_profile(
     klines: list[Kline],
     bucket_count: int = 20,
-    top_n: int = 3,
+    top_n: int = 5,
 ) -> list[VolumeNode]:
     """가격 범위를 bucket_count 등분 → 각 bucket 거래량 합 → 상위 top_n.
 
