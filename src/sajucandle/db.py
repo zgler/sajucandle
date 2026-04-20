@@ -16,13 +16,28 @@ logger = logging.getLogger(__name__)
 _pool: Optional[asyncpg.Pool] = None
 
 
-async def connect(dsn: str, min_size: int = 1, max_size: int = 5) -> None:
-    """Pool 생성. 이미 열려있으면 no-op."""
+async def connect(
+    dsn: str,
+    min_size: int = 1,
+    max_size: int = 5,
+    statement_cache_size: Optional[int] = None,
+) -> None:
+    """Pool 생성. 이미 열려있으면 no-op.
+
+    statement_cache_size: None=asyncpg 기본값(1024). Supabase transaction
+    pooler(port 6543)는 prepared statement 미지원이므로 이 경우 0 권장.
+    """
     global _pool
     if _pool is not None:
         return
-    _pool = await asyncpg.create_pool(dsn, min_size=min_size, max_size=max_size)
-    logger.info("asyncpg pool ready (min=%d max=%d)", min_size, max_size)
+    kwargs: dict = {"min_size": min_size, "max_size": max_size}
+    if statement_cache_size is not None:
+        kwargs["statement_cache_size"] = statement_cache_size
+    _pool = await asyncpg.create_pool(dsn, **kwargs)
+    logger.info(
+        "asyncpg pool ready (min=%d max=%d stmt_cache=%s)",
+        min_size, max_size, statement_cache_size,
+    )
 
 
 async def close() -> None:

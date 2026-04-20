@@ -81,7 +81,9 @@ async def _run_cmd(args: argparse.Namespace) -> int:
     if not dsn:
         print("ERROR: DATABASE_URL 또는 TEST_DATABASE_URL 환경변수 필요", file=sys.stderr)
         return 1
-    await db.connect(dsn)
+    # Supabase transaction pooler(6543) 호환을 위해 prepared statement 비활성.
+    # Session pooler(5432)에서도 안전 (단지 성능 미세 손실).
+    await db.connect(dsn, statement_cache_size=0)
 
     try:
         summary = await run_backtest(
@@ -110,7 +112,9 @@ async def _aggregate_cmd(args: argparse.Namespace) -> int:
     if not dsn:
         print("ERROR: DATABASE_URL 필요", file=sys.stderr)
         return 1
-    await db.connect(dsn)
+    # Supabase transaction pooler(6543) 호환을 위해 prepared statement 비활성.
+    # Session pooler(5432)에서도 안전 (단지 성능 미세 손실).
+    await db.connect(dsn, statement_cache_size=0)
     try:
         async with db.acquire() as conn:
             stats = await aggregate_run(conn, run_id=args.run_id)
