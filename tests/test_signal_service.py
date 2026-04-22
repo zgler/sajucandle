@@ -87,21 +87,23 @@ def _make_router(fake_client) -> MarketRouter:
 # ─────────────────────────────────────────────
 
 def _make_aligned_uptrend_analysis():
-    """강진입 조건을 만족하는 aligned+uptrend AnalysisResult stub."""
+    """강진입_L 조건을 만족하는 aligned+uptrend+bullish+LONG AnalysisResult stub."""
     from unittest.mock import MagicMock
     from sajucandle.analysis.structure import MarketStructure
 
     a = MagicMock()
     a.alignment.aligned = True
+    a.alignment.bias = "bullish"
     a.structure.state = MarketStructure.UPTREND
+    a.direction = "LONG"
     return a
 
 
 @pytest.mark.parametrize("score,expected", [
-    (100, "강진입"), (75, "강진입"),
-    (74, "진입"), (60, "진입"),
+    (100, "강진입_L"), (75, "강진입_L"),
+    (74, "진입_L"), (60, "진입_L"),
     (59, "관망"), (40, "관망"),
-    (39, "회피"), (0, "회피"),
+    (39, "관망"), (0, "관망"),   # Phase 2: "회피" 제거
 ])
 def test_grade_boundaries(score, expected):
     analysis = _make_aligned_uptrend_analysis()
@@ -125,7 +127,9 @@ def test_compute_basic_response_shape():
     assert resp.ticker == "BTCUSDT"
     assert resp.date == "2026-04-16"
     assert 0 <= resp.composite_score <= 100
-    assert resp.signal_grade in {"강진입", "진입", "관망", "회피"}
+    assert resp.signal_grade in {
+        "강진입_L", "진입_L", "관망", "진입_S", "강진입_S",
+    }
     assert 0 <= resp.saju.composite <= 100
     assert 0 <= resp.chart.score <= 100
     assert "RSI" in resp.chart.reason
@@ -449,8 +453,8 @@ def test_week9_sr_levels_always_in_response():
 # ─────────────────────────────────────────────
 
 
-def test_week10_downtrend_entry_downgraded_to_gwanmang():
-    """DOWNTREND 구조에서는 점수 65여도 '관망'으로 강등."""
+def test_week10_downtrend_with_short_direction_is_short_entry():
+    """Phase 2: DOWNTREND + SHORT direction → 진입_S (숏 진입)."""
     from sajucandle.analysis.composite import AnalysisResult
     from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
     from sajucandle.analysis.multi_timeframe import Alignment
@@ -461,21 +465,24 @@ def test_week10_downtrend_entry_downgraded_to_gwanmang():
         structure=StructureAnalysis(
             state=MarketStructure.DOWNTREND,
             last_high=None, last_low=None, score=20,
+            long_score=20, short_score=80,
         ),
         alignment=Alignment(
             tf_1h=TrendDirection.DOWN, tf_4h=TrendDirection.DOWN,
             tf_1d=TrendDirection.DOWN, aligned=True,
             bias="bearish", score=10,
+            long_score=10, short_score=90,
         ),
         rsi_1h=40.0, volume_ratio_1d=1.0,
         composite_score=65, reason="...",
+        long_score=25, short_score=65,
+        direction="SHORT",
     )
-    grade = _grade_signal(65, analysis)
-    assert grade == "관망"
+    assert _grade_signal(65, analysis) == "진입_S"
 
 
-def test_week10_breakdown_entry_downgraded_to_gwanmang():
-    """BREAKDOWN 구조에서도 진입 차단."""
+def test_week10_breakdown_with_short_direction_is_short_entry():
+    """BREAKDOWN + SHORT direction → 진입_S."""
     from sajucandle.analysis.composite import AnalysisResult
     from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
     from sajucandle.analysis.multi_timeframe import Alignment
@@ -486,20 +493,24 @@ def test_week10_breakdown_entry_downgraded_to_gwanmang():
         structure=StructureAnalysis(
             state=MarketStructure.BREAKDOWN,
             last_high=None, last_low=None, score=30,
+            long_score=30, short_score=70,
         ),
         alignment=Alignment(
             tf_1h=TrendDirection.DOWN, tf_4h=TrendDirection.FLAT,
             tf_1d=TrendDirection.UP, aligned=False,
             bias="mixed", score=50,
+            long_score=50, short_score=50,
         ),
         rsi_1h=55.0, volume_ratio_1d=1.2,
         composite_score=68, reason="...",
+        long_score=40, short_score=68,
+        direction="SHORT",
     )
-    assert _grade_signal(68, analysis) == "관망"
+    assert _grade_signal(68, analysis) == "진입_S"
 
 
-def test_week10_uptrend_entry_stays_entry():
-    """UPTREND + score 65는 '진입' 유지 (회귀 확인)."""
+def test_week10_uptrend_long_entry_stays_entry_long():
+    """UPTREND + score 65는 '진입_L' 유지 (회귀 확인)."""
     from sajucandle.analysis.composite import AnalysisResult
     from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
     from sajucandle.analysis.multi_timeframe import Alignment
@@ -510,20 +521,24 @@ def test_week10_uptrend_entry_stays_entry():
         structure=StructureAnalysis(
             state=MarketStructure.UPTREND,
             last_high=None, last_low=None, score=70,
+            long_score=70, short_score=20,
         ),
         alignment=Alignment(
             tf_1h=TrendDirection.UP, tf_4h=TrendDirection.UP,
             tf_1d=TrendDirection.UP, aligned=True,
             bias="bullish", score=90,
+            long_score=90, short_score=10,
         ),
         rsi_1h=45.0, volume_ratio_1d=1.3,
         composite_score=65, reason="...",
+        long_score=65, short_score=20,
+        direction="LONG",
     )
-    assert _grade_signal(65, analysis) == "진입"
+    assert _grade_signal(65, analysis) == "진입_L"
 
 
-def test_week10_range_entry_stays_entry():
-    """RANGE는 차단 안 함 (DOWNTREND/BREAKDOWN만)."""
+def test_week10_range_forces_neutral():
+    """Phase 2: RANGE 구조는 direction/score 무관 관망 강제."""
     from sajucandle.analysis.composite import AnalysisResult
     from sajucandle.analysis.structure import MarketStructure, StructureAnalysis
     from sajucandle.analysis.multi_timeframe import Alignment
@@ -534,13 +549,186 @@ def test_week10_range_entry_stays_entry():
         structure=StructureAnalysis(
             state=MarketStructure.RANGE,
             last_high=None, last_low=None, score=50,
+            long_score=50, short_score=50,
         ),
         alignment=Alignment(
             tf_1h=TrendDirection.FLAT, tf_4h=TrendDirection.UP,
             tf_1d=TrendDirection.FLAT, aligned=False,
             bias="bullish", score=60,
+            long_score=60, short_score=40,
         ),
         rsi_1h=50.0, volume_ratio_1d=1.0,
         composite_score=62, reason="...",
+        long_score=55, short_score=45,
+        direction="LONG",   # RANGE면 direction 무시
     )
-    assert _grade_signal(62, analysis) == "진입"
+    assert _grade_signal(62, analysis) == "관망"
+
+
+# ─────────────────────────────────────────────
+# Phase 2: 5등급 + direction 조합
+# ─────────────────────────────────────────────
+
+
+def _make_analysis(
+    state,
+    direction,
+    bias="bullish",
+    aligned=True,
+    long_score=70,
+    short_score=20,
+):
+    from sajucandle.analysis.composite import AnalysisResult
+    from sajucandle.analysis.structure import StructureAnalysis
+    from sajucandle.analysis.multi_timeframe import Alignment
+    from sajucandle.analysis.timeframe import TrendDirection
+
+    return AnalysisResult(
+        structure=StructureAnalysis(
+            state=state, last_high=None, last_low=None,
+            score=long_score, long_score=long_score, short_score=short_score,
+        ),
+        alignment=Alignment(
+            tf_1h=TrendDirection.UP, tf_4h=TrendDirection.UP,
+            tf_1d=TrendDirection.UP, aligned=aligned, bias=bias,
+            score=long_score, long_score=long_score, short_score=short_score,
+        ),
+        rsi_1h=50.0, volume_ratio_1d=1.0,
+        composite_score=max(long_score, short_score), reason="...",
+        long_score=long_score, short_score=short_score,
+        direction=direction,
+    )
+
+
+def test_phase2_strong_long_grade():
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.signal_service import _grade_signal
+
+    a = _make_analysis(
+        state=MarketStructure.UPTREND, direction="LONG",
+        bias="bullish", aligned=True,
+        long_score=85, short_score=15,
+    )
+    assert _grade_signal(85, a) == "강진입_L"
+
+
+def test_phase2_strong_short_grade():
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.signal_service import _grade_signal
+
+    a = _make_analysis(
+        state=MarketStructure.DOWNTREND, direction="SHORT",
+        bias="bearish", aligned=True,
+        long_score=15, short_score=85,
+    )
+    assert _grade_signal(85, a) == "강진입_S"
+
+
+def test_phase2_long_entry_fallback_when_not_aligned():
+    """LONG + score≥75 이지만 aligned=False → 강진입_L 조건 미충족 → 진입_L."""
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.signal_service import _grade_signal
+
+    a = _make_analysis(
+        state=MarketStructure.UPTREND, direction="LONG",
+        bias="bullish", aligned=False,
+        long_score=78, short_score=20,
+    )
+    assert _grade_signal(78, a) == "진입_L"
+
+
+def test_phase2_short_entry_fallback_when_breakout_not_breakdown():
+    """SHORT + score≥75 + bullish bias → 강진입_S 조건 미충족 → 진입_S."""
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.signal_service import _grade_signal
+
+    a = _make_analysis(
+        state=MarketStructure.BREAKDOWN, direction="SHORT",
+        bias="mixed", aligned=False,    # 조건 불충족
+        long_score=25, short_score=80,
+    )
+    assert _grade_signal(80, a) == "진입_S"
+
+
+def test_phase2_neutral_direction_always_gwanmang():
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.signal_service import _grade_signal
+
+    a = _make_analysis(
+        state=MarketStructure.UPTREND, direction="NEUTRAL",
+        long_score=72, short_score=68,
+    )
+    assert _grade_signal(72, a) == "관망"
+
+
+def test_phase2_no_avoid_grade_returned():
+    """'회피' 등급이 절대 반환되지 않음 (invariant)."""
+    from sajucandle.analysis.structure import MarketStructure
+    from sajucandle.signal_service import _grade_signal
+
+    for state in [
+        MarketStructure.UPTREND,
+        MarketStructure.DOWNTREND,
+        MarketStructure.RANGE,
+        MarketStructure.BREAKOUT,
+        MarketStructure.BREAKDOWN,
+    ]:
+        for direction in ("LONG", "SHORT", "NEUTRAL"):
+            for score in (0, 30, 59, 60, 74, 75, 100):
+                a = _make_analysis(
+                    state=state, direction=direction,
+                    long_score=score if direction != "SHORT" else 100 - score,
+                    short_score=score if direction == "SHORT" else 100 - score,
+                )
+                grade = _grade_signal(score, a)
+                assert grade != "회피"
+                assert grade in {
+                    "강진입_L", "진입_L", "관망", "진입_S", "강진입_S",
+                }
+
+
+def test_phase2_short_trade_setup_direction_propagated():
+    """compute 내부: SHORT 등급 → TradeSetup.direction=SHORT."""
+    from sajucandle.signal_service import SignalService
+    from unittest.mock import MagicMock
+
+    # 숏 시나리오 합성 히스토리 (하락)
+    dn_1h = [100 - i * 0.2 for i in range(200)]
+    dn_4h = [100 - i * 0.3 for i in range(100)]
+    dn_1d = [100 - i * 0.5 for i in range(100)]
+
+    def _klines_from(closes):
+        return [
+            Kline(
+                open_time=datetime(2026, 2, 1, tzinfo=timezone.utc),
+                open=c, high=c + 0.5, low=c - 0.5, close=c,
+                volume=1000.0,
+            )
+            for c in closes
+        ]
+
+    fake = MagicMock()
+    fake.fetch_klines = lambda s, interval, limit: (
+        _klines_from(dn_1d) if interval == "1d"
+        else _klines_from(dn_4h) if interval == "4h"
+        else _klines_from(dn_1h)
+    )
+    fake.is_market_open = lambda s: True
+    fake.last_session_date = lambda s: date(2026, 4, 16)
+    router = MarketRouter(binance=fake, yfinance=fake)
+
+    engine = CachedSajuEngine(cache=BaziCache(redis_client=None))
+    score_svc = ScoreService(engine=engine, redis_client=None)
+    svc = SignalService(score_service=score_svc, market_router=router, redis_client=None)
+
+    resp = svc.compute(_profile(), date(2026, 4, 16), "BTCUSDT")
+    # 하락장에서 숏 direction + 진입_S or 강진입_S 기대
+    assert resp.analysis is not None
+    if resp.signal_grade in ("진입_S", "강진입_S"):
+        assert resp.analysis.direction == "SHORT"
+        assert resp.analysis.trade_setup is not None
+        assert resp.analysis.trade_setup.direction == "SHORT"
+        assert resp.analysis.trade_setup.stop_loss > resp.analysis.trade_setup.entry
+        assert (
+            resp.analysis.trade_setup.take_profit_1 < resp.analysis.trade_setup.entry
+        )

@@ -40,32 +40,47 @@ logger = logging.getLogger(__name__)
 _SIGNAL_TTL = 300
 
 
-def _grade_signal(score: int, analysis: AnalysisResult) -> str:
-    """등급 판정.
+_SCORE_THRESHOLD_STRONG = 75
+_SCORE_THRESHOLD_ENTRY = 60
 
-    - 강진입: score>=75 + 정렬 aligned + UPTREND/BREAKOUT
-    - 진입: score>=60 (단 DOWNTREND/BREAKDOWN이면 관망으로 강등)
-    - 관망: score>=40
-    - 회피: 그 외
+
+def _grade_signal(score: int, analysis: AnalysisResult) -> str:
+    """Phase 2 5등급 판정.
+
+    반환: "강진입_L" | "진입_L" | "관망" | "진입_S" | "강진입_S"
+
+    로직:
+      - RANGE 구조 → 항상 관망
+      - direction == NEUTRAL → 관망
+      - score < 60 → 관망
+      - LONG + score>=75 + aligned + bullish + UPTREND/BREAKOUT → 강진입_L
+      - LONG + score>=60 → 진입_L
+      - SHORT + score>=75 + aligned + bearish + DOWNTREND/BREAKDOWN → 강진입_S
+      - SHORT + score>=60 → 진입_S
     """
     state = analysis.structure.state
+    direction = analysis.direction
 
-    # 강진입 (Week 8)
-    if (score >= 75
-            and analysis.alignment.aligned
-            and state in (MarketStructure.UPTREND, MarketStructure.BREAKOUT)):
-        return "강진입"
-
-    # Week 10 Phase 2: 하락/이탈 구조에서 진입 차단
-    if state in (MarketStructure.DOWNTREND, MarketStructure.BREAKDOWN):
-        if score >= 60:
-            return "관망"
-
-    if score >= 60:
-        return "진입"
-    if score >= 40:
+    if state == MarketStructure.RANGE:
         return "관망"
-    return "회피"
+    if direction == "NEUTRAL" or score < _SCORE_THRESHOLD_ENTRY:
+        return "관망"
+
+    if direction == "LONG":
+        if (score >= _SCORE_THRESHOLD_STRONG
+                and analysis.alignment.aligned
+                and analysis.alignment.bias == "bullish"
+                and state in (MarketStructure.UPTREND, MarketStructure.BREAKOUT)):
+            return "강진입_L"
+        return "진입_L"
+
+    # SHORT
+    if (score >= _SCORE_THRESHOLD_STRONG
+            and analysis.alignment.aligned
+            and analysis.alignment.bias == "bearish"
+            and state in (MarketStructure.DOWNTREND, MarketStructure.BREAKDOWN)):
+        return "강진입_S"
+    return "진입_S"
 
 
 def _analysis_to_summary(
@@ -93,6 +108,7 @@ def _analysis_to_summary(
             sl_basis=trade_setup.sl_basis,
             tp1_basis=trade_setup.tp1_basis,
             tp2_basis=trade_setup.tp2_basis,
+            direction=trade_setup.direction,
         )
     return AnalysisSummary(
         structure=StructureSummary(
@@ -113,6 +129,9 @@ def _analysis_to_summary(
         reason=a.reason,
         sr_levels=sr_summaries,
         trade_setup=ts_summary,
+        direction=a.direction,
+        long_score=a.long_score,
+        short_score=a.short_score,
     )
 
 
@@ -163,13 +182,16 @@ class SignalService:
         final = max(0, min(100, final))
         grade = _grade_signal(final, analysis)
 
-        # Week 9: TradeSetup 조건부 생성
+        # Phase 2: 5등급 중 진입 4종에서 TradeSetup 생성 (direction 전달)
         trade_setup: Optional[TradeSetup] = None
-        if grade in ("강진입", "진입") and analysis.atr_1d > 0:
+        if (grade in ("강진입_L", "진입_L", "강진입_S", "진입_S")
+                and analysis.atr_1d > 0
+                and analysis.direction in ("LONG", "SHORT")):
             trade_setup = compute_trade_setup(
                 entry=current,
                 atr_1d=analysis.atr_1d,
                 sr_levels=analysis.sr_levels,
+                direction=analysis.direction,
             )
 
         from sajucandle.market.router import _CRYPTO_SYMBOLS
@@ -185,6 +207,13 @@ class SignalService:
         # ma_trend 매핑 (하위호환 ChartSummary용)
         tf_1d_value = analysis.alignment.tf_1d.value
         ma_trend_map = {"up": "up", "down": "down", "flat": "flat"}
+
+        logger.info(
+            "signal ok chat_id=%s ticker=%s composite=%d grade=%s "
+            "direction=%s long=%d short=%d",
+            profile.telegram_chat_id, ticker, final, grade,
+            analysis.direction, analysis.long_score, analysis.short_score,
+        )
 
         resp = SignalResponse(
             chat_id=profile.telegram_chat_id,
