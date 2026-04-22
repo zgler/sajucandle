@@ -313,7 +313,7 @@ async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 def _append_trade_setup_block(lines: list, ts: dict) -> None:
-    """진입/강진입 등급에 '세팅' 블록 삽입."""
+    """진입/강진입 등급에 '세팅' 블록 삽입. Phase 2: 롱/숏 방향 분기."""
     entry = ts["entry"]
     sl = ts["stop_loss"]
     tp1 = ts["take_profit_1"]
@@ -321,13 +321,15 @@ def _append_trade_setup_block(lines: list, ts: dict) -> None:
     risk = ts["risk_pct"]
     rr1 = ts["rr_tp1"]
     rr2 = ts["rr_tp2"]
+    direction = ts.get("direction") or "LONG"   # 레거시 row는 LONG 가정
 
     sl_pct = (sl - entry) / entry * 100 if entry else 0.0
     tp1_pct = (tp1 - entry) / entry * 100 if entry else 0.0
     tp2_pct = (tp2 - entry) / entry * 100 if entry else 0.0
 
+    label = "세팅 (숏):" if direction == "SHORT" else "세팅 (롱):"
     lines.append("")
-    lines.append("세팅:")
+    lines.append(label)
     lines.append(f" 진입 ${entry:,.2f}")
     lines.append(f" 손절 ${sl:,.2f} ({sl_pct:+.1f}%)")
     lines.append(
@@ -371,6 +373,19 @@ _STRUCTURE_LABEL = {
 }
 
 _TF_ARROW_UI = {"up": "↑", "down": "↓", "flat": "→"}
+
+# Phase 2: 5등급 라벨 + 레거시 4등급 호환 매핑
+_GRADE_LABEL = {
+    "강진입_L": "🔥 강진입 (롱)",
+    "진입_L":   "🟢 진입 (롱)",
+    "관망":     "🟡 관망",
+    "진입_S":   "🔴 진입 (숏)",
+    "강진입_S": "🧊 강진입 (숏)",
+    # 레거시 호환 (Phase 0~1 운영 row)
+    "강진입":   "🔥 강진입 (롱)",
+    "진입":     "🟢 진입 (롱)",
+    "회피":     "🟡 관망",
+}
 
 
 def _format_signal_card(data: dict) -> str:
@@ -433,18 +448,22 @@ def _format_signal_card(data: dict) -> str:
         vr = analysis.get("volume_ratio_1d", 1.0)
         lines.append(f"진입조건: RSI(1h) {rsi_v:.0f} · 거래량 {vr:.1f}x")
 
-        # Week 9: 등급별 블록
+        # Phase 2: 5등급 + TradeSetup 블록 (진입_L/진입_S/강진입_L/강진입_S)
         grade = data.get("signal_grade", "")
         ts = analysis.get("trade_setup")
         sr_levels = analysis.get("sr_levels") or []
 
-        if grade in ("강진입", "진입") and ts:
+        entry_grades = ("강진입_L", "진입_L", "강진입_S", "진입_S",
+                        "강진입", "진입")   # 뒤 2개 레거시 호환
+        if grade in entry_grades and ts:
             _append_trade_setup_block(lines, ts)
         elif sr_levels:
             _append_sr_levels_block(lines, sr_levels)
 
     lines.append("")
-    lines.append(f"종합: {data['composite_score']:>3} | {data['signal_grade']}")
+    grade = data.get("signal_grade", "")
+    grade_label = _GRADE_LABEL.get(grade, grade)
+    lines.append(f"종합: {data['composite_score']:>3} | {grade_label}")
     lines.append(f"사주: {saju['composite']:>3} ({saju['grade']})")
 
     if data.get("best_hours"):
@@ -692,6 +711,7 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 def _format_stats_card(stats: dict) -> str:
     total = stats.get("total", 0)
     by_grade = stats.get("by_grade") or {}
+    by_direction = stats.get("by_direction") or {}
     tracking = stats.get("tracking") or {}
     mfe_mae = stats.get("mfe_mae") or {}
     filters = stats.get("filters") or {}
@@ -717,10 +737,28 @@ def _format_stats_card(stats: dict) -> str:
 
     lines.append("")
     lines.append("등급별:")
-    for grade_name in ["강진입", "진입", "관망", "회피"]:
+    # Phase 2 5등급 + 레거시 4등급을 모두 지원. 비어있지 않은 항목만 노출.
+    grade_order = [
+        "강진입_L", "진입_L", "관망", "진입_S", "강진입_S",
+        "강진입", "진입", "회피",  # legacy
+    ]
+    for grade_name in grade_order:
         cnt = by_grade.get(grade_name, 0)
         if cnt > 0:
-            lines.append(f"  {grade_name:<4}  {cnt}건")
+            label = _GRADE_LABEL.get(grade_name, grade_name)
+            lines.append(f"  {label}  {cnt}건")
+
+    # 방향별 (Phase 2)
+    if by_direction:
+        lines.append("")
+        lines.append("방향별:")
+        long_cnt = by_direction.get("LONG", 0)
+        short_cnt = by_direction.get("SHORT", 0)
+        neutral_cnt = by_direction.get("NEUTRAL", 0)
+        lines.append(
+            f"  🟢 LONG {long_cnt}건 · 🔴 SHORT {short_cnt}건 · "
+            f"🟡 NEUTRAL {neutral_cnt}건"
+        )
 
     completed = tracking.get("completed", 0)
     pct = int(completed / total * 100) if total > 0 else 0
@@ -747,31 +785,33 @@ def _format_stats_card(stats: dict) -> str:
 _GUIDE_TEXT = """📖 사주캔들 가이드
 ─────────────
 
-[등급]
-🔥 강진입: 점수 75+ AND 3TF 정렬 AND 상승추세
-👍 진입: 점수 60+ AND 우호 구조
-😐 관망: 점수 40-59 또는 하락추세
-🛑 회피: 점수 40 미만
+[등급] (Phase 2: 양방향 5등급)
+🔥 강진입 (롱): 점수 75+ AND 3TF 정렬 AND 상승추세
+🟢 진입 (롱):  점수 60+ AND LONG 우세
+🟡 관망:       점수 60 미만 또는 방향 애매 / 박스권
+🔴 진입 (숏):  점수 60+ AND SHORT 우세
+🧊 강진입 (숏): 점수 75+ AND 3TF 정렬 AND 하락추세
 
 [구조]
-상승추세 (HH-HL): 지속 매수 유리
-하락추세 (LH-LL): 매수 불리, 관망
-횡보 (박스): 레벨 반응 대기
-상승 돌파: 추세 전환 가능성
-하락 이탈: 지지선 붕괴, 약세
+상승추세 (HH-HL): 롱 우호
+하락추세 (LH-LL): 숏 우호
+횡보 (박스): 레벨 반응 대기 → 항상 관망
+상승 돌파: 롱 추세 전환 가능성
+하락 이탈: 숏 추세 전환 가능성
 
 [정렬 (1d/4h/1h)]
-↑↑↑ 강정렬: 상위 TF 일관된 방향
+↑↑↑ 강정렬(롱): 상위 TF 일관 상승
+↓↓↓ 강정렬(숏): 상위 TF 일관 하락
 ↑→↓ 혼조: TF 간 불일치, 리스크↑
 
 [세팅 블록 (진입 등급만)]
-진입 = 현재가
-손절 = 리스크 시작선
-익절1/2 = 부분 익절 가격
+롱: 진입<익절 · 진입>손절
+숏: 진입>익절 · 진입<손절 (방향 반전)
 R:R = 손실 1 대비 기대 수익
 리스크 = 진입~손절 거리 %
 
 계좌의 1~2%만 리스크로 배팅 권장.
+숏 실행 = 현물 매도 or 선물/옵션 (계좌 유형에 따라 가능 여부 확인).
 
 ※ 정보 제공 목적. 투자 판단과 손실 책임은 본인에게 있습니다."""
 

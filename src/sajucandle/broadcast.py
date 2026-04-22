@@ -156,6 +156,9 @@ def format_watchlist_summary(signals: list[dict], target_date) -> Optional[str]:
         t = _short_ticker(s["ticker"])
         score = s.get("composite_score", 0)
         grade = s.get("signal_grade", "")
+        # Phase 2: 5등급 라벨 적용 (레거시 4등급은 자동 매핑)
+        from sajucandle.handlers import _GRADE_LABEL
+        grade_label = _GRADE_LABEL.get(grade, grade)
         price = s.get("price", {})
         cur = price.get("current", 0.0)
         pct = price.get("change_pct_24h", 0.0)
@@ -165,7 +168,7 @@ def format_watchlist_summary(signals: list[dict], target_date) -> Optional[str]:
         if status.get("category") == "us_stock" and not status.get("is_open"):
             clock = "  🕐"
         lines.append(
-            f"[{t}] {score:>3} {grade}  ${cur:,.2f}  ({sign}{pct:.2f}%){clock}"
+            f"[{t}] {score:>3} {grade_label}  ${cur:,.2f}  ({sign}{pct:.2f}%){clock}"
         )
     lines.append("")
     lines.append("상세: /signal <심볼>")
