@@ -1,27 +1,47 @@
 """Analysis 조합기: swing → structure + multi TF → composite_score.
 
-Weights:
-  composite = 0.45 * structure.score
-            + 0.35 * alignment.score
-            + 0.10 * rsi_score (1h RSI)
-            + 0.10 * volume_score (1d volume_ratio)
+Phase 2: long_score/short_score 양방향 산출 + direction 결정.
+
+Weights (각 방향):
+  *_score = 0.45 * structure.*_score
+          + 0.35 * alignment.*_score
+          + 0.10 * rsi_*_score  (1h RSI)
+          + 0.10 * volume_score (1d volume_ratio, 방향 중립)
+
+composite_score = max(long_score, short_score)  (하위호환)
+
+direction:
+  - RANGE 구조 → 항상 NEUTRAL
+  - |long - short| < δ(=10) → NEUTRAL
+  - long > short + δ → LONG
+  - short > long + δ → SHORT
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Literal
 
 from sajucandle.analysis.multi_timeframe import Alignment, compute_alignment
-from sajucandle.analysis.structure import StructureAnalysis, classify_structure
+from sajucandle.analysis.structure import (
+    MarketStructure,
+    StructureAnalysis,
+    classify_structure,
+)
 from sajucandle.analysis.support_resistance import SRLevel, identify_sr_levels
 from sajucandle.analysis.swing import _atr, detect_swings
 from sajucandle.analysis.timeframe import TrendDirection
 from sajucandle.market_data import Kline
 from sajucandle.tech_analysis import (
     _rsi_score,
+    _rsi_score_short,
     _volume_score,
     rsi,
     volume_ratio,
 )
+
+SignalDirection = Literal["LONG", "SHORT", "NEUTRAL"]
+
+_DIRECTION_MARGIN = 10  # δ: |long - short| < δ → NEUTRAL
 
 _TF_ARROW = {
     TrendDirection.UP: "↑",
@@ -41,6 +61,10 @@ class AnalysisResult:
     # Week 9
     sr_levels: list[SRLevel] = field(default_factory=list)
     atr_1d: float = 0.0
+    # Phase 2
+    long_score: int = 0
+    short_score: int = 0
+    direction: SignalDirection = "NEUTRAL"
 
 
 def _safe_rsi(klines: list[Kline], period: int = 14) -> float:
@@ -61,6 +85,25 @@ def _safe_vol_ratio(klines: list[Kline], lookback: int = 20) -> float:
         return 1.0
 
 
+def _decide_direction(
+    state: MarketStructure,
+    long_score: int,
+    short_score: int,
+    swings_detected: bool,
+) -> SignalDirection:
+    """RANGE(의도적 박스권, swings 존재) → NEUTRAL 강제.
+
+    swings 미감지로 RANGE 폴백된 경우엔 alignment 기반 보정 점수로 방향 판정.
+    """
+    if state == MarketStructure.RANGE and swings_detected:
+        return "NEUTRAL"
+    if long_score - short_score >= _DIRECTION_MARGIN:
+        return "LONG"
+    if short_score - long_score >= _DIRECTION_MARGIN:
+        return "SHORT"
+    return "NEUTRAL"
+
+
 def analyze(
     klines_1h: list[Kline],
     klines_4h: list[Kline],
@@ -79,22 +122,36 @@ def analyze(
     rsi_1h = _safe_rsi(klines_1h, 14)
     vr_1d = _safe_vol_ratio(klines_1d, 20)
 
-    rsi_score_ = _rsi_score(rsi_1h)
+    rsi_long_score = _rsi_score(rsi_1h)
+    rsi_short_score = _rsi_score_short(rsi_1h)
     vol_score_ = _volume_score(vr_1d)
 
-    # 스윙이 감지되지 않아 구조가 RANGE로 폴백된 경우: alignment 방향으로 structure score 보정
-    structure_score = structure.score
+    # 스윙이 감지되지 않아 구조가 RANGE로 폴백된 경우: alignment 방향으로 보정
+    struct_long = structure.long_score
+    struct_short = structure.short_score
     if not swings:
-        # alignment score를 50% 반영하여 방향성 보정 (완전한 스윙 없이도 추세 반영)
-        structure_score = round(0.5 * structure.score + 0.5 * alignment.score)
+        struct_long = round(0.5 * struct_long + 0.5 * alignment.long_score)
+        struct_short = round(0.5 * struct_short + 0.5 * alignment.short_score)
 
-    composite = round(
-        0.45 * structure_score
-        + 0.35 * alignment.score
-        + 0.10 * rsi_score_
+    long_score = round(
+        0.45 * struct_long
+        + 0.35 * alignment.long_score
+        + 0.10 * rsi_long_score
         + 0.10 * vol_score_
     )
-    composite = max(0, min(100, composite))
+    short_score = round(
+        0.45 * struct_short
+        + 0.35 * alignment.short_score
+        + 0.10 * rsi_short_score
+        + 0.10 * vol_score_
+    )
+    long_score = max(0, min(100, long_score))
+    short_score = max(0, min(100, short_score))
+
+    direction = _decide_direction(
+        structure.state, long_score, short_score, swings_detected=bool(swings)
+    )
+    composite = max(long_score, short_score)
 
     tf_str = (
         f"1d{_TF_ARROW[alignment.tf_1d]} "
@@ -128,4 +185,7 @@ def analyze(
         reason=reason,
         sr_levels=sr_levels,
         atr_1d=atr_1d_value,
+        long_score=long_score,
+        short_score=short_score,
+        direction=direction,
     )
