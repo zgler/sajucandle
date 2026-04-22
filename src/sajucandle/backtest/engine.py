@@ -1,7 +1,10 @@
-"""Phase 1 백테스트 엔진.
+"""Phase 1/2 백테스트 엔진.
 
 매일 1회 UTC 종가 시점에 analyze + grade + trade_setup + MFE/MAE 계산 →
 signal_log에 source='backtest' + run_id로 기록.
+
+Phase 2: mode="longonly"|"symmetric" 지원. longonly는 엔진 출력 필터 방식 —
+숏 등급을 '관망'으로 후처리 매핑하고 direction=NEUTRAL 저장.
 """
 from __future__ import annotations
 
@@ -9,7 +12,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Awaitable, Callable, Optional
+from typing import Awaitable, Callable, Literal, Optional
 
 from sajucandle.analysis.composite import analyze
 from sajucandle.analysis.trade_setup import compute_trade_setup
@@ -23,6 +26,8 @@ from sajucandle import repositories
 
 logger = logging.getLogger(__name__)
 
+SymmetryMode = Literal["longonly", "symmetric"]
+
 
 @dataclass
 class BacktestSummary:
@@ -33,6 +38,20 @@ class BacktestSummary:
     signals_total: int = 0
     signals_by_grade: dict[str, int] = field(default_factory=dict)
     insert_errors: int = 0
+
+
+def _apply_longonly_filter(grade: str, direction: str) -> tuple[str, str]:
+    """longonly 모드: 숏 등급 + SHORT direction을 관망+NEUTRAL로 매핑.
+
+    symmetric 모드와 동일 analyze 결과에서 LONG 사이드는 완전 보존 → 회귀 0.
+    SHORT direction은 grade가 '관망'이든 진입이든 무조건 NEUTRAL 로 스트립
+    (Phase 1 호환: SHORT direction이 DB에 남지 않아야 함).
+    """
+    if grade in ("진입_S", "강진입_S"):
+        return "관망", "NEUTRAL"
+    if direction == "SHORT":
+        return grade, "NEUTRAL"
+    return grade, direction
 
 
 async def run_backtest(
@@ -47,6 +66,7 @@ async def run_backtest(
     cache_dir: Optional[Path] = None,
     insert_log_fn: Optional[Callable[..., Awaitable[int]]] = None,
     history_override: Optional[TickerHistory] = None,
+    mode: SymmetryMode = "symmetric",
 ) -> BacktestSummary:
     """Phase 1 백테스트 엔트리.
 
@@ -101,12 +121,21 @@ async def run_backtest(
             final = max(0, min(100, final))
 
             grade = _grade_signal(final, analysis)
+            direction = analysis.direction
+
+            # Phase 2 longonly 모드: 숏 등급 매핑
+            if mode == "longonly":
+                grade, direction = _apply_longonly_filter(grade, direction)
 
             ts = None
-            if grade in ("강진입", "진입") and analysis.atr_1d > 0:
+            entry_grades = ("강진입_L", "진입_L", "강진입_S", "진입_S")
+            if (grade in entry_grades
+                    and analysis.atr_1d > 0
+                    and direction in ("LONG", "SHORT")):
                 ts = compute_trade_setup(
                     entry=current, atr_1d=analysis.atr_1d,
                     sr_levels=analysis.sr_levels,
+                    direction=direction,
                 )
 
             # MFE/MAE
@@ -155,7 +184,7 @@ async def run_backtest(
                     tp1_basis=ts.tp1_basis if ts else None,
                     tp2_basis=ts.tp2_basis if ts else None,
                     run_id=run_id,
-                    signal_direction=analysis.direction,
+                    signal_direction=direction,
                 )
                 # 주의: MFE/MAE는 별도 update_signal_tracking 호출로 기록해야 한다.
                 # Phase 1 최소 구현은 insert 시점에서 mfe_mae는 이미 계산됐으므로

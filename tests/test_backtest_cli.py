@@ -43,3 +43,35 @@ def test_parse_aggregate_json_flag():
 def test_parse_aggregate_text_default():
     args = _parse_args(["aggregate", "--run-id", "r1"])
     assert args.json is False
+
+
+# Phase 2: --mode 옵션 + run_id 자동 생성 규칙
+
+def test_parse_run_mode_default_symmetric():
+    args = _parse_args(["run", "--ticker", "BTCUSDT",
+                         "--from", "2026-01-01", "--to", "2026-04-01"])
+    assert args.mode == "symmetric"
+
+
+def test_parse_run_mode_longonly():
+    args = _parse_args(["run", "--ticker", "BTCUSDT",
+                         "--from", "2026-01-01", "--to", "2026-04-01",
+                         "--mode", "longonly"])
+    assert args.mode == "longonly"
+
+
+def test_parse_run_mode_invalid_rejected():
+    with pytest.raises(SystemExit):
+        _parse_args(["run", "--ticker", "BTCUSDT",
+                     "--from", "2026-01-01", "--to", "2026-04-01",
+                     "--mode", "bogus"])
+
+
+def test_default_run_id_phase2_prefix():
+    from sajucandle.backtest.cli import _default_run_id
+    sym = _default_run_id(mode="symmetric")
+    lon = _default_run_id(mode="longonly")
+    assert sym.startswith("phase2-")
+    assert "-symmetric-" in sym
+    assert lon.startswith("phase2-")
+    assert "-longonly-" in lon

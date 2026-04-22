@@ -32,10 +32,15 @@ def _short_sha() -> str:
         return "unknown"
 
 
-def _default_run_id(label: str = "auto") -> str:
+def _default_run_id(label: str = "auto", mode: str = "symmetric") -> str:
+    """Phase 2 run_id 컨벤션: phase2-<sha7>-<mode>-<date>.
+
+    mode="symmetric" — Phase 2 기본 (숏 신호 포함)
+    mode="longonly" — Phase 1 호환 (숏 신호 '관망'으로 스트립)
+    """
     sha = _short_sha()
     today = datetime.now(timezone.utc).strftime("%Y%m%d")
-    return f"phase1-{sha}-{label}-{today}"
+    return f"phase2-{sha}-{mode}-{today}"
 
 
 def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
@@ -58,6 +63,12 @@ def _parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
                         help="백테스트 run 식별자. 미지정 시 자동 생성")
     run_p.add_argument("--cache-dir", default=".cache/backtest",
                         help="OHLCV 디스크 캐시 경로")
+    run_p.add_argument(
+        "--mode",
+        choices=["longonly", "symmetric"],
+        default="symmetric",
+        help="신호 모드. symmetric(기본)=양방향, longonly=Phase 1 호환(숏 스트립)",
+    )
 
     # aggregate
     agg_p = sub.add_parser("aggregate", help="run별 집계 결과")
@@ -73,7 +84,8 @@ async def _run_cmd(args: argparse.Namespace) -> int:
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
 
-    run_id = args.run_id or _default_run_id(label="auto")
+    mode = getattr(args, "mode", "symmetric")
+    run_id = args.run_id or _default_run_id(label="auto", mode=mode)
     router = MarketRouter(binance=BinanceClient(), yfinance=YFinanceClient())
 
     # DB 연결
@@ -93,6 +105,7 @@ async def _run_cmd(args: argparse.Namespace) -> int:
             run_id=run_id,
             router=router,
             cache_dir=Path(args.cache_dir),
+            mode=mode,
         )
         print(f"\nBacktest done — run_id={summary.run_id}")
         print(f"  ticker={summary.ticker}")
