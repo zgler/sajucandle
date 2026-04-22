@@ -98,6 +98,19 @@ def _rsi_score(rsi_value: float) -> int:
     return 20
 
 
+def _rsi_score_short(rsi_value: float) -> int:
+    """RSI → 0~100 (숏 관점). 과매수(높은 RSI)가 매도 기회로 점수 높음."""
+    if rsi_value >= 70:
+        return 70
+    if rsi_value >= 55:
+        return 55
+    if rsi_value >= 45:
+        return 50
+    if rsi_value >= 30:
+        return 40
+    return 20
+
+
 def _ma_score_and_trend(ma20_v: float, ma50_v: float) -> tuple[int, str]:
     """MA20/MA50 비교 → (점수, trend)."""
     if ma50_v == 0:

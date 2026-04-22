@@ -5,6 +5,8 @@ import pytest
 
 from sajucandle.tech_analysis import (
     ChartScoreBreakdown,
+    _rsi_score,
+    _rsi_score_short,
     rsi,
     score_chart,
     sma,
@@ -194,3 +196,52 @@ def test_score_chart_insufficient_closes_raises():
 def test_score_chart_insufficient_volumes_raises():
     with pytest.raises(ValueError):
         score_chart([100.0] * 55, [50.0] * 15)  # volumes < 21
+
+
+# ─────────────────────────────────────────────
+# Phase 2: _rsi_score_short 대칭
+# ─────────────────────────────────────────────
+
+def test_rsi_score_short_oversold_low():
+    # RSI 20 (과매도) → 숏 관점에서 불리 → 20
+    assert _rsi_score_short(20) == 20
+    assert _rsi_score_short(29.9) == 20
+
+
+def test_rsi_score_short_weak_low():
+    # 30~44 구간
+    assert _rsi_score_short(30) == 40
+    assert _rsi_score_short(44.9) == 40
+
+
+def test_rsi_score_short_neutral():
+    # 45~54 구간
+    assert _rsi_score_short(45) == 50
+    assert _rsi_score_short(50) == 50
+    assert _rsi_score_short(54.9) == 50
+
+
+def test_rsi_score_short_weak_high():
+    # 55~69 구간
+    assert _rsi_score_short(55) == 55
+    assert _rsi_score_short(69.9) == 55
+
+
+def test_rsi_score_short_overbought():
+    # 과매수(높은 RSI) → 숏 가점 → 70
+    assert _rsi_score_short(70) == 70
+    assert _rsi_score_short(80) == 70
+    assert _rsi_score_short(100) == 70
+
+
+def test_rsi_score_long_short_complementary():
+    """대칭 sanity: extreme에서 반대 방향 스코어."""
+    # 과매도: 롱 가점 70, 숏 감점 20
+    assert _rsi_score(25) == 70
+    assert _rsi_score_short(25) == 20
+    # 과매수: 롱 감점 20, 숏 가점 70
+    assert _rsi_score(80) == 20
+    assert _rsi_score_short(80) == 70
+    # 중립: 둘 다 50
+    assert _rsi_score(50) == 50
+    assert _rsi_score_short(50) == 50
