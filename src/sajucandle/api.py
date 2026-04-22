@@ -508,6 +508,7 @@ def create_app(
             "filters": {"ticker": ticker, "grade": grade, "run_id": run_id},
             "total": stats["total"],
             "by_grade": stats["by_grade"],
+            "by_direction": stats["by_direction"],
             "tracking": {
                 "completed": stats["tracking_completed"],
                 "pending": stats["tracking_pending"],

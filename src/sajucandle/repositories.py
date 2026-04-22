@@ -402,6 +402,31 @@ async def aggregate_signal_stats(
     )
     by_grade = {r["signal_grade"]: int(r["cnt"]) for r in by_grade_rows}
 
+    # Phase 2: by_direction 집계 (COALESCE로 레거시 grade→direction 매핑)
+    by_direction_rows = await conn.fetch(
+        f"""
+        SELECT
+            COALESCE(
+                signal_direction,
+                CASE signal_grade
+                    WHEN '강진입' THEN 'LONG'
+                    WHEN '진입' THEN 'LONG'
+                    WHEN '강진입_L' THEN 'LONG'
+                    WHEN '진입_L' THEN 'LONG'
+                    WHEN '강진입_S' THEN 'SHORT'
+                    WHEN '진입_S' THEN 'SHORT'
+                    ELSE 'NEUTRAL'
+                END
+            ) AS direction,
+            COUNT(*) AS cnt
+        FROM signal_log
+        WHERE {where}
+        GROUP BY direction
+        """,
+        *params,
+    )
+    by_direction = {r["direction"]: int(r["cnt"]) for r in by_direction_rows}
+
     tracking_row = await conn.fetchrow(
         f"SELECT "
         f"  COUNT(*) FILTER (WHERE tracking_done) AS done, "
@@ -432,6 +457,7 @@ async def aggregate_signal_stats(
     return {
         "total": total,
         "by_grade": by_grade,
+        "by_direction": by_direction,
         "tracking_completed": tracking_completed,
         "tracking_pending": tracking_pending,
         "sample_size": sample_size,

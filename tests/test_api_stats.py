@@ -42,6 +42,7 @@ def test_stats_empty_returns_zero(client):
     body = r.json()
     assert "total" in body
     assert "by_grade" in body
+    assert "by_direction" in body
     assert "tracking" in body
     assert "mfe_mae" in body
 

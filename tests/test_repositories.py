@@ -692,3 +692,43 @@ async def test_insert_signal_log_all_three_directions(db_conn):
         "SELECT signal_direction FROM signal_log WHERE ticker LIKE 'T_%'"
     )
     assert sorted(r["signal_direction"] for r in rows) == ["LONG", "NEUTRAL", "SHORT"]
+
+
+async def test_aggregate_by_direction_maps_legacy_grades(db_conn):
+    """레거시 row (signal_direction=NULL) + 신규 row (direction 있음) 혼합 집계."""
+    from datetime import datetime, timezone, timedelta
+    await _register_user(db_conn, 700001)
+    now = datetime.now(timezone.utc)
+
+    # 레거시 '강진입' → LONG 매핑 기대
+    await insert_signal_log(
+        db_conn, source="ondemand", telegram_chat_id=700001,
+        ticker="BTCUSDT", target_date=(now - timedelta(days=3)).date(),
+        entry_price=100.0, saju_score=50, analysis_score=80,
+        structure_state="uptrend", alignment_bias="bullish",
+        rsi_1h=60.0, volume_ratio_1d=1.2,
+        composite_score=80, signal_grade="강진입",
+    )
+    # 레거시 '관망' → NEUTRAL 매핑
+    await insert_signal_log(
+        db_conn, source="ondemand", telegram_chat_id=700001,
+        ticker="BTCUSDT", target_date=(now - timedelta(days=2)).date(),
+        entry_price=100.0, saju_score=50, analysis_score=50,
+        structure_state="range", alignment_bias="mixed",
+        rsi_1h=50.0, volume_ratio_1d=1.0,
+        composite_score=50, signal_grade="관망",
+    )
+    # 신규 SHORT
+    await insert_signal_log(
+        db_conn, source="ondemand", telegram_chat_id=700001,
+        ticker="BTCUSDT", target_date=(now - timedelta(days=1)).date(),
+        entry_price=100.0, saju_score=50, analysis_score=80,
+        structure_state="downtrend", alignment_bias="bearish",
+        rsi_1h=75.0, volume_ratio_1d=1.3,
+        composite_score=80, signal_grade="강진입_S",
+        signal_direction="SHORT",
+    )
+    stats = await aggregate_signal_stats(db_conn, since=now - timedelta(days=7))
+    assert stats["by_direction"]["LONG"] == 1
+    assert stats["by_direction"]["NEUTRAL"] == 1
+    assert stats["by_direction"]["SHORT"] == 1
