@@ -605,3 +605,90 @@ async def test_aggregate_signal_stats_with_run_id(db_conn):
     )
     assert stats["total"] == 1
     assert stats["by_grade"]["진입"] == 1
+
+
+# ─────────────────────────────────────────────
+# Phase 2: signal_direction
+# ─────────────────────────────────────────────
+
+
+async def test_insert_signal_log_with_signal_direction(db_conn):
+    await _register_user(db_conn, 600001)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand",
+        telegram_chat_id=600001,
+        ticker="BTCUSDT",
+        target_date=date(2026, 4, 22),
+        entry_price=70000.0,
+        saju_score=55,
+        analysis_score=72,
+        structure_state="downtrend",
+        alignment_bias="bearish",
+        rsi_1h=75.0,
+        volume_ratio_1d=1.3,
+        composite_score=70,
+        signal_grade="진입_S",
+        signal_direction="SHORT",
+    )
+    row = await db_conn.fetchrow(
+        "SELECT signal_direction, signal_grade FROM signal_log WHERE id = $1",
+        row_id,
+    )
+    assert row["signal_direction"] == "SHORT"
+    assert row["signal_grade"] == "진입_S"
+
+
+async def test_insert_signal_log_signal_direction_default_null(db_conn):
+    """기존 호출 (signal_direction 미지정) 하위호환 — NULL 저장."""
+    await _register_user(db_conn, 600002)
+    row_id = await insert_signal_log(
+        db_conn,
+        source="ondemand",
+        telegram_chat_id=600002,
+        ticker="AAPL",
+        target_date=date(2026, 4, 22),
+        entry_price=180.0,
+        saju_score=50,
+        analysis_score=50,
+        structure_state="range",
+        alignment_bias="mixed",
+        rsi_1h=None,
+        volume_ratio_1d=None,
+        composite_score=50,
+        signal_grade="관망",
+    )
+    row = await db_conn.fetchrow(
+        "SELECT signal_direction FROM signal_log WHERE id = $1", row_id
+    )
+    assert row["signal_direction"] is None
+
+
+async def test_insert_signal_log_all_three_directions(db_conn):
+    await _register_user(db_conn, 600003)
+    for direction, grade in (
+        ("LONG", "강진입_L"),
+        ("SHORT", "강진입_S"),
+        ("NEUTRAL", "관망"),
+    ):
+        await insert_signal_log(
+            db_conn,
+            source="backtest",
+            telegram_chat_id=None,
+            ticker=f"T_{direction}",
+            target_date=date(2026, 4, 22),
+            entry_price=100.0,
+            saju_score=50,
+            analysis_score=70,
+            structure_state="uptrend",
+            alignment_bias="bullish",
+            rsi_1h=60.0,
+            volume_ratio_1d=1.2,
+            composite_score=70,
+            signal_grade=grade,
+            signal_direction=direction,
+        )
+    rows = await db_conn.fetch(
+        "SELECT signal_direction FROM signal_log WHERE ticker LIKE 'T_%'"
+    )
+    assert sorted(r["signal_direction"] for r in rows) == ["LONG", "NEUTRAL", "SHORT"]

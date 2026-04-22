@@ -155,6 +155,7 @@ async def run_backtest(
                     tp1_basis=ts.tp1_basis if ts else None,
                     tp2_basis=ts.tp2_basis if ts else None,
                     run_id=run_id,
+                    signal_direction=analysis.direction,
                 )
                 # 주의: MFE/MAE는 별도 update_signal_tracking 호출로 기록해야 한다.
                 # Phase 1 최소 구현은 insert 시점에서 mfe_mae는 이미 계산됐으므로

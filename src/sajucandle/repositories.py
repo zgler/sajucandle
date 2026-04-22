@@ -238,6 +238,8 @@ async def insert_signal_log(
     tp2_basis: Optional[str] = None,
     # Phase 1
     run_id: Optional[str] = None,
+    # Phase 2
+    signal_direction: Optional[str] = None,
 ) -> int:
     """signal_log INSERT → id 반환."""
     row = await conn.fetchrow(
@@ -252,10 +254,10 @@ async def insert_signal_log(
             stop_loss, take_profit_1, take_profit_2,
             risk_pct, rr_tp1, rr_tp2,
             sl_basis, tp1_basis, tp2_basis,
-            run_id
+            run_id, signal_direction
         ) VALUES (
             $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13,
-            $14, $15, $16, $17, $18, $19, $20, $21, $22, $23
+            $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24
         ) RETURNING id
         """,
         source, telegram_chat_id,
@@ -267,7 +269,7 @@ async def insert_signal_log(
         stop_loss, take_profit_1, take_profit_2,
         risk_pct, rr_tp1, rr_tp2,
         sl_basis, tp1_basis, tp2_basis,
-        run_id,
+        run_id, signal_direction,
     )
     return int(row["id"])
 

@@ -596,6 +596,9 @@ def create_app(
                         sl_basis=ts.sl_basis if ts else None,
                         tp1_basis=ts.tp1_basis if ts else None,
                         tp2_basis=ts.tp2_basis if ts else None,
+                        signal_direction=(
+                            result.analysis.direction if result.analysis else None
+                        ),
                     )
         except Exception as e:
             logger.warning("signal_log insert failed chat_id=%s: %s", chat_id, e)
