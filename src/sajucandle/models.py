@@ -163,6 +163,9 @@ class SRLevelSummary(BaseModel):
     strength: Literal["low", "medium", "high"]
 
 
+SignalDirection = Literal["LONG", "SHORT", "NEUTRAL"]
+
+
 class TradeSetupSummary(BaseModel):
     entry: float
     stop_loss: float
@@ -174,6 +177,7 @@ class TradeSetupSummary(BaseModel):
     sl_basis: Literal["atr", "sr_snap"]
     tp1_basis: Literal["atr", "sr_snap"]
     tp2_basis: Literal["atr", "sr_snap"]
+    direction: Optional[SignalDirection] = None   # Phase 2 (default=None: 레거시 LONG)
 
 
 class AnalysisSummary(BaseModel):
@@ -187,6 +191,10 @@ class AnalysisSummary(BaseModel):
     # Week 9
     sr_levels: List[SRLevelSummary] = Field(default_factory=list)
     trade_setup: Optional[TradeSetupSummary] = None
+    # Phase 2: 방향 + 양방향 스코어 (Optional: 레거시 응답 호환)
+    direction: Optional[SignalDirection] = None
+    long_score: Optional[int] = Field(default=None, ge=0, le=100)
+    short_score: Optional[int] = Field(default=None, ge=0, le=100)
 
 
 class SignalResponse(BaseModel):
