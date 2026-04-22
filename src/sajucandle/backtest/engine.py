@@ -115,10 +115,10 @@ async def run_backtest(
                 entry_price=current, post_bars_1h=post, sent_at=t,
             )
 
-            tracking_done = (
-                len(post) > 0
-                and post[-1].open_time >= t + timedelta(days=7)
-            )
+            # 7일(168h)치 post_bars_1h가 full로 있으면 tracking 완료.
+            # post_bars_1h는 strict inequality (open_time < end)라 마지막 봉의
+            # open_time은 t+167h 근처. 개수로 판정이 가장 정확.
+            tracking_done = len(post) >= 168
 
             # insert
             insert_fn = insert_log_fn
