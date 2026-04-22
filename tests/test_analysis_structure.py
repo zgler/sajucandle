@@ -98,3 +98,77 @@ def test_classify_breakdown_from_uptrend():
     r = classify_structure(swings)
     assert r.state == MarketStructure.BREAKDOWN
     assert r.score <= 40
+
+
+# Phase 2: long_score / short_score 대칭
+
+def test_symmetric_scores_uptrend():
+    swings = [
+        _sp("low", 100, 0), _sp("high", 110, 5),
+        _sp("low", 105, 10), _sp("high", 120, 15),
+        _sp("low", 112, 20), _sp("high", 130, 25),
+    ]
+    r = classify_structure(swings)
+    assert r.state == MarketStructure.UPTREND
+    assert r.long_score == 70
+    assert r.short_score == 20
+
+
+def test_symmetric_scores_downtrend():
+    swings = [
+        _sp("high", 130, 0), _sp("low", 120, 5),
+        _sp("high", 125, 10), _sp("low", 115, 15),
+        _sp("high", 120, 20), _sp("low", 110, 25),
+    ]
+    r = classify_structure(swings)
+    assert r.state == MarketStructure.DOWNTREND
+    assert r.long_score == 20
+    assert r.short_score == 80
+
+
+def test_symmetric_scores_range_neutral():
+    """빈 swings → RANGE, long/short 모두 50."""
+    r = classify_structure([])
+    assert r.state == MarketStructure.RANGE
+    assert r.long_score == 50
+    assert r.short_score == 50
+
+
+def test_symmetric_scores_breakout():
+    swings = [
+        _sp("low", 100, 0), _sp("high", 110, 5),
+        _sp("low", 102, 10), _sp("high", 109, 15),
+        _sp("low", 103, 20), _sp("high", 120, 25),
+    ]
+    r = classify_structure(swings)
+    assert r.state == MarketStructure.BREAKOUT
+    assert r.long_score == 80
+    assert r.short_score == 15
+
+
+def test_symmetric_scores_breakdown():
+    swings = [
+        _sp("low", 100, 0), _sp("high", 110, 5),
+        _sp("low", 105, 10), _sp("high", 120, 15),
+        _sp("low", 100, 20),
+    ]
+    r = classify_structure(swings)
+    assert r.state == MarketStructure.BREAKDOWN
+    assert r.long_score == 30
+    assert r.short_score == 70
+
+
+def test_legacy_score_equals_long_score():
+    """score 필드는 항상 long_score와 동일 (하위호환 invariant)."""
+    cases = [
+        [],  # RANGE (empty)
+        [_sp("low", 100, 0), _sp("high", 110, 5),
+         _sp("low", 105, 10), _sp("high", 120, 15),
+         _sp("low", 112, 20), _sp("high", 130, 25)],  # UPTREND
+        [_sp("high", 130, 0), _sp("low", 120, 5),
+         _sp("high", 125, 10), _sp("low", 115, 15),
+         _sp("high", 120, 20), _sp("low", 110, 25)],  # DOWNTREND
+    ]
+    for swings in cases:
+        r = classify_structure(swings)
+        assert r.score == r.long_score

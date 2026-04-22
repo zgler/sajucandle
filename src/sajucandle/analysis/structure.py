@@ -25,15 +25,25 @@ class StructureAnalysis:
     state: MarketStructure
     last_high: Optional[SwingPoint]
     last_low: Optional[SwingPoint]
-    score: int   # 0~100
+    score: int          # 0~100 (== long_score, legacy 하위호환)
+    long_score: int = 0   # Phase 2: 롱 유리도
+    short_score: int = 0  # Phase 2: 숏 유리도
 
 
-_SCORE_MAP = {
+_LONG_SCORE_MAP = {
     MarketStructure.UPTREND: 70,
     MarketStructure.BREAKOUT: 80,
     MarketStructure.RANGE: 50,
     MarketStructure.BREAKDOWN: 30,
     MarketStructure.DOWNTREND: 20,
+}
+
+_SHORT_SCORE_MAP = {
+    MarketStructure.UPTREND: 20,
+    MarketStructure.BREAKOUT: 15,
+    MarketStructure.RANGE: 50,
+    MarketStructure.BREAKDOWN: 70,
+    MarketStructure.DOWNTREND: 80,
 }
 
 
@@ -52,7 +62,9 @@ def classify_structure(swings: list[SwingPoint]) -> StructureAnalysis:
         return StructureAnalysis(
             state=MarketStructure.RANGE,
             last_high=last_high, last_low=last_low,
-            score=_SCORE_MAP[MarketStructure.RANGE],
+            score=_LONG_SCORE_MAP[MarketStructure.RANGE],
+            long_score=_LONG_SCORE_MAP[MarketStructure.RANGE],
+            short_score=_SHORT_SCORE_MAP[MarketStructure.RANGE],
         )
 
     highs = [s for s in swings if s.kind == "high"]
@@ -93,9 +105,13 @@ def classify_structure(swings: list[SwingPoint]) -> StructureAnalysis:
     else:
         state = MarketStructure.RANGE
 
+    long_score = _LONG_SCORE_MAP[state]
+    short_score = _SHORT_SCORE_MAP[state]
     return StructureAnalysis(
         state=state,
         last_high=last_high,
         last_low=last_low,
-        score=_SCORE_MAP[state],
+        score=long_score,
+        long_score=long_score,
+        short_score=short_score,
     )
