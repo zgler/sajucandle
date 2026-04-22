@@ -20,7 +20,9 @@ class Alignment:
     tf_1d: TrendDirection
     aligned: bool
     bias: Literal["bullish", "mixed", "bearish"]
-    score: int
+    score: int          # legacy == long_score (하위호환)
+    long_score: int = 0   # Phase 2: 롱 유리도
+    short_score: int = 0  # Phase 2: 숏 유리도
 
 
 def compute_alignment(
@@ -46,13 +48,19 @@ def compute_alignment(
         bias = "mixed"
 
     diff = ups - downs    # -3..3
-    score = round((diff + 3) / 6 * 100)
+    long_score = round((diff + 3) / 6 * 100)
+    short_score = round((-diff + 3) / 6 * 100)
     if aligned and bias == "bullish":
-        score = max(score, 90)
+        long_score = max(long_score, 90)
+        short_score = min(short_score, 10)
     if aligned and bias == "bearish":
-        score = min(score, 10)
+        long_score = min(long_score, 10)
+        short_score = max(short_score, 90)
 
     return Alignment(
         tf_1h=t1h, tf_4h=t4h, tf_1d=t1d,
-        aligned=aligned, bias=bias, score=score,
+        aligned=aligned, bias=bias,
+        score=long_score,
+        long_score=long_score,
+        short_score=short_score,
     )

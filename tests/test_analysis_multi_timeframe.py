@@ -56,3 +56,37 @@ def test_score_range_0_to_100():
     flat = [100.0] * 60
     r = compute_alignment(_klines(flat), _klines(flat), _klines(flat))
     assert 0 <= r.score <= 100
+
+
+# Phase 2: long_score / short_score 대칭
+
+def test_symmetric_aligned_bullish():
+    up_series = [100 + i * 0.5 for i in range(60)]
+    r = compute_alignment(_klines(up_series), _klines(up_series), _klines(up_series))
+    assert r.long_score >= 90
+    assert r.short_score <= 10
+
+
+def test_symmetric_aligned_bearish():
+    dn_series = [100 - i * 0.5 for i in range(60)]
+    r = compute_alignment(_klines(dn_series), _klines(dn_series), _klines(dn_series))
+    assert r.long_score <= 10
+    assert r.short_score >= 90
+
+
+def test_symmetric_flat_neutral():
+    flat = [100.0] * 60
+    r = compute_alignment(_klines(flat), _klines(flat), _klines(flat))
+    # 3 FLAT → diff=0 → long=50, short=50
+    assert r.long_score == 50
+    assert r.short_score == 50
+
+
+def test_legacy_score_equals_long_score():
+    """score 필드는 long_score와 동일."""
+    up = [100 + i * 0.5 for i in range(60)]
+    dn = [100 - i * 0.5 for i in range(60)]
+    flat = [100.0] * 60
+    for k1, k2, k3 in [(up, up, up), (dn, dn, dn), (up, dn, flat), (flat, flat, flat)]:
+        r = compute_alignment(_klines(k1), _klines(k2), _klines(k3))
+        assert r.score == r.long_score
