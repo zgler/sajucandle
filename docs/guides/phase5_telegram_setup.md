@@ -8,35 +8,36 @@
 
 ## 한눈에 보는 단계
 
-1. Telegram 앱에서 **BotFather** 와 대화 → 봇 만들기 → **토큰** 받기
-2. Telegram 앱에서 **@userinfobot** 과 대화 → 내 **chat_id** 받기
-3. 내가 방금 만든 봇과 **한 번 대화 시작(`/start`)** ← 이걸 빼먹으면 403 에러
+1. Telegram에서 **BotFather** 와 대화 → 기존 **@sajucandle** 봇 토큰 받기
+2. Telegram에서 **@userinfobot** 과 대화 → 내 **chat_id** 받기
+3. **@sajucandle 봇과 한 번 대화 시작(`/start`)** ← 이걸 빼먹으면 403 에러
 4. 프로젝트 루트에 `.env` 파일 만들고 토큰/chat_id 입력
 5. 명령어 1줄 실행 → Telegram에 메시지 도착 확인
 
 ---
 
-## Step 1. 봇 만들기 (BotFather)
+## Step 1. 기존 @sajucandle 봇 토큰 가져오기 (BotFather)
+
+> 이미 `@sajucandle` 봇을 BotFather로 만들어두었음. 새로 만들 필요 없고 **토큰만 재확인**하면 됨.
+> 과거 `.env` 파일이나 비밀번호 매니저에 토큰이 있다면 그걸 써도 됩니다. 분실했으면 아래 절차로 재발급 받으세요.
 
 1. Telegram 앱에서 검색창에 `@BotFather` 입력
    - 프로필 사진에 **파란 체크마크(공식)** 가 있는 계정을 선택 (가짜 주의!)
-2. 대화창 열기 → 하단 `시작(START)` 버튼 누르기
-3. 메뉴에서 `/newbot` 입력 후 전송
-4. BotFather가 **봇 이름**을 물어봄
-   - 아무거나 입력 가능: 예) `사주캔들 신호봇`
-5. 다음으로 **봇 사용자명(username)** 을 물어봄
-   - 규칙: 반드시 `bot` 으로 끝나야 함. 전 세계에서 유일해야 함
-   - 예) `sajucandle_zgler_bot` (본인 ID 넣으면 안 겹침)
-6. 성공하면 다음 같은 메시지가 옴:
+2. 대화창 열기 → `/mybots` 전송
+3. 내 봇 목록이 나옴 → **`@sajucandle`** 클릭
+4. 메뉴에서 `API Token` 누르기
+5. 화면에 현재 토큰이 표시됨. 예:
    ```
-   Done! Congratulations on your new bot.
-   ...
-   Use this token to access the HTTP API:
+   You can use this token to access HTTP API:
    123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw
    ```
-   **이 토큰을 복사**. 이게 `TELEGRAM_BOT_TOKEN` 값입니다.
+   **이 토큰을 복사**. 이게 `TELEGRAM_BOT_TOKEN` 값.
 
-> ⚠️ **토큰은 비밀번호와 같음.** 카카오톡·GitHub·디스코드에 절대 붙여넣지 말 것. 유출 의심 시 BotFather에서 `/revoke` 로 즉시 무효화.
+### 토큰을 새로 발급받아야 한다면
+토큰이 유출됐거나 분실했으면 같은 메뉴에서 `Revoke current token` → 새 토큰 발급.
+**주의**: revoke 하면 기존 토큰은 즉시 무효화됨. 다른 곳에서 이 봇을 쓰고 있다면 모두 업데이트 필요.
+
+> ⚠️ **토큰은 비밀번호와 같음.** 카카오톡·GitHub·디스코드에 절대 붙여넣지 말 것. 유출 의심 시 즉시 `Revoke`.
 
 ---
 
@@ -54,13 +55,16 @@
 
 ---
 
-## Step 3. 내 봇과 대화 시작 (← 빼먹기 쉬움)
+## Step 3. @sajucandle 봇과 대화 시작 (← 빼먹기 쉬움)
 
 **중요**: Telegram Bot API는 **내가 먼저 봇에게 말을 건 적이 없으면** 메시지를 못 보냄 (403 Forbidden).
 
-1. Telegram 검색창에 Step 1에서 만든 **내 봇 username** 입력 (예: `@sajucandle_zgler_bot`)
-2. 내 봇 프로필 열기 → `시작(START)` 또는 `/start` 전송
+1. Telegram 검색창에 **`@sajucandle`** 입력 → 내 봇 선택
+2. 봇 프로필 열기 → `시작(START)` 또는 `/start` 전송
 3. 봇은 아직 응답 프로그램이 없어서 **아무 답도 안 옴** — 그래도 OK. "말 걸기"만 해두면 서버가 나를 수신자로 인식.
+
+> 과거 이 봇과 이미 대화한 적이 있으면 이 단계는 이미 통과된 상태. 그냥 Step 4로 넘어가도 됨.
+> 확실치 않으면 그냥 `/start` 다시 한 번 보내면 안전.
 
 ---
 
