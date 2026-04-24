@@ -1,0 +1,21 @@
+symbol,name,asset_class,market,sector,founding_date,founding_time,listing_date,listing_time,birth_city,transition_points_json,weight_founding,weight_listing,weight_transition,notes
+BTC-USD,Bitcoin,coin,onchain,L1,,,2009-01-03,18:15,London,"[{""date"":""2017-08-01"",""label"":""BCH 하드포크"",""time"":""12:37""},{""date"":""2024-01-11"",""label"":""현물 ETF 승인"",""time"":""16:00""}]",0.5,0.3,0.2,제네시스 블록 시각(UTC 18:15) 기준
+ETH-USD,Ethereum,coin,onchain,L1,2015-07-30,15:26,2015-08-07,00:00,London,"[{""date"":""2022-09-15"",""label"":""The Merge"",""time"":""06:42""}]",0.5,0.3,0.2,제네시스 블록 = 창립일
+SOL-USD,Solana,coin,onchain,L1,2020-03-16,00:00,2020-04-10,00:00,San Francisco,[],0.5,0.5,0,
+DOGE-USD,Dogecoin,coin,onchain,Meme,2013-12-06,00:00,2013-12-06,00:00,San Francisco,[],1.0,0,0,창립일=런칭일
+BNB-USD,BNB,coin,onchain,Exchange,2017-07-14,00:00,2017-07-25,00:00,Malta,[],0.5,0.5,0,
+XRP-USD,Ripple,coin,onchain,Payments,2012-06-02,00:00,2013-01-01,00:00,San Francisco,[],0.5,0.5,0,
+AVAX-USD,Avalanche,coin,onchain,L1,2020-09-21,00:00,2020-09-21,00:00,New York,[],1.0,0,0,
+LINK-USD,Chainlink,coin,onchain,Oracle,2017-09-19,00:00,2017-09-19,00:00,San Francisco,[],1.0,0,0,
+MATIC-USD,Polygon,coin,onchain,L2,2017-10-01,00:00,2019-04-26,00:00,Mumbai,[],0.5,0.5,0,
+ADA-USD,Cardano,coin,onchain,L1,2017-09-29,00:00,2017-10-01,00:00,Singapore,[],0.5,0.5,0,
+NVDA,NVIDIA Corp.,stock,NASDAQ,Technology,1993-04-05,00:00,1999-01-22,09:30,Santa Clara,"[{""date"":""2023-05-30"",""label"":""S&P500 편입 이후 AI 랠리 피크"",""time"":""09:30""}]",0.5,0.3,0.2,
+AAPL,Apple Inc.,stock,NASDAQ,Technology,1976-04-01,00:00,1980-12-12,09:30,Cupertino,[],0.6,0.4,0,
+MSFT,Microsoft Corp.,stock,NASDAQ,Technology,1975-04-04,00:00,1986-03-13,09:30,Redmond,[],0.6,0.4,0,
+GOOGL,Alphabet Inc.,stock,NASDAQ,Technology,1998-09-04,00:00,2004-08-19,09:30,Mountain View,[],0.6,0.4,0,
+AMZN,Amazon.com Inc.,stock,NASDAQ,Consumer,1994-07-05,00:00,1997-05-15,09:30,Seattle,[],0.6,0.4,0,
+TSLA,Tesla Inc.,stock,NASDAQ,Consumer,2003-07-01,00:00,2010-06-29,09:30,Austin,[],0.6,0.4,0,
+META,Meta Platforms,stock,NASDAQ,Technology,2004-02-04,00:00,2012-05-18,11:30,Menlo Park,[],0.6,0.4,0,
+BRK-B,Berkshire Hathaway,stock,NYSE,Finance,1839-01-01,00:00,1996-05-09,09:30,Omaha,[],0.3,0.7,0,창립 1839 맨해튼 제조업이 현재 지주회사 전 단계
+JPM,JPMorgan Chase,stock,NYSE,Finance,1799-09-01,00:00,1969-12-09,09:30,New York,[],0.3,0.7,0,
+XOM,ExxonMobil,stock,NYSE,Energy,1870-01-01,00:00,1972-01-01,09:30,Irving,[],0.3,0.7,0,

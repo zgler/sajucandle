@@ -33,8 +33,11 @@ Thumbs.db
 # Skyfield 천체력 (대용량, 재다운로드 가능)
 *.bsp
 
-# 데이터 캐시 (재생성 가능)
-data/
+# 데이터: 기본 ignore, 런타임 필수 항목만 예외 허용
+data/*
+!data/tickers/
+!data/manseryeok/
+!data/solar_terms/
 
 # 원본 로직 반입 폴더 (참고용, 커밋 제외)
 로직/
