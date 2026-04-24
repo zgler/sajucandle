@@ -1,0 +1,65 @@
+{
+  "config": {
+    "saju_weight": 0.1,
+    "scorer": "saju_score_v2",
+    "period": "2015-2024",
+    "universe": "stock_30"
+  },
+  "placebo": {
+    "real": {
+      "cagr": 0.0716,
+      "sharpe": 0.58,
+      "sortino": 0.8,
+      "mdd": -0.2378,
+      "hit_rate": 0.571,
+      "n_rebalances": 119,
+      "final_equity": 1.9852,
+      "avg_turnover": 0.32
+    },
+    "placebo_mean": {
+      "cagr": 0.1556,
+      "sharpe": 1.078,
+      "sortino": 1.831,
+      "hit_rate": 0.6277
+    },
+    "placebo_std": {
+      "cagr": 0.0183,
+      "sharpe": 0.1256,
+      "sortino": 0.2621,
+      "hit_rate": 0.0313
+    },
+    "zscore": {
+      "cagr": -4.59,
+      "sharpe": -3.97,
+      "sortino": -3.93,
+      "hit_rate": -1.81
+    },
+    "verdict": "fail",
+    "n_trials": 10,
+    "asset_class": "stock"
+  },
+  "shuffle": {
+    "real_sharpe": 0.58,
+    "shuffled_sharpes": [
+      1.03,
+      1.1,
+      1.13,
+      0.98,
+      1.04,
+      1.22,
+      1.18,
+      1.02,
+      1.09,
+      1.27
+    ],
+    "percentile": 0.0,
+    "verdict": "fail",
+    "n_trials": 10,
+    "asset_class": "stock"
+  },
+  "summary": {
+    "pass_count": 0,
+    "marginal_count": 0,
+    "verdict": "FAIL — 통계적 유의성 미확인. 필터 전용(0%) 설정 권장."
+  }
+}

@@ -1,0 +1,1824 @@
+{
+  "period": "2015-2024",
+  "regime_distribution": {
+    "2015-01-01": "sideways",
+    "2015-02-01": "sideways",
+    "2015-03-01": "sideways",
+    "2015-04-01": "sideways",
+    "2015-05-01": "sideways",
+    "2015-06-01": "sideways",
+    "2015-07-01": "sideways",
+    "2015-08-01": "sideways",
+    "2015-09-01": "bear",
+    "2015-10-01": "sideways",
+    "2015-11-01": "bull",
+    "2015-12-01": "sideways",
+    "2016-01-01": "sideways",
+    "2016-02-01": "bear",
+    "2016-03-01": "sideways",
+    "2016-04-01": "sideways",
+    "2016-05-01": "sideways",
+    "2016-06-01": "sideways",
+    "2016-07-01": "sideways",
+    "2016-08-01": "sideways",
+    "2016-09-01": "sideways",
+    "2016-10-01": "sideways",
+    "2016-11-01": "sideways",
+    "2016-12-01": "sideways",
+    "2017-01-01": "sideways",
+    "2017-02-01": "sideways",
+    "2017-03-01": "sideways",
+    "2017-04-01": "sideways",
+    "2017-05-01": "sideways",
+    "2017-06-01": "sideways",
+    "2017-07-01": "sideways",
+    "2017-08-01": "sideways",
+    "2017-09-01": "sideways",
+    "2017-10-01": "sideways",
+    "2017-11-01": "sideways",
+    "2017-12-01": "sideways",
+    "2018-01-01": "sideways",
+    "2018-02-01": "bull",
+    "2018-03-01": "bear",
+    "2018-04-01": "sideways",
+    "2018-05-01": "sideways",
+    "2018-06-01": "sideways",
+    "2018-07-01": "sideways",
+    "2018-08-01": "sideways",
+    "2018-09-01": "sideways",
+    "2018-10-01": "sideways",
+    "2018-11-01": "bear",
+    "2018-12-01": "sideways",
+    "2019-01-01": "bear",
+    "2019-02-01": "bull",
+    "2019-03-01": "bull",
+    "2019-04-01": "sideways",
+    "2019-05-01": "sideways",
+    "2019-06-01": "bear",
+    "2019-07-01": "bull",
+    "2019-08-01": "sideways",
+    "2019-09-01": "sideways",
+    "2019-10-01": "sideways",
+    "2019-11-01": "sideways",
+    "2019-12-01": "sideways",
+    "2020-01-01": "sideways",
+    "2020-02-01": "sideways",
+    "2020-03-01": "bear",
+    "2020-04-01": "bear",
+    "2020-05-01": "bull",
+    "2020-06-01": "bull",
+    "2020-07-01": "sideways",
+    "2020-08-01": "bull",
+    "2020-09-01": "bull",
+    "2020-10-01": "sideways",
+    "2020-11-01": "sideways",
+    "2020-12-01": "bull",
+    "2021-01-01": "sideways",
+    "2021-02-01": "sideways",
+    "2021-03-01": "bull",
+    "2021-04-01": "sideways",
+    "2021-05-01": "bull",
+    "2021-06-01": "sideways",
+    "2021-07-01": "sideways",
+    "2021-08-01": "sideways",
+    "2021-09-01": "sideways",
+    "2021-10-01": "sideways",
+    "2021-11-01": "bull",
+    "2021-12-01": "sideways",
+    "2022-01-01": "bull",
+    "2022-02-01": "sideways",
+    "2022-03-01": "sideways",
+    "2022-04-01": "bull",
+    "2022-05-01": "bear",
+    "2022-06-01": "sideways",
+    "2022-07-01": "bear",
+    "2022-08-01": "bull",
+    "2022-09-01": "sideways",
+    "2022-10-01": "bear",
+    "2022-11-01": "bull",
+    "2022-12-01": "bull",
+    "2023-01-01": "bear",
+    "2023-02-01": "bull",
+    "2023-03-01": "sideways",
+    "2023-04-01": "sideways",
+    "2023-05-01": "sideways",
+    "2023-06-01": "sideways",
+    "2023-07-01": "bull",
+    "2023-08-01": "sideways",
+    "2023-09-01": "sideways",
+    "2023-10-01": "sideways",
+    "2023-11-01": "sideways",
+    "2023-12-01": "bull",
+    "2024-01-01": "sideways",
+    "2024-02-01": "sideways",
+    "2024-03-01": "sideways",
+    "2024-04-01": "sideways",
+    "2024-05-01": "sideways",
+    "2024-06-01": "bull",
+    "2024-07-01": "sideways",
+    "2024-08-01": "sideways",
+    "2024-09-01": "sideways",
+    "2024-10-01": "sideways",
+    "2024-11-01": "sideways",
+    "2024-12-01": "bull"
+  },
+  "pure_quant": {
+    "cagr": 0.0764,
+    "sharpe": 0.65,
+    "sortino": 1.02,
+    "mdd": -0.1915,
+    "hit_rate": 0.571,
+    "n_rebalances": 119,
+    "final_equity": 2.0762,
+    "avg_turnover": 0.3
+  },
+  "C_filter_always": {
+    "cagr": 0.1398,
+    "sharpe": 0.97,
+    "sortino": 1.55,
+    "mdd": -0.1484,
+    "hit_rate": 0.622,
+    "n_rebalances": 119,
+    "final_equity": 3.6601,
+    "avg_turnover": 0.31
+  },
+  "regime_conditional": {
+    "cagr": 0.1398,
+    "sharpe": 0.97,
+    "mdd": -0.1484,
+    "hit_rate": 0.622,
+    "final_equity": 3.6601,
+    "n_rebalances": 119,
+    "sideways_avg": 0.014,
+    "bull_avg": 0.0074,
+    "bear_avg": 0.0048,
+    "regime_log": [
+      {
+        "date": "2015-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AVGO",
+          "NEE",
+          "UNH",
+          "WMT",
+          "HON"
+        ],
+        "net_return": 0.0126,
+        "equity": 1.0126
+      },
+      {
+        "date": "2015-02-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AVGO",
+          "NEE",
+          "UNH",
+          "WMT",
+          "HON"
+        ],
+        "net_return": 0.0051,
+        "equity": 1.0178
+      },
+      {
+        "date": "2015-03-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AVGO",
+          "UNH",
+          "HON",
+          "DIS",
+          "BAC"
+        ],
+        "net_return": -0.0096,
+        "equity": 1.0081
+      },
+      {
+        "date": "2015-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AVGO",
+          "UNH",
+          "HON",
+          "DIS",
+          "META"
+        ],
+        "net_return": -0.0033,
+        "equity": 1.0047
+      },
+      {
+        "date": "2015-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "DIS",
+          "HON",
+          "AVGO",
+          "KO",
+          "UNH"
+        ],
+        "net_return": 0.0552,
+        "equity": 1.0602
+      },
+      {
+        "date": "2015-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "DIS",
+          "HON",
+          "AVGO",
+          "UNH",
+          "MCD"
+        ],
+        "net_return": -0.0125,
+        "equity": 1.047
+      },
+      {
+        "date": "2015-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "UNH",
+          "DIS",
+          "MCD",
+          "AVGO",
+          "V"
+        ],
+        "net_return": 0.0115,
+        "equity": 1.059
+      },
+      {
+        "date": "2015-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "V",
+          "UNH",
+          "DIS",
+          "MCD",
+          "AVGO"
+        ],
+        "net_return": -0.039,
+        "equity": 1.0178
+      },
+      {
+        "date": "2015-09-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "V",
+          "DIS",
+          "AVGO",
+          "UNH",
+          "XOM"
+        ],
+        "net_return": 0.0278,
+        "equity": 1.046
+      },
+      {
+        "date": "2015-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "V",
+          "AVGO",
+          "UNH",
+          "XOM",
+          "MCD"
+        ],
+        "net_return": 0.0341,
+        "equity": 1.0817
+      },
+      {
+        "date": "2015-11-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "MCD",
+          "V",
+          "AVGO",
+          "XOM",
+          "CVX"
+        ],
+        "net_return": 0.0203,
+        "equity": 1.1036
+      },
+      {
+        "date": "2015-12-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MCD",
+          "V",
+          "AVGO",
+          "GOOGL",
+          "TSLA"
+        ],
+        "net_return": 0.0301,
+        "equity": 1.1368
+      },
+      {
+        "date": "2016-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "MCD",
+          "V",
+          "AVGO",
+          "TSLA"
+        ],
+        "net_return": -0.0125,
+        "equity": 1.1226
+      },
+      {
+        "date": "2016-02-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "GOOGL",
+          "MCD",
+          "AVGO",
+          "TSLA",
+          "V"
+        ],
+        "net_return": -0.0472,
+        "equity": 1.0697
+      },
+      {
+        "date": "2016-03-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "JNJ",
+          "NKE",
+          "AVGO",
+          "CAT",
+          "NVDA"
+        ],
+        "net_return": 0.0705,
+        "equity": 1.1451
+      },
+      {
+        "date": "2016-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "JNJ",
+          "NKE",
+          "AVGO",
+          "CAT",
+          "NVDA"
+        ],
+        "net_return": -0.0101,
+        "equity": 1.1336
+      },
+      {
+        "date": "2016-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CAT",
+          "NVDA",
+          "JNJ",
+          "KO",
+          "ABBV"
+        ],
+        "net_return": 0.0506,
+        "equity": 1.1909
+      },
+      {
+        "date": "2016-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CAT",
+          "NVDA",
+          "JNJ",
+          "NEE",
+          "MA"
+        ],
+        "net_return": 0.014,
+        "equity": 1.2076
+      },
+      {
+        "date": "2016-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "NEE",
+          "JNJ",
+          "CAT",
+          "MCD"
+        ],
+        "net_return": 0.0639,
+        "equity": 1.2848
+      },
+      {
+        "date": "2016-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "NEE",
+          "JNJ",
+          "CVX",
+          "XOM"
+        ],
+        "net_return": 0.0007,
+        "equity": 1.2857
+      },
+      {
+        "date": "2016-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "CVX",
+          "CAT",
+          "ABBV",
+          "TSLA"
+        ],
+        "net_return": 0.0388,
+        "equity": 1.3356
+      },
+      {
+        "date": "2016-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CAT",
+          "NVDA",
+          "CVX",
+          "HON",
+          "V"
+        ],
+        "net_return": -0.0086,
+        "equity": 1.3241
+      },
+      {
+        "date": "2016-11-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CVX",
+          "NVDA",
+          "CAT",
+          "V",
+          "UNH"
+        ],
+        "net_return": 0.1135,
+        "equity": 1.4743
+      },
+      {
+        "date": "2016-12-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CVX",
+          "NVDA",
+          "CAT",
+          "UNH",
+          "V"
+        ],
+        "net_return": 0.0212,
+        "equity": 1.5055
+      },
+      {
+        "date": "2017-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "CAT",
+          "UNH",
+          "DIS",
+          "BAC"
+        ],
+        "net_return": 0.0415,
+        "equity": 1.568
+      },
+      {
+        "date": "2017-02-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "CAT",
+          "UNH",
+          "DIS",
+          "CVX"
+        ],
+        "net_return": 0.0022,
+        "equity": 1.5715
+      },
+      {
+        "date": "2017-03-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CAT",
+          "UNH",
+          "DIS",
+          "BAC",
+          "NVDA"
+        ],
+        "net_return": -0.0149,
+        "equity": 1.5481
+      },
+      {
+        "date": "2017-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "DIS",
+          "NVDA",
+          "UNH",
+          "AAPL",
+          "MSFT"
+        ],
+        "net_return": 0.0006,
+        "equity": 1.549
+      },
+      {
+        "date": "2017-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NFLX",
+          "AAPL",
+          "AMZN",
+          "GOOGL",
+          "DIS"
+        ],
+        "net_return": 0.0228,
+        "equity": 1.5843
+      },
+      {
+        "date": "2017-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NFLX",
+          "AAPL",
+          "AMZN",
+          "GOOGL",
+          "MSFT"
+        ],
+        "net_return": -0.0098,
+        "equity": 1.5687
+      },
+      {
+        "date": "2017-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NKE",
+          "NVDA",
+          "UNH",
+          "GOOGL",
+          "LLY"
+        ],
+        "net_return": 0.05,
+        "equity": 1.6472
+      },
+      {
+        "date": "2017-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "KO",
+          "UNH",
+          "NKE",
+          "LLY"
+        ],
+        "net_return": 0.0057,
+        "equity": 1.6566
+      },
+      {
+        "date": "2017-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "MA",
+          "KO",
+          "META",
+          "UNH"
+        ],
+        "net_return": 0.0174,
+        "equity": 1.6854
+      },
+      {
+        "date": "2017-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MA",
+          "META",
+          "LLY",
+          "GOOGL",
+          "AMD"
+        ],
+        "net_return": -0.0175,
+        "equity": 1.656
+      },
+      {
+        "date": "2017-11-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "MA",
+          "GOOGL",
+          "META",
+          "NEE"
+        ],
+        "net_return": -0.0102,
+        "equity": 1.6391
+      },
+      {
+        "date": "2017-12-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MA",
+          "GOOGL",
+          "ABBV",
+          "META",
+          "NEE"
+        ],
+        "net_return": 0.0045,
+        "equity": 1.6464
+      },
+      {
+        "date": "2018-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "ABBV",
+          "JNJ",
+          "XOM",
+          "GOOGL",
+          "HON"
+        ],
+        "net_return": 0.0299,
+        "equity": 1.6956
+      },
+      {
+        "date": "2018-02-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "ABBV",
+          "XOM",
+          "GOOGL",
+          "HON",
+          "NVDA"
+        ],
+        "net_return": -0.0644,
+        "equity": 1.5864
+      },
+      {
+        "date": "2018-03-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "ABBV",
+          "XOM",
+          "NVDA",
+          "GOOGL",
+          "AMD"
+        ],
+        "net_return": -0.0176,
+        "equity": 1.5584
+      },
+      {
+        "date": "2018-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "GOOGL",
+          "AVGO",
+          "V",
+          "AMZN"
+        ],
+        "net_return": 0.0586,
+        "equity": 1.6497
+      },
+      {
+        "date": "2018-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "V",
+          "CVX",
+          "AMZN",
+          "NVDA",
+          "UNH"
+        ],
+        "net_return": 0.0164,
+        "equity": 1.6767
+      },
+      {
+        "date": "2018-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "V",
+          "CVX",
+          "AMZN",
+          "UNH",
+          "CAT"
+        ],
+        "net_return": -0.0104,
+        "equity": 1.6592
+      },
+      {
+        "date": "2018-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "UNH",
+          "V",
+          "CAT",
+          "AMZN",
+          "CVX"
+        ],
+        "net_return": 0.0073,
+        "equity": 1.6714
+      },
+      {
+        "date": "2018-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "DIS",
+          "V",
+          "UNH",
+          "AMZN",
+          "CAT"
+        ],
+        "net_return": 0.0379,
+        "equity": 1.7348
+      },
+      {
+        "date": "2018-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MSFT",
+          "AMZN",
+          "DIS",
+          "AAPL",
+          "V"
+        ],
+        "net_return": -0.0081,
+        "equity": 1.7208
+      },
+      {
+        "date": "2018-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MSFT",
+          "AMZN",
+          "DIS",
+          "AAPL",
+          "V"
+        ],
+        "net_return": -0.0559,
+        "equity": 1.6246
+      },
+      {
+        "date": "2018-11-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "DIS",
+          "WMT",
+          "NFLX",
+          "UNH",
+          "AAPL"
+        ],
+        "net_return": -0.0477,
+        "equity": 1.5471
+      },
+      {
+        "date": "2018-12-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MCD",
+          "UNH",
+          "DIS",
+          "KO",
+          "AAPL"
+        ],
+        "net_return": -0.045,
+        "equity": 1.4774
+      },
+      {
+        "date": "2019-01-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "MCD",
+          "UNH",
+          "DIS",
+          "KO",
+          "LLY"
+        ],
+        "net_return": 0.0373,
+        "equity": 1.5325
+      },
+      {
+        "date": "2019-02-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "UNH",
+          "DIS",
+          "LLY",
+          "CAT",
+          "CVX"
+        ],
+        "net_return": 0.0204,
+        "equity": 1.5639
+      },
+      {
+        "date": "2019-03-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "LLY",
+          "MA",
+          "NEE",
+          "CAT",
+          "CVX"
+        ],
+        "net_return": 0.0119,
+        "equity": 1.5824
+      },
+      {
+        "date": "2019-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "LLY",
+          "JNJ",
+          "MA",
+          "NEE",
+          "CAT"
+        ],
+        "net_return": -0.0035,
+        "equity": 1.5769
+      },
+      {
+        "date": "2019-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MA",
+          "HON",
+          "NEE",
+          "JNJ",
+          "CVX"
+        ],
+        "net_return": -0.0034,
+        "equity": 1.5715
+      },
+      {
+        "date": "2019-06-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "AMD",
+          "MA",
+          "HON",
+          "NEE",
+          "CAT"
+        ],
+        "net_return": 0.0757,
+        "equity": 1.6904
+      },
+      {
+        "date": "2019-07-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "AMD",
+          "MA",
+          "HON",
+          "NEE",
+          "UNH"
+        ],
+        "net_return": 0.0108,
+        "equity": 1.7086
+      },
+      {
+        "date": "2019-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MA",
+          "HON",
+          "NEE",
+          "BAC",
+          "META"
+        ],
+        "net_return": -0.0331,
+        "equity": 1.6521
+      },
+      {
+        "date": "2019-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NEE",
+          "MA",
+          "BAC",
+          "AVGO",
+          "CAT"
+        ],
+        "net_return": 0.0165,
+        "equity": 1.6794
+      },
+      {
+        "date": "2019-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NEE",
+          "MA",
+          "BAC",
+          "GOOGL",
+          "DIS"
+        ],
+        "net_return": 0.0426,
+        "equity": 1.7509
+      },
+      {
+        "date": "2019-11-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "NEE",
+          "MA",
+          "BAC",
+          "NVDA"
+        ],
+        "net_return": 0.0319,
+        "equity": 1.8068
+      },
+      {
+        "date": "2019-12-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "BAC",
+          "NVDA",
+          "NEE",
+          "MA"
+        ],
+        "net_return": 0.028,
+        "equity": 1.8573
+      },
+      {
+        "date": "2020-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "BAC",
+          "NVDA",
+          "MSFT",
+          "AMZN",
+          "MA"
+        ],
+        "net_return": 0.0242,
+        "equity": 1.9023
+      },
+      {
+        "date": "2020-02-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MSFT",
+          "NFLX",
+          "AMZN",
+          "MA",
+          "V"
+        ],
+        "net_return": 0.005,
+        "equity": 1.9118
+      },
+      {
+        "date": "2020-03-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "NFLX",
+          "NEE",
+          "GOOGL",
+          "NKE",
+          "MSFT"
+        ],
+        "net_return": -0.1386,
+        "equity": 1.6469
+      },
+      {
+        "date": "2020-04-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "MSFT",
+          "NFLX",
+          "ABBV",
+          "NVDA",
+          "AMZN"
+        ],
+        "net_return": 0.1459,
+        "equity": 1.8872
+      },
+      {
+        "date": "2020-05-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "AMZN",
+          "NVDA",
+          "MSFT",
+          "ABBV",
+          "NFLX"
+        ],
+        "net_return": 0.0417,
+        "equity": 1.9659
+      },
+      {
+        "date": "2020-06-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "AMZN",
+          "NVDA",
+          "MSFT",
+          "ABBV",
+          "NFLX"
+        ],
+        "net_return": 0.101,
+        "equity": 2.1644
+      },
+      {
+        "date": "2020-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NVDA",
+          "ABBV",
+          "AMZN",
+          "LLY",
+          "NFLX"
+        ],
+        "net_return": 0.0057,
+        "equity": 2.1769
+      },
+      {
+        "date": "2020-08-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "NVDA",
+          "ABBV",
+          "AMZN",
+          "MSFT",
+          "LLY"
+        ],
+        "net_return": 0.0785,
+        "equity": 2.3477
+      },
+      {
+        "date": "2020-09-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "MSFT",
+          "AMZN",
+          "NVDA",
+          "JNJ",
+          "NFLX"
+        ],
+        "net_return": -0.0571,
+        "equity": 2.2137
+      },
+      {
+        "date": "2020-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AMZN",
+          "NVDA",
+          "AMD",
+          "AAPL",
+          "TSLA"
+        ],
+        "net_return": -0.0912,
+        "equity": 2.0118
+      },
+      {
+        "date": "2020-11-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "META",
+          "AMD",
+          "HON",
+          "NVDA",
+          "AMZN"
+        ],
+        "net_return": 0.1392,
+        "equity": 2.2918
+      },
+      {
+        "date": "2020-12-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "AMD",
+          "CAT",
+          "META",
+          "AVGO",
+          "HON"
+        ],
+        "net_return": 0.0273,
+        "equity": 2.3544
+      },
+      {
+        "date": "2021-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AMD",
+          "HON",
+          "CAT",
+          "DIS",
+          "AVGO"
+        ],
+        "net_return": -0.0111,
+        "equity": 2.3284
+      },
+      {
+        "date": "2021-02-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AVGO",
+          "HON",
+          "CAT",
+          "DIS",
+          "META"
+        ],
+        "net_return": 0.0691,
+        "equity": 2.4892
+      },
+      {
+        "date": "2021-03-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "DIS",
+          "AVGO",
+          "CAT",
+          "HON",
+          "NVDA"
+        ],
+        "net_return": -0.0123,
+        "equity": 2.4586
+      },
+      {
+        "date": "2021-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "DIS",
+          "BAC",
+          "CAT",
+          "HON",
+          "WMT"
+        ],
+        "net_return": 0.0109,
+        "equity": 2.4854
+      },
+      {
+        "date": "2021-05-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "BAC",
+          "CAT",
+          "MA",
+          "V",
+          "DIS"
+        ],
+        "net_return": -0.008,
+        "equity": 2.4654
+      },
+      {
+        "date": "2021-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "KO",
+          "MA",
+          "BAC",
+          "V",
+          "GOOGL"
+        ],
+        "net_return": 0.0027,
+        "equity": 2.4721
+      },
+      {
+        "date": "2021-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "KO",
+          "V",
+          "BAC",
+          "GOOGL",
+          "CAT"
+        ],
+        "net_return": -0.0002,
+        "equity": 2.4717
+      },
+      {
+        "date": "2021-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "V",
+          "KO",
+          "DIS",
+          "NKE"
+        ],
+        "net_return": 0.0198,
+        "equity": 2.5208
+      },
+      {
+        "date": "2021-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "KO",
+          "DIS",
+          "MCD",
+          "NKE"
+        ],
+        "net_return": -0.0024,
+        "equity": 2.5147
+      },
+      {
+        "date": "2021-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MCD",
+          "XOM",
+          "CVX",
+          "DIS",
+          "NKE"
+        ],
+        "net_return": 0.0574,
+        "equity": 2.659
+      },
+      {
+        "date": "2021-11-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "MCD",
+          "XOM",
+          "ABBV",
+          "CVX",
+          "LLY"
+        ],
+        "net_return": -0.0037,
+        "equity": 2.6492
+      },
+      {
+        "date": "2021-12-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CVX",
+          "ABBV",
+          "LLY",
+          "NKE",
+          "UNH"
+        ],
+        "net_return": 0.043,
+        "equity": 2.7631
+      },
+      {
+        "date": "2022-01-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "CVX",
+          "AAPL",
+          "LLY",
+          "ABBV",
+          "NKE"
+        ],
+        "net_return": -0.019,
+        "equity": 2.7107
+      },
+      {
+        "date": "2022-02-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CVX",
+          "AAPL",
+          "LLY",
+          "ABBV",
+          "NKE"
+        ],
+        "net_return": 0.0011,
+        "equity": 2.7136
+      },
+      {
+        "date": "2022-03-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CVX",
+          "ABBV",
+          "WMT",
+          "UNH",
+          "GOOGL"
+        ],
+        "net_return": 0.0793,
+        "equity": 2.9287
+      },
+      {
+        "date": "2022-04-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "ABBV",
+          "UNH",
+          "WMT",
+          "CVX",
+          "GOOGL"
+        ],
+        "net_return": 0.0061,
+        "equity": 2.9465
+      },
+      {
+        "date": "2022-05-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "UNH",
+          "WMT",
+          "CVX",
+          "GOOGL",
+          "META"
+        ],
+        "net_return": -0.0503,
+        "equity": 2.7984
+      },
+      {
+        "date": "2022-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "CVX",
+          "META",
+          "ABBV",
+          "XOM",
+          "MCD"
+        ],
+        "net_return": -0.0351,
+        "equity": 2.7002
+      },
+      {
+        "date": "2022-07-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "CVX",
+          "ABBV",
+          "MCD",
+          "XOM",
+          "LLY"
+        ],
+        "net_return": -0.0211,
+        "equity": 2.6434
+      },
+      {
+        "date": "2022-08-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "NEE",
+          "LLY",
+          "ABBV",
+          "MCD",
+          "CVX"
+        ],
+        "net_return": -0.0229,
+        "equity": 2.5827
+      },
+      {
+        "date": "2022-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "NEE",
+          "LLY",
+          "CVX",
+          "TSLA",
+          "XOM"
+        ],
+        "net_return": -0.0094,
+        "equity": 2.5585
+      },
+      {
+        "date": "2022-10-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "LLY",
+          "MCD",
+          "XOM",
+          "MSFT",
+          "UNH"
+        ],
+        "net_return": 0.0621,
+        "equity": 2.7174
+      },
+      {
+        "date": "2022-11-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "LLY",
+          "UNH",
+          "MCD",
+          "V",
+          "XOM"
+        ],
+        "net_return": 0.0181,
+        "equity": 2.7665
+      },
+      {
+        "date": "2022-12-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "LLY",
+          "UNH",
+          "XOM",
+          "MCD",
+          "V"
+        ],
+        "net_return": -0.0299,
+        "equity": 2.6838
+      },
+      {
+        "date": "2023-01-01",
+        "regime": "bear",
+        "saju_filter": false,
+        "held": [
+          "LLY",
+          "XOM",
+          "KO",
+          "V",
+          "MSFT"
+        ],
+        "net_return": 0.0311,
+        "equity": 2.7673
+      },
+      {
+        "date": "2023-02-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "NFLX",
+          "XOM",
+          "V",
+          "MSFT",
+          "AMZN"
+        ],
+        "net_return": -0.0554,
+        "equity": 2.6139
+      },
+      {
+        "date": "2023-03-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "JPM",
+          "NFLX",
+          "XOM",
+          "MSFT",
+          "AAPL"
+        ],
+        "net_return": 0.0402,
+        "equity": 2.7189
+      },
+      {
+        "date": "2023-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AAPL",
+          "MSFT",
+          "JPM",
+          "NFLX",
+          "AMD"
+        ],
+        "net_return": -0.0298,
+        "equity": 2.638
+      },
+      {
+        "date": "2023-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AAPL",
+          "MSFT",
+          "NKE",
+          "NFLX",
+          "JPM"
+        ],
+        "net_return": -0.0134,
+        "equity": 2.6026
+      },
+      {
+        "date": "2023-06-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MSFT",
+          "NFLX",
+          "AAPL",
+          "NKE",
+          "JPM"
+        ],
+        "net_return": 0.0264,
+        "equity": 2.6713
+      },
+      {
+        "date": "2023-07-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "MSFT",
+          "NFLX",
+          "JPM",
+          "AAPL",
+          "NKE"
+        ],
+        "net_return": 0.0175,
+        "equity": 2.7182
+      },
+      {
+        "date": "2023-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "AVGO",
+          "NVDA",
+          "JPM",
+          "AAPL"
+        ],
+        "net_return": -0.0118,
+        "equity": 2.6862
+      },
+      {
+        "date": "2023-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GOOGL",
+          "AVGO",
+          "NVDA",
+          "AAPL",
+          "WMT"
+        ],
+        "net_return": -0.0294,
+        "equity": 2.6073
+      },
+      {
+        "date": "2023-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MSFT",
+          "NKE",
+          "GOOGL",
+          "NFLX",
+          "AMD"
+        ],
+        "net_return": 0.0459,
+        "equity": 2.7271
+      },
+      {
+        "date": "2023-11-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "MSFT",
+          "AMD",
+          "NFLX",
+          "GOOGL",
+          "META"
+        ],
+        "net_return": 0.0339,
+        "equity": 2.8194
+      },
+      {
+        "date": "2023-12-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "MSFT",
+          "AMD",
+          "META",
+          "BAC",
+          "GOOGL"
+        ],
+        "net_return": 0.0682,
+        "equity": 3.0118
+      },
+      {
+        "date": "2024-01-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AMD",
+          "META",
+          "MSFT",
+          "BAC",
+          "GOOGL"
+        ],
+        "net_return": 0.0259,
+        "equity": 3.0899
+      },
+      {
+        "date": "2024-02-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "META",
+          "BAC",
+          "AMD",
+          "MSFT",
+          "TSLA"
+        ],
+        "net_return": 0.0948,
+        "equity": 3.3827
+      },
+      {
+        "date": "2024-03-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "META",
+          "AMD",
+          "BAC",
+          "MSFT",
+          "DIS"
+        ],
+        "net_return": 0.0201,
+        "equity": 3.4508
+      },
+      {
+        "date": "2024-04-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "AMD",
+          "META",
+          "BAC",
+          "MSFT",
+          "LLY"
+        ],
+        "net_return": -0.041,
+        "equity": 3.3093
+      },
+      {
+        "date": "2024-05-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GS",
+          "META",
+          "BAC",
+          "LLY",
+          "KO"
+        ],
+        "net_return": 0.0318,
+        "equity": 3.4144
+      },
+      {
+        "date": "2024-06-01",
+        "regime": "bull",
+        "saju_filter": false,
+        "held": [
+          "BAC",
+          "GS",
+          "LLY",
+          "DIS",
+          "CAT"
+        ],
+        "net_return": 0.0145,
+        "equity": 3.464
+      },
+      {
+        "date": "2024-07-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "BAC",
+          "LLY",
+          "NFLX",
+          "GS",
+          "KO"
+        ],
+        "net_return": 0.0175,
+        "equity": 3.5245
+      },
+      {
+        "date": "2024-08-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "KO",
+          "GS",
+          "AMZN",
+          "XOM",
+          "NEE"
+        ],
+        "net_return": 0.0086,
+        "equity": 3.5549
+      },
+      {
+        "date": "2024-09-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "GS",
+          "XOM",
+          "KO",
+          "NEE",
+          "GOOGL"
+        ],
+        "net_return": 0.0063,
+        "equity": 3.5775
+      },
+      {
+        "date": "2024-10-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "KO",
+          "GS",
+          "XOM",
+          "NEE",
+          "GOOGL"
+        ],
+        "net_return": -0.0192,
+        "equity": 3.5088
+      },
+      {
+        "date": "2024-11-01",
+        "regime": "sideways",
+        "saju_filter": true,
+        "held": [
+          "KO",
+          "JPM",
+          "GS",
+          "GOOGL",
+          "HON"
+        ],
+        "net_return": 0.0431,
+        "equity": 3.6601
+      }
+    ]
+  }
+}

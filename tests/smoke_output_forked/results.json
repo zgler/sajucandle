@@ -1,0 +1,315 @@
+[
+  {
+    "label": "입춘전_17:00 (KST)",
+    "args": {
+      "year": 2024,
+      "month": 2,
+      "day": 4,
+      "hour": 17,
+      "minute": 0,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "癸卯",
+      "month_pillar": "乙丑",
+      "day_pillar": "戊戌",
+      "hour_pillar": "庚申",
+      "year_stem": "癸",
+      "year_branch": "卯",
+      "month_stem": "乙",
+      "month_branch": "丑",
+      "day_stem": "戊",
+      "day_branch": "戌",
+      "hour_stem": "庚",
+      "hour_branch": "申",
+      "birth_time": "17:00",
+      "birth_date": "2024-02-04",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "17:00",
+        "solar_time": "16:27"
+      }
+    }
+  },
+  {
+    "label": "입춘경계_17:26",
+    "args": {
+      "year": 2024,
+      "month": 2,
+      "day": 4,
+      "hour": 17,
+      "minute": 26,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "癸卯",
+      "month_pillar": "乙丑",
+      "day_pillar": "戊戌",
+      "hour_pillar": "庚申",
+      "year_stem": "癸",
+      "year_branch": "卯",
+      "month_stem": "乙",
+      "month_branch": "丑",
+      "day_stem": "戊",
+      "day_branch": "戌",
+      "hour_stem": "庚",
+      "hour_branch": "申",
+      "birth_time": "17:26",
+      "birth_date": "2024-02-04",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "17:26",
+        "solar_time": "16:53"
+      }
+    }
+  },
+  {
+    "label": "입춘경계_17:28",
+    "args": {
+      "year": 2024,
+      "month": 2,
+      "day": 4,
+      "hour": 17,
+      "minute": 28,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "甲辰",
+      "month_pillar": "丙寅",
+      "day_pillar": "戊戌",
+      "hour_pillar": "庚申",
+      "year_stem": "甲",
+      "year_branch": "辰",
+      "month_stem": "丙",
+      "month_branch": "寅",
+      "day_stem": "戊",
+      "day_branch": "戌",
+      "hour_stem": "庚",
+      "hour_branch": "申",
+      "birth_time": "17:28",
+      "birth_date": "2024-02-04",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "17:28",
+        "solar_time": "16:55"
+      }
+    }
+  },
+  {
+    "label": "입춘후_18:00",
+    "args": {
+      "year": 2024,
+      "month": 2,
+      "day": 4,
+      "hour": 18,
+      "minute": 0,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "甲辰",
+      "month_pillar": "丙寅",
+      "day_pillar": "戊戌",
+      "hour_pillar": "辛酉",
+      "year_stem": "甲",
+      "year_branch": "辰",
+      "month_stem": "丙",
+      "month_branch": "寅",
+      "day_stem": "戊",
+      "day_branch": "戌",
+      "hour_stem": "辛",
+      "hour_branch": "酉",
+      "birth_time": "18:00",
+      "birth_date": "2024-02-04",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "18:00",
+        "solar_time": "17:27"
+      }
+    }
+  },
+  {
+    "label": "오늘_2026-04-23_정오",
+    "args": {
+      "year": 2026,
+      "month": 4,
+      "day": 23,
+      "hour": 12,
+      "minute": 0,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "丙午",
+      "month_pillar": "壬辰",
+      "day_pillar": "丁卯",
+      "hour_pillar": "丙午",
+      "year_stem": "丙",
+      "year_branch": "午",
+      "month_stem": "壬",
+      "month_branch": "辰",
+      "day_stem": "丁",
+      "day_branch": "卯",
+      "hour_stem": "丙",
+      "hour_branch": "午",
+      "birth_time": "12:00",
+      "birth_date": "2026-04-23",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "12:00",
+        "solar_time": "11:27"
+      }
+    }
+  },
+  {
+    "label": "야자시_2024-01-01_23:30",
+    "args": {
+      "year": 2024,
+      "month": 1,
+      "day": 1,
+      "hour": 23,
+      "minute": 30,
+      "city": "Seoul",
+      "use_solar_time": true,
+      "early_zi_time": true
+    },
+    "result": {
+      "year_pillar": "癸卯",
+      "month_pillar": "甲子",
+      "day_pillar": "甲子",
+      "hour_pillar": "乙亥",
+      "year_stem": "癸",
+      "year_branch": "卯",
+      "month_stem": "甲",
+      "month_branch": "子",
+      "day_stem": "甲",
+      "day_branch": "子",
+      "hour_stem": "乙",
+      "hour_branch": "亥",
+      "birth_time": "23:30",
+      "birth_date": "2024-01-01",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "23:30",
+        "solar_time": "22:57"
+      }
+    }
+  },
+  {
+    "label": "설날_2024-02-10_12:00",
+    "args": {
+      "year": 2024,
+      "month": 2,
+      "day": 10,
+      "hour": 12,
+      "minute": 0,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "甲辰",
+      "month_pillar": "丙寅",
+      "day_pillar": "甲辰",
+      "hour_pillar": "庚午",
+      "year_stem": "甲",
+      "year_branch": "辰",
+      "month_stem": "丙",
+      "month_branch": "寅",
+      "day_stem": "甲",
+      "day_branch": "辰",
+      "hour_stem": "庚",
+      "hour_branch": "午",
+      "birth_time": "12:00",
+      "birth_date": "2024-02-10",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "12:00",
+        "solar_time": "11:27"
+      }
+    }
+  },
+  {
+    "label": "서머타임_1988-08-15_12:00",
+    "args": {
+      "year": 1988,
+      "month": 8,
+      "day": 15,
+      "hour": 12,
+      "minute": 0,
+      "city": "Seoul",
+      "use_solar_time": true
+    },
+    "result": {
+      "year_pillar": "戊辰",
+      "month_pillar": "庚申",
+      "day_pillar": "壬寅",
+      "hour_pillar": "丙午",
+      "year_stem": "戊",
+      "year_branch": "辰",
+      "month_stem": "庚",
+      "month_branch": "申",
+      "day_stem": "壬",
+      "day_branch": "寅",
+      "hour_stem": "丙",
+      "hour_branch": "午",
+      "birth_time": "12:00",
+      "birth_date": "1988-08-15",
+      "zi_time_type": null,
+      "solar_correction": {
+        "city": "Seoul",
+        "longitude": 126.9783,
+        "longitude_source": "geocoded",
+        "utc_offset": 9,
+        "standard_longitude": 135,
+        "correction_minutes": -32.1,
+        "original_time": "12:00",
+        "solar_time": "11:27"
+      }
+    }
+  }
+]

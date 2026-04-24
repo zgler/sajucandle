@@ -1,0 +1,143 @@
+{
+  "calibration": {
+    "ic_table": {
+      "IC": {
+        "wolwoon_x_ilju": 0.0424,
+        "ilji_x_ilju": -0.0079,
+        "sewoon_element_match": 0.0379,
+        "daeun_bias": NaN,
+        "element_balance": 0.0028,
+        "samchung_events": 0.0127,
+        "shinsal_boost": 0.0271
+      },
+      "p_value": {
+        "wolwoon_x_ilju": 0.053,
+        "ilji_x_ilju": 0.7179,
+        "sewoon_element_match": 0.0834,
+        "daeun_bias": NaN,
+        "element_balance": 0.8997,
+        "samchung_events": 0.5633,
+        "shinsal_boost": 0.2151
+      },
+      "n": {
+        "wolwoon_x_ilju": 2088,
+        "ilji_x_ilju": 2088,
+        "sewoon_element_match": 2088,
+        "daeun_bias": 2088,
+        "element_balance": 2088,
+        "samchung_events": 2088,
+        "shinsal_boost": 2088
+      },
+      "ICIR": {
+        "wolwoon_x_ilju": 0.152,
+        "ilji_x_ilju": -0.133,
+        "sewoon_element_match": 0.157,
+        "daeun_bias": 0.0,
+        "element_balance": -0.038,
+        "samchung_events": -0.024,
+        "shinsal_boost": 0.113
+      },
+      "date_IC_mean": {
+        "wolwoon_x_ilju": 0.0328,
+        "ilji_x_ilju": -0.0249,
+        "sewoon_element_match": 0.0285,
+        "daeun_bias": 0.0,
+        "element_balance": -0.0064,
+        "samchung_events": -0.005,
+        "shinsal_boost": 0.0242
+      },
+      "n_dates": {
+        "wolwoon_x_ilju": 72.0,
+        "ilji_x_ilju": 72.0,
+        "sewoon_element_match": 72.0,
+        "daeun_bias": 0.0,
+        "element_balance": 72.0,
+        "samchung_events": 69.0,
+        "shinsal_boost": 72.0
+      }
+    },
+    "calibrated_weights": {
+      "wolwoon_x_ilju": 29.7,
+      "ilji_x_ilju": 0.0,
+      "sewoon_element_match": 10.2,
+      "daeun_bias": 0.0,
+      "element_balance": 0.0,
+      "samchung_events": 38.8,
+      "shinsal_boost": 21.3
+    },
+    "prior_weights": {
+      "wolwoon_x_ilju": 25,
+      "ilji_x_ilju": 20,
+      "sewoon_element_match": 15,
+      "daeun_bias": 10,
+      "element_balance": 10,
+      "samchung_events": 10,
+      "shinsal_boost": 10
+    },
+    "n_obs": 2088,
+    "train_period": [
+      "2015-01",
+      "2020-12"
+    ]
+  },
+  "variant_stats": {
+    "base_30pct_saju": {
+      "cagr": 0.115,
+      "sharpe": 0.8,
+      "sortino": 1.24,
+      "mdd": -0.1896,
+      "hit_rate": 0.546,
+      "n_rebalances": 119,
+      "final_equity": 2.9433,
+      "avg_turnover": 0.35
+    },
+    "C_filter_40": {
+      "cagr": 0.144,
+      "sharpe": 1.01,
+      "sortino": 1.7,
+      "mdd": -0.1403,
+      "hit_rate": 0.597,
+      "n_rebalances": 119,
+      "final_equity": 3.7962,
+      "avg_turnover": 0.35
+    },
+    "C_filter_30": {
+      "cagr": 0.1473,
+      "sharpe": 1.03,
+      "sortino": 1.76,
+      "mdd": -0.1403,
+      "hit_rate": 0.622,
+      "n_rebalances": 119,
+      "final_equity": 3.9072,
+      "avg_turnover": 0.32
+    },
+    "pure_quant": {
+      "cagr": 0.1497,
+      "sharpe": 1.05,
+      "sortino": 1.86,
+      "mdd": -0.1403,
+      "hit_rate": 0.622,
+      "n_rebalances": 119,
+      "final_equity": 3.9901,
+      "avg_turnover": 0.32
+    }
+  },
+  "calibrated_weights": {
+    "wolwoon_x_ilju": 29.7,
+    "ilji_x_ilju": 0.0,
+    "sewoon_element_match": 10.2,
+    "daeun_bias": 0.0,
+    "element_balance": 0.0,
+    "samchung_events": 38.8,
+    "shinsal_boost": 21.3
+  },
+  "prior_weights": {
+    "wolwoon_x_ilju": 25,
+    "ilji_x_ilju": 20,
+    "sewoon_element_match": 15,
+    "daeun_bias": 10,
+    "element_balance": 10,
+    "samchung_events": 10,
+    "shinsal_boost": 10
+  }
+}

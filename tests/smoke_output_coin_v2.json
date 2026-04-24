@@ -1,0 +1,44 @@
+{
+  "period": "2020-10~2024-12",
+  "universe": "코인 15종",
+  "pure_quant": {
+    "cagr": 0.1399,
+    "sharpe": 0.51,
+    "sortino": 0.81,
+    "mdd": -0.7357,
+    "hit_rate": 0.4,
+    "n_rebalances": 50,
+    "final_equity": 1.7253,
+    "avg_turnover": 0.41
+  },
+  "C_filter_30": {
+    "cagr": 0.8582,
+    "sharpe": 0.93,
+    "sortino": 2.79,
+    "mdd": -0.7246,
+    "hit_rate": 0.58,
+    "n_rebalances": 50,
+    "final_equity": 13.2194,
+    "avg_turnover": 0.41
+  },
+  "C_filter_40": {
+    "cagr": 0.4564,
+    "sharpe": 0.78,
+    "sortino": 1.72,
+    "mdd": -0.7607,
+    "hit_rate": 0.58,
+    "n_rebalances": 50,
+    "final_equity": 4.7899,
+    "avg_turnover": 0.4
+  },
+  "saju_30pct": {
+    "cagr": 0.7907,
+    "sharpe": 0.9,
+    "sortino": 2.83,
+    "mdd": -0.7343,
+    "hit_rate": 0.56,
+    "n_rebalances": 50,
+    "final_equity": 11.332,
+    "avg_turnover": 0.44
+  }
+}

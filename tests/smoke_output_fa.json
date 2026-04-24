@@ -1,0 +1,205 @@
+[
+  {
+    "total": 73.8,
+    "breakdown": {
+      "valuation": 80.0,
+      "quality": 100.0,
+      "fcf_yield": 35.0,
+      "growth": 100.0,
+      "balance_sheet": 45.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "NVDA",
+    "raw_metrics": {
+      "forwardPE": 17.915453,
+      "pegRatio": 0.72,
+      "returnOnEquity": 1.01485,
+      "operatingMargins": 0.65024,
+      "revenueGrowth": 0.732,
+      "earningsGrowth": 0.956,
+      "marketCap": 4893933305856,
+      "freeCashflow": 58128998400,
+      "debtToEquity": 7.255
+    }
+  },
+  {
+    "total": 61.8,
+    "breakdown": {
+      "valuation": 40.0,
+      "quality": 100.0,
+      "fcf_yield": 55.0,
+      "growth": 80.0,
+      "balance_sheet": 25.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "AAPL",
+    "raw_metrics": {
+      "forwardPE": 29.101475,
+      "pegRatio": 2.46,
+      "returnOnEquity": 1.5202099,
+      "operatingMargins": 0.35374,
+      "revenueGrowth": 0.157,
+      "earningsGrowth": 0.183,
+      "marketCap": 4014664843264,
+      "freeCashflow": 106312753152,
+      "debtToEquity": 102.63
+    }
+  },
+  {
+    "total": 70.8,
+    "breakdown": {
+      "valuation": 65.0,
+      "quality": 100.0,
+      "fcf_yield": 35.0,
+      "growth": 90.0,
+      "balance_sheet": 60.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "MSFT",
+    "raw_metrics": {
+      "forwardPE": 22.867674,
+      "pegRatio": 1.32,
+      "returnOnEquity": 0.34390998,
+      "operatingMargins": 0.47094002,
+      "revenueGrowth": 0.167,
+      "earningsGrowth": 0.598,
+      "marketCap": 3213313441792,
+      "freeCashflow": 53640626176,
+      "debtToEquity": 31.539
+    }
+  },
+  {
+    "total": 37.5,
+    "breakdown": {
+      "valuation": 15.0,
+      "quality": 50.0,
+      "fcf_yield": 35.0,
+      "growth": 10.0,
+      "balance_sheet": 85.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "TSLA",
+    "raw_metrics": {
+      "forwardPE": 142.12141,
+      "pegRatio": 5.75,
+      "returnOnEquity": 0.049250003,
+      "operatingMargins": 0.047030002,
+      "revenueGrowth": -0.031,
+      "earningsGrowth": -0.606,
+      "marketCap": 1467857502208,
+      "freeCashflow": 3732624896,
+      "debtToEquity": 17.763
+    }
+  },
+  {
+    "total": 55.0,
+    "breakdown": {
+      "valuation": 55.0,
+      "quality": 65.0,
+      "fcf_yield": 35.0,
+      "growth": 60.0,
+      "balance_sheet": 60.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "AMZN",
+    "raw_metrics": {
+      "forwardPE": 26.75854,
+      "pegRatio": 1.8,
+      "returnOnEquity": 0.22286,
+      "operatingMargins": 0.10533,
+      "revenueGrowth": 0.136,
+      "earningsGrowth": 0.05,
+      "marketCap": 2715448508416,
+      "freeCashflow": 23793125376,
+      "debtToEquity": 43.435
+    }
+  },
+  {
+    "total": 68.2,
+    "breakdown": {
+      "valuation": 40.0,
+      "quality": 100.0,
+      "fcf_yield": 35.0,
+      "growth": 90.0,
+      "balance_sheet": 85.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "GOOGL",
+    "raw_metrics": {
+      "forwardPE": 25.025997,
+      "pegRatio": 2.31,
+      "returnOnEquity": 0.35705003,
+      "operatingMargins": 0.31568,
+      "revenueGrowth": 0.18,
+      "earningsGrowth": 0.311,
+      "marketCap": 4081648926720,
+      "freeCashflow": 38088376320,
+      "debtToEquity": 16.133
+    }
+  },
+  {
+    "total": 70.0,
+    "breakdown": {
+      "valuation": 65.0,
+      "quality": 100.0,
+      "fcf_yield": 35.0,
+      "growth": 70.0,
+      "balance_sheet": 75.0
+    },
+    "weights": {
+      "valuation": 25,
+      "quality": 25,
+      "fcf_yield": 20,
+      "growth": 15,
+      "balance_sheet": 15
+    },
+    "symbol": "META",
+    "raw_metrics": {
+      "forwardPE": 18.957039,
+      "pegRatio": 1.1,
+      "returnOnEquity": 0.30238,
+      "operatingMargins": 0.41314998,
+      "revenueGrowth": 0.238,
+      "earningsGrowth": 0.107,
+      "marketCap": 1713892622336,
+      "freeCashflow": 23432374272,
+      "debtToEquity": 39.164
+    }
+  }
+]

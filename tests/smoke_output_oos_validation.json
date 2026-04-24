@@ -1,0 +1,85 @@
+{
+  "train_period": "2015-01~2019-12",
+  "test_period": "2020-01~2024-12",
+  "train_results": {
+    "0.0": {
+      "cagr": 0.0616,
+      "sharpe": 0.64,
+      "mdd": -0.1061,
+      "hit_rate": 0.559,
+      "final_equity": 1.3419
+    },
+    "20.0": {
+      "cagr": 0.1346,
+      "sharpe": 1.14,
+      "mdd": -0.1484,
+      "hit_rate": 0.644,
+      "final_equity": 1.8602
+    },
+    "30.0": {
+      "cagr": 0.1278,
+      "sharpe": 1.08,
+      "mdd": -0.1484,
+      "hit_rate": 0.627,
+      "final_equity": 1.8068
+    },
+    "40.0": {
+      "cagr": 0.117,
+      "sharpe": 1.02,
+      "mdd": -0.1484,
+      "hit_rate": 0.593,
+      "final_equity": 1.7225
+    },
+    "50.0": {
+      "cagr": 0.0903,
+      "sharpe": 0.84,
+      "mdd": -0.0936,
+      "hit_rate": 0.627,
+      "final_equity": 1.5296
+    }
+  },
+  "test_results": {
+    "0.0": {
+      "cagr": 0.1715,
+      "sharpe": 0.88,
+      "mdd": -0.2127,
+      "hit_rate": 0.542,
+      "final_equity": 2.1778
+    },
+    "20.0": {
+      "cagr": 0.2163,
+      "sharpe": 1.08,
+      "mdd": -0.1563,
+      "hit_rate": 0.627,
+      "final_equity": 2.6188
+    },
+    "30.0": {
+      "cagr": 0.2163,
+      "sharpe": 1.08,
+      "mdd": -0.1563,
+      "hit_rate": 0.627,
+      "final_equity": 2.6188
+    },
+    "40.0": {
+      "cagr": 0.1618,
+      "sharpe": 0.95,
+      "mdd": -0.1509,
+      "hit_rate": 0.61,
+      "final_equity": 2.0901
+    },
+    "50.0": {
+      "cagr": 0.1669,
+      "sharpe": 1.0,
+      "mdd": -0.1401,
+      "hit_rate": 0.644,
+      "final_equity": 2.1363
+    }
+  },
+  "best_train_threshold": 20.0,
+  "best_test_threshold": 20.0,
+  "train_best_test_rank": 1,
+  "verdict": [
+    "✓ 학습 최적값이 테스트에서도 최적 → 일관성 있음",
+    "✓ 테스트 Sharpe > 0.8 (SPY 초과 수준) → 실용적"
+  ]
+}

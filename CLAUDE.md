@@ -16,120 +16,179 @@
   - `docs/superpowers/specs/` — 설계 스펙
   - `docs/superpowers/plans/` — 구현 플랜
 
-### 1.3 Phase 모델
-- 현재 진행 중: **Phase 0** (현황 파악) → Phase 1 (백테스트 하네스) → Phase 2 (숏 대칭) → Phase 3 (지표 고도화) → Phase 4 (튜닝).
-- 각 Phase 완료 시 사용자 승인 대기 → 다음 Phase 프롬프트 작성.
+### 1.3 Phase 모델 (현재 기준: Phase 4 완료)
+- Phase 0 (현황 파악) → Phase 1 (백테스트 하네스) → Phase 2 (숏 대칭) → Phase 3 (지표 고도화) → **Phase 4 (Saju-filter quant + 월간 시그널)**.
+- Phase 4 산출물이 `main` 브랜치 기준 `src/sajucandle/`의 현행 구조다. 이전 Phase(analysis/backtest/market 아키텍처)는 제거됨.
 
-## 2. 도메인 용어
+## 2. 도메인 용어 (Phase 4 기준)
 
 | 용어 | 정의 |
 |------|------|
-| **swing** | Fractals + ATR prominence 필터로 감지한 국소 고/저점 (`SwingPoint`) |
-| **structure** | swing 기반 시장 상태 분류 (UPTREND/DOWNTREND/RANGE/BREAKOUT/BREAKDOWN) |
-| **alignment** | 1h/4h/1d 3개 TF의 trend_direction 정렬 상태 |
-| **composite_score** | analyze()의 최종 점수 (0.45 structure + 0.35 alignment + 0.10 rsi + 0.10 volume, 0~100) |
-| **final_score** | `0.1 × saju + 0.9 × analysis.composite_score` (등급 판정 입력) |
-| **signal_grade** | 강진입/진입/관망/회피 4종 (롱 관점. 숏은 Phase 2에서 추가) |
-| **TradeSetup** | entry/SL/TP1/TP2/R:R/risk_pct 구체 가격 제시 (진입/강진입 등급만) |
-| **S/R** | Support/Resistance 레벨. swing + volume profile 융합 |
-| **VPVR** | Volume Profile Visible Range. bucket별 volume 합 상위 N개 |
-| **ATR** | Average True Range (Wilder, period=14). 변동성 지표 |
-| **EMA** | Exponential Moving Average (period=50, α=2/51) |
+| **saju_score** | 명식 × 일진/세운의 궁합을 천간·지지 관계로 평가한 0~100 점수 (`saju/scorer.py`) |
+| **saju_score_v2** | 3컴포넌트(Heaven-Earth / Day-Ilju / Daeun) + ICIR 가중. Null Test FAIL로 deprecated |
+| **C 필터** | Saju score 임계값 미만 티커를 쿼트 랭킹 전에 제외하는 전략 (Phase 4 확정 전략) |
+| **regime** | SPY 3개월 롤링 기반 Bull/Bear/Sideways 레짐 감지 (`signal/regime.py`) |
+| **signal_type** | 월간 시그널 6종: BUY/ACCUMULATE/HOLD/WATCH/SELL/KILL (`signal/engine.py`) |
+| **ta_score** | RSI/MACD/Bollinger 기반 기술적 점수 (주식/코인 분리, `quant/technical.py`) |
+| **macro_score** | 거시지표 보조 점수. 주식/코인(crypto_macro) 분리 |
+| **fa_score** | 펀더멘털 지표 점수 (주식 전용, `quant/fundamental.py`) |
+| **onchain_score** | 온체인 지표 점수 (코인 전용, `quant/onchain.py`) |
+| **null_test** | Saju 점수를 무작위 대체해 z-score로 유효성 검증 (`quant/null_test.py`) |
+| **OOS validation** | 학습(2015-19)/테스트(2020-24) threshold grid 검증 |
 | **iljin** | 日辰 — 해당 날짜의 천간지지 (명리) |
-| **yongsin** | 用神 — 명식 전체 균형에 도움되는 오행 |
+| **daeun** | 大運 — 10년 단위 대운 (`saju/daeun.py`) |
+| **sewoon** | 歲運 — 1년 단위 세운 (`saju/sewoon.py`) |
+| **shinsal** | 神煞 — 길흉 특수 관계 (`saju/shinsal.py`) |
+| **manseryeok** | 萬歲曆 — 천문력 기반 사주 계산 (skyfield ephemeris + CSV, `manseryeok/core.py`) |
 
 ## 3. 코딩 컨벤션
 
 ### 3.1 Python 스타일
-- **Python 3.12+** 전제. `from __future__ import annotations` 항상 사용.
+- **Python 3.12+** 전제. `from __future__ import annotations` 적극 사용.
 - **PEP 621** + hatchling 빌드. `pyproject.toml`에 의존성 관리.
-- **ruff** 린트 (line-length=100, target-version=py312). 커밋 전 `python -m ruff check src/ tests/` 통과 필수.
+- **ruff** 린트 (line-length=100, target-version=py312). 커밋 전 `./.venv/Scripts/python.exe -m ruff check src/ tests/` 통과 권장.
 - 타입 힌트 적극 사용. dataclass / Pydantic BaseModel로 데이터 구조 표현.
-- **Private 상수**는 module-level `_PREFIX` 언더스코어.
-- **async** I/O는 FastAPI + asyncpg. 순수 계산 함수는 sync.
+- pandas/numpy를 많이 쓰므로 순수 dict 대신 DataFrame 기본.
 
 ### 3.2 테스트
-- pytest + pytest-asyncio (`asyncio_mode = "auto"`).
-- TDD 선호: 테스트 먼저 → 실패 확인 → 구현 → 통과 → commit.
-- DB 통합 테스트는 `db_conn` fixture(트랜잭션 롤백) 사용. `TEST_DATABASE_URL` 없을 때 자동 skip.
-- Mock: `unittest.mock` + `respx` (httpx) + `fakeredis`.
+- **Phase 4는 smoke test 스크립트 기반**: `tests/smoke_test_*.py`. pytest로 자동 수집되지 않고 직접 실행한다.
+- 실행: `PYTHONPATH=src ./.venv/Scripts/python.exe tests/smoke_test_<name>.py`.
+- 결과물은 `tests/smoke_output_<name>.{json,html}` 또는 `tests/smoke_output_<name>/` 에 기록.
+- 핵심 회귀 smoke: `smoke_test_oos_validation.py`, `smoke_test_regime_engine.py`, `smoke_test_coin_v2.py`, `smoke_test_nulltest_v2.py`, `smoke_test_signal_engine.py`.
 
 ### 3.3 커밋 메시지
-- Conventional commits: `feat(scope): ...`, `fix(...)`, `docs(...)`, `refactor(...)`, `test(...)`.
-- 각 task = 1 commit 원칙 (구현 플랜의 subagent-driven 패턴 계승).
+- Conventional commits: `feat(scope): ...`, `fix(...)`, `docs(...)`, `refactor(...)`, `test(...)`, `chore(...)`.
+- 각 논리 변경 = 1 commit 원칙.
 
-## 4. 모듈 책임
+## 4. 모듈 책임 (Phase 4)
 
-### 4.1 분석 엔진 (`src/sajucandle/analysis/`)
-
-| 모듈 | 책임 |
-|------|------|
-| `swing.py` | Fractals + ATR prominence → `SwingPoint` list |
-| `structure.py` | swings → `MarketStructure` enum + score |
-| `timeframe.py` | 단일 TF EMA50 기반 `TrendDirection` enum |
-| `multi_timeframe.py` | 3TF 정렬 → `Alignment` (aligned/bias/score) |
-| `volume_profile.py` | VPVR bucket 누적 → top-N `VolumeNode` |
-| `support_resistance.py` | swing + volume 융합 → 현재가 기준 `SRLevel` 최대 6개 |
-| `trade_setup.py` | ATR + S/R snap 하이브리드 → `TradeSetup` |
-| `composite.py` | 위 모듈 조합 → `AnalysisResult` (analyze 엔트리) |
-
-### 4.2 서비스 레이어
+### 4.1 사주 레이어 (`src/sajucandle/saju/`, `manseryeok/`)
 
 | 모듈 | 책임 |
 |------|------|
-| `signal_service.py` | analyze() + 사주 합산 + 등급 판정 + TradeSetup 생성 + Redis 캐시 |
-| `score_service.py` | 사주 4축 점수 + KST 자정 TTL 캐시 |
-| `tech_analysis.py` | RSI/SMA/volume_ratio/score 매핑 (순수 함수) |
-| `market_data.py` | Binance OHLCV 클라이언트 + 2-tier Redis 캐시 (fresh 5분/backup 24h) |
-| `market/yfinance.py` | yfinance OHLCV + 2-tier 캐시 (fresh 1h/backup 24h) + 4h resample |
-| `market/router.py` | ticker → provider 라우팅 + 화이트리스트 |
+| `manseryeok/core.py` | `SajuCalculator` — 출생일시 → 명식 4주. skyfield CSV + geopy 경도 보정 |
+| `saju/constants.py` | 천간/지지/오행 상수 |
+| `saju/relations.py` | 천간합/충, 지지 육합/삼합/충/형/파/해 관계 |
+| `saju/tengod.py` | 십신(十神) 계산 |
+| `saju/shinsal.py` | 신살(神煞) 판정 |
+| `saju/daeun.py` / `sewoon.py` | 대운/세운 |
+| `saju/scorer.py` | `saju_score()` — 명식 × 일진 궁합 점수 엔트리 |
 
-### 4.3 인프라
+### 4.2 쿼트 레이어 (`src/sajucandle/quant/`)
 
 | 모듈 | 책임 |
 |------|------|
-| `api.py` | FastAPI 엔드포인트 전체 (14개) |
-| `api_client.py` | 봇 → API httpx 래퍼 |
-| `handlers.py` | Telegram 커맨드 (13개) + 카드 포맷 |
-| `broadcast.py` | 일일 푸시 CLI (Phase 0 tracking → Phase 1 precompute → Phase 2 사주 → Phase 3 watchlist) |
-| `repositories.py` | DB CRUD (users/user_bazi/user_watchlist/signal_log) |
-| `models.py` | Pydantic 모델 |
-| `format.py` | 명식 카드 + DISCLAIMER 상수 |
+| `price_data.py` | yfinance 기반 OHLCV 로더 + `data/prices/` 캐시 |
+| `technical.py` | RSI/MACD/Bollinger → `ta_score_stock`/`ta_score_coin` (ta 라이브러리) |
+| `macro.py` / `crypto_macro.py` | 거시 지표 점수 (주식/코인) |
+| `fundamental.py` | 펀더멘털 점수 (yfinance) |
+| `onchain.py` | 온체인 점수 (코인 전용) |
+| `ranker.py` | 종목 랭킹 (saju filter + 쿼트 점수 합산) |
+| `backtest.py` | 월간 백테스트 엔진 (saju_filter_mode 지원) |
+| `null_test.py` | 사주 점수 placebo 테스트 |
+| `saju_calibrator.py` | 사주 점수 calibration (ICIR 등) |
 
-## 5. 제약사항 / 주의점
+### 4.3 시그널·서비스 레이어
 
-### 5.1 외부 API 제약
-- **yfinance 1h 인터벌**: 최근 **60일**만 조회 가능. 백테스트 시 제약.
-- **yfinance 4h**: 네이티브 미지원 → 1h 데이터를 `pandas.resample("4h", origin="epoch")`로 집계.
-- **Binance `data-api.binance.vision`**: Market data 공개 미러. 인증 불필요. Railway IP 차단 우회 (`api.binance.com`은 차단됨).
-- **미국 장 공휴일 미처리**: `is_market_open`이 True로 잘못 판정될 수 있음 (1년 ~9일). `last_session_date`는 yfinance가 휴장일 데이터 안 주므로 정확.
+| 모듈 | 책임 |
+|------|------|
+| `signal/regime.py` | SPY 3M 롤링 기반 Bull/Bear/Sideways 감지 |
+| `signal/engine.py` | 월간 시그널 생성기 — `generate_signals()` → BUY/HOLD/SELL/WATCH/KILL |
+| `signal/renderer.py` | Telegram MDv2 / HTML 이메일 / 텍스트 출력 |
+| `ticker/schema.py` | `TickerRecord`, `TransitionPoint` 데이터클래스 |
+| `ticker/loader.py` | `data/tickers/*.csv` 로더 |
+| `ticker/saju_resolver.py` | 티커 상장일 → 명식 계산 |
+| `api/main.py` | FastAPI — `/health`, `/signals/stock`, `/signals/stock/html`, `/signals/stock/telegram` |
+| `scheduler/runner.py` | APScheduler — 매월 1일 09:00 KST 자동 실행 |
 
-### 5.2 로직 제약
-- **숏 미지원**: 현재 분석은 롱 관점만. 하락장은 "회피"로만 표시. Phase 2에서 대칭 구현 예정.
-- **사주 가중치 10%**: Week 8에서 0.4→0.1로 강등. 실 트레이딩 판단은 차트 중심.
-- **구조 판정 엄격**: UPTREND/DOWNTREND는 3개 연속 HH-HL/LH-LL 요구. swing 부족 시 RANGE 폴백 → composite에서 alignment 50% 섞음.
-- **튜닝 상수**: `_SL_ATR_MULT` 등은 **백테스트 이전 initial value**. Phase 4에서 조정 예정.
+### 4.4 보조 도구 (`tools/`, optional deps `[tools]`)
 
-### 5.3 캐시 TTL (provider별 비대칭 주의)
-- Binance OHLCV: **fresh 5분** (24/7 시장 실시간성)
-- yfinance OHLCV: **fresh 1h** (시간외 변동 작음)
-- Signal composite: 5분 (`signal:*`)
-- 사주: KST 자정까지 (`score:*`)
+| 모듈 | 책임 |
+|------|------|
+| `tools/compute_solar_terms.py` | skyfield + DE440s.bsp → 24절기 JSON 생성 |
+| `tools/build_manseryeok_csv.py` | 만세력 CSV 빌드 |
+| `tools/verify_day_pillar.py` / `cross_validate_day_pillar.py` | 일주 검증 |
+| `tools/compare_solar_terms.py` | 절기 비교 |
 
-## 6. 현재 구현 상태 (Phase 0 확정)
+## 5. 실행 진입점
 
-- **브랜치**: `main` (commit `c092a7c` 기준)
-- **주차**: Week 10 Phase 2 완료
-- **테스트**: 307 passed, 69 skipped
-- **상세**: `docs/planning/research/phase0_current_state.md`
+### 5.1 로컬 개발
+```bash
+# venv + deps
+py -3.14 -m venv .venv
+./.venv/Scripts/python.exe -m pip install -e ".[dev]"
 
-## 7. 다음 단계 (Phase 1 준비)
+# 툴 작업 시
+./.venv/Scripts/python.exe -m pip install -e ".[tools]"
 
-Phase 1은 **백테스트 하네스 구축**. 시작 전 설계자가 Phase 0 리서치의 "Open Questions"에 답변 필요:
+# smoke test 1개
+PYTHONPATH=src ./.venv/Scripts/python.exe tests/smoke_test_signal_engine.py
+```
 
-1. volume_profile.top_n 기본값 3 → 5 보정 여부
-2. OHLCV TTL 비대칭을 명세 반영 or 코드 일원화
-3. Phase 1 전 CI 도입 여부
-4. backtest 패키지 경로 (신규 vs broadcast CLI 확장)
+### 5.2 API 서버
+```bash
+PYTHONPATH=src ./.venv/Scripts/python.exe -m uvicorn sajucandle.api.main:app --port 8001
+```
+엔드포인트: `GET /health`, `GET /signals/stock` (JSON / html / telegram)
 
-위 답변 후 Phase 1 프롬프트 작성 단계로 이동.
+### 5.3 월간 스케줄러
+```bash
+# 데몬 (매월 1일 09:00 KST)
+PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --daemon
+
+# 수동 실행 (특정일)
+PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --date 2026-05-01
+```
+
+### 5.4 배포 (Railway / 범용 Docker)
+- Dockerfile CMD: `uvicorn sajucandle.api.main:app --host 0.0.0.0 --port 8000`
+- Procfile `web` / `worker` 는 API / 스케줄러 각각.
+
+## 6. 제약사항 / 주의점
+
+### 6.1 런타임 데이터
+- **data/tickers/**, **data/manseryeok/**, **data/solar_terms/** 는 git tracking (런타임 필수).
+- **data/prices/**, **data/signals/** 는 gitignore (캐시/출력). 재계산 가능.
+- **.bsp 천체력 파일**(de421.bsp 16MB, de440s.bsp 32MB)은 gitignore. 필요 시 `skyfield.api.load()`로 재다운로드.
+
+### 6.2 외부 API / 환경
+- **yfinance**: 1h 인터벌 최근 60일 제한. 일봉 기반 백테스트는 무제한.
+- **Windows stdout 버퍼링**: 스크립트 실행 시 `sys.stdout.reconfigure(encoding="utf-8")` 권장.
+- **bash-native 실행**: `PYTHONPATH=src ./.venv/Scripts/python.exe ...` 형태.
+- **APScheduler**: `job.next_run_time`은 `scheduler.start()` 이후에만 유효.
+- **FastAPI load_tickers**: `Path` 객체 필요 (`str()` 변환 금지).
+
+### 6.3 로직 제약 (검증 결과)
+- **사주 = 가중치 실패, 필터로만 유효**
+  - Null Test v1 (30% 가중): z = −7.46 FAIL
+  - Null Test v2 (10% 가중, 3컴포넌트): z = −3.97 FAIL
+  - 원인: 60갑자 사이클 → 구조적 나이/섹터 편향
+- **확정 전략 = C 필터**: saju_score < 30 제외 후 순수 퀀트 랭킹
+- **Regime-conditional은 불필요**: Sideways 71% → always-ON과 동일
+- **OOS 검증 PASS (2026-04-24)**: threshold 20/30 동률, 40+ 급락 (overfitting 경계)
+- **saju_score_v2는 deprecated**
+
+### 6.4 검증 결과 요약
+
+| 전략 | 자산 | CAGR | Sharpe | MDD |
+|---|---|---|---|---|
+| C 필터 <30 | 주식 2015-24 | 14.0% | 0.97 | −14.8% |
+| C 필터 <30 | 코인 2020-24 | 85.8% | 0.93 | −72.5% |
+| SPY B&H (baseline) | 주식 2015-24 | 13.0% | 0.90 | −33.7% |
+
+## 7. 현재 구현 상태 (2026-04-24)
+
+- **브랜치**: `phase4-logic-merge` (main 기준 +N 커밋, Phase 4 로직 반입)
+- **Phase**: 4 완료 (검증·OOS PASS)
+- **테스트**: smoke test 22종, pytest 수집 0건 (Phase 4는 스크립트 기반)
+- **핸드오버**: `PHASE4_HANDOVER.md` (상세 매니페스트 + 검증 테이블)
+
+## 8. 다음 단계 후보
+
+1. threshold 20 vs 30 실운영 선택 (OOS 동률 → A/B 시험)
+2. UI/렌더링 연결 — renderer 출력을 프론트엔드/이메일/텔레그램 봇에 연결
+3. 구독자 DB 연동 — 시그널 → 구독자별 전송 파이프라인
+4. 결제 연동
+5. Phase 2 코인 정밀 재검증 (50개월 / 15종)
+
+위 중 선택 후 스펙 작성 → 플랜 → 실행 순서.

@@ -1,0 +1,991 @@
+[
+  {
+    "symbol": "SOL-USD",
+    "name": "Solana",
+    "asset_class": "coin",
+    "sector": "L1",
+    "primary_pillar": "丁巳",
+    "primary_source": "founding",
+    "saju_100": 76.3,
+    "quant_100": 57.2,
+    "raw": 62.9,
+    "final": 62.9,
+    "penalty_applied": false,
+    "saju_detail": {
+      "total_100": 76.3,
+      "breakdown": {
+        "wolwoon_x_ilju": 98.0,
+        "ilji_x_ilju": 84.0,
+        "sewoon_element_match": 100.0,
+        "daeun_bias": 50.0,
+        "element_balance": 50.0,
+        "samchung_events": 50.0,
+        "shinsal_boost": 50.0
+      },
+      "weighted": {
+        "wolwoon_x_ilju": 24.5,
+        "ilji_x_ilju": 16.8,
+        "sewoon_element_match": 15.0,
+        "daeun_bias": 5.0,
+        "element_balance": 5.0,
+        "samchung_events": 5.0,
+        "shinsal_boost": 5.0
+      },
+      "weights": {
+        "wolwoon_x_ilju": 25,
+        "ilji_x_ilju": 20,
+        "sewoon_element_match": 15,
+        "daeun_bias": 10,
+        "element_balance": 10,
+        "samchung_events": 10,
+        "shinsal_boost": 10
+      },
+      "today_context": {
+        "sewoon": "丙午",
+        "wolwoon": "壬辰",
+        "ilji": "丁卯"
+      },
+      "relations": {
+        "wolwoon_raw": {
+          "total": 24,
+          "stem_rels": [
+            {
+              "type": "천간합",
+              "score": 12,
+              "element": "木",
+              "detail": "丁·壬 합화 木"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "상생",
+              "score": 12,
+              "detail": "火→土"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간합",
+              "score": 12,
+              "element": "木",
+              "detail": "丁·壬 합화 木"
+            },
+            {
+              "type": "상생",
+              "score": 12,
+              "detail": "火→土"
+            }
+          ],
+          "cons": [],
+          "pillar_a": "丁巳",
+          "pillar_b": "壬辰"
+        },
+        "ilji_raw": {
+          "total": 17,
+          "stem_rels": [
+            {
+              "type": "천간 오행동",
+              "score": 5,
+              "detail": "火 공유"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "상생",
+              "score": 12,
+              "detail": "木→火"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간 오행동",
+              "score": 5,
+              "detail": "火 공유"
+            },
+            {
+              "type": "상생",
+              "score": 12,
+              "detail": "木→火"
+            }
+          ],
+          "cons": [],
+          "pillar_a": "丁巳",
+          "pillar_b": "丁卯"
+        },
+        "samhap_events": [],
+        "shinsal_findings": []
+      }
+    },
+    "quant_detail": {
+      "total": 57.2,
+      "components": {
+        "macro": {
+          "total": 58.5,
+          "breakdown": {
+            "btc_dominance": 60.0,
+            "stablecoin_supply": 60.7,
+            "dxy_liquidity": 42.5,
+            "funding_rate": 70.0
+          },
+          "weights": {
+            "btc_dominance": 31,
+            "stablecoin_supply": 23,
+            "dxy_liquidity": 23,
+            "funding_rate": 23
+          },
+          "asof": "2026-04-23T12:00:00",
+          "note": "ETF·청산 지표는 Phase 2에 추가 (가중치 재분배)"
+        },
+        "onchain": {
+          "total": 67.7,
+          "breakdown": {
+            "active_addresses": 50.0,
+            "cap_trend_90d": 50.0,
+            "price_drawdown": 90.0,
+            "price_ma200_ratio": 55.0,
+            "volume_7d_vs_30d": 55.0
+          },
+          "weights": {
+            "active_addresses": 0,
+            "cap_trend_90d": 0,
+            "price_drawdown": 36,
+            "price_ma200_ratio": 27,
+            "volume_7d_vs_30d": 36
+          },
+          "symbol": "SOL-USD",
+          "note": "알트코인: CoinMetrics 미지원, 가격 proxy만 사용."
+        },
+        "ta": {
+          "total": 39.5,
+          "breakdown": {
+            "supertrend": 0.0,
+            "ma200_rsi": 50.0,
+            "macd_momentum": 100.0,
+            "volume_trend": 35.7,
+            "relative_strength_vs_btc": 27.7
+          },
+          "weights": {
+            "supertrend": 30,
+            "ma200_rsi": 20,
+            "macd_momentum": 20,
+            "volume_trend": 15,
+            "relative_strength_vs_btc": 15
+          }
+        }
+      },
+      "weights": {
+        "macro": 0.28,
+        "onchain": 0.44,
+        "ta": 0.28
+      }
+    }
+  },
+  {
+    "symbol": "ETH-USD",
+    "name": "Ethereum",
+    "asset_class": "coin",
+    "sector": "L1",
+    "primary_pillar": "丁未",
+    "primary_source": "founding",
+    "saju_100": 67.6,
+    "quant_100": 57.3,
+    "raw": 60.4,
+    "final": 60.4,
+    "penalty_applied": false,
+    "saju_detail": {
+      "total_100": 67.6,
+      "breakdown": {
+        "wolwoon_x_ilju": 84.0,
+        "ilji_x_ilju": 80.0,
+        "sewoon_element_match": 100.0,
+        "daeun_bias": 50.0,
+        "element_balance": 36.0,
+        "samchung_events": 50.0,
+        "shinsal_boost": 20.0
+      },
+      "weighted": {
+        "wolwoon_x_ilju": 21.0,
+        "ilji_x_ilju": 16.0,
+        "sewoon_element_match": 15.0,
+        "daeun_bias": 5.0,
+        "element_balance": 3.6,
+        "samchung_events": 5.0,
+        "shinsal_boost": 2.0
+      },
+      "weights": {
+        "wolwoon_x_ilju": 25,
+        "ilji_x_ilju": 20,
+        "sewoon_element_match": 15,
+        "daeun_bias": 10,
+        "element_balance": 10,
+        "samchung_events": 10,
+        "shinsal_boost": 10
+      },
+      "today_context": {
+        "sewoon": "丙午",
+        "wolwoon": "壬辰",
+        "ilji": "丁卯"
+      },
+      "relations": {
+        "wolwoon_raw": {
+          "total": 17,
+          "stem_rels": [
+            {
+              "type": "천간합",
+              "score": 12,
+              "element": "木",
+              "detail": "丁·壬 합화 木"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "오행동(同)",
+              "score": 5,
+              "detail": "土 공유"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간합",
+              "score": 12,
+              "element": "木",
+              "detail": "丁·壬 합화 木"
+            },
+            {
+              "type": "오행동(同)",
+              "score": 5,
+              "detail": "土 공유"
+            }
+          ],
+          "cons": [],
+          "pillar_a": "丁未",
+          "pillar_b": "壬辰"
+        },
+        "ilji_raw": {
+          "total": 15,
+          "stem_rels": [
+            {
+              "type": "천간 오행동",
+              "score": 5,
+              "detail": "火 공유"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "반합(半合)",
+              "score": 10,
+              "element": "木",
+              "detail": "未·卯 반합"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간 오행동",
+              "score": 5,
+              "detail": "火 공유"
+            },
+            {
+              "type": "반합(半合)",
+              "score": 10,
+              "element": "木",
+              "detail": "未·卯 반합"
+            }
+          ],
+          "cons": [],
+          "pillar_a": "丁未",
+          "pillar_b": "丁卯"
+        },
+        "samhap_events": [],
+        "shinsal_findings": [
+          {
+            "name": "화개살",
+            "score": -2,
+            "where": "未",
+            "type": "흉"
+          },
+          {
+            "name": "백호살",
+            "score": -4,
+            "where": "乙未",
+            "type": "흉"
+          }
+        ]
+      }
+    },
+    "quant_detail": {
+      "total": 57.3,
+      "components": {
+        "macro": {
+          "total": 58.5,
+          "breakdown": {
+            "btc_dominance": 60.0,
+            "stablecoin_supply": 60.7,
+            "dxy_liquidity": 42.5,
+            "funding_rate": 70.0
+          },
+          "weights": {
+            "btc_dominance": 31,
+            "stablecoin_supply": 23,
+            "dxy_liquidity": 23,
+            "funding_rate": 23
+          },
+          "asof": "2026-04-23T12:00:00",
+          "note": "ETF·청산 지표는 Phase 2에 추가 (가중치 재분배)"
+        },
+        "onchain": {
+          "total": 45.2,
+          "breakdown": {
+            "active_addresses": 20.0,
+            "cap_trend_90d": 15.0,
+            "price_drawdown": 90.0,
+            "price_ma200_ratio": 55.0,
+            "volume_7d_vs_30d": 55.0
+          },
+          "weights": {
+            "active_addresses": 25,
+            "cap_trend_90d": 20,
+            "price_drawdown": 20,
+            "price_ma200_ratio": 15,
+            "volume_7d_vs_30d": 20
+          },
+          "symbol": "ETH-USD",
+          "note": "Phase 1 간이 버전. MVRV/NVT/SOPR은 Phase 2 (유료 Glassnode 또는 Dune)."
+        },
+        "ta": {
+          "total": 75.1,
+          "breakdown": {
+            "supertrend": 100.0,
+            "ma200_rsi": 50.0,
+            "macd_momentum": 100.0,
+            "volume_trend": 37.8,
+            "relative_strength_vs_btc": 62.6
+          },
+          "weights": {
+            "supertrend": 30,
+            "ma200_rsi": 20,
+            "macd_momentum": 20,
+            "volume_trend": 15,
+            "relative_strength_vs_btc": 15
+          }
+        }
+      },
+      "weights": {
+        "macro": 0.28,
+        "onchain": 0.44,
+        "ta": 0.28
+      }
+    }
+  },
+  {
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "asset_class": "coin",
+    "sector": "L1",
+    "primary_pillar": "戊申",
+    "primary_source": "listing",
+    "saju_100": 66.4,
+    "quant_100": 57.4,
+    "raw": 60.1,
+    "final": 60.1,
+    "penalty_applied": false,
+    "saju_detail": {
+      "total_100": 66.4,
+      "breakdown": {
+        "wolwoon_x_ilju": 46.0,
+        "ilji_x_ilju": 50.0,
+        "sewoon_element_match": 100.0,
+        "daeun_bias": 50.0,
+        "element_balance": 69.0,
+        "samchung_events": 100.0,
+        "shinsal_boost": 80.0
+      },
+      "weighted": {
+        "wolwoon_x_ilju": 11.5,
+        "ilji_x_ilju": 10.0,
+        "sewoon_element_match": 15.0,
+        "daeun_bias": 5.0,
+        "element_balance": 6.9,
+        "samchung_events": 10.0,
+        "shinsal_boost": 8.0
+      },
+      "weights": {
+        "wolwoon_x_ilju": 25,
+        "ilji_x_ilju": 20,
+        "sewoon_element_match": 15,
+        "daeun_bias": 10,
+        "element_balance": 10,
+        "samchung_events": 10,
+        "shinsal_boost": 10
+      },
+      "today_context": {
+        "sewoon": "丙午",
+        "wolwoon": "壬辰",
+        "ilji": "丁卯"
+      },
+      "relations": {
+        "wolwoon_raw": {
+          "total": -2,
+          "stem_rels": [
+            {
+              "type": "천간 상극",
+              "score": -12,
+              "detail": "土剋水"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "반합(半合)",
+              "score": 10,
+              "element": "水",
+              "detail": "申·辰 반합"
+            }
+          ],
+          "pros": [
+            {
+              "type": "반합(半合)",
+              "score": 10,
+              "element": "水",
+              "detail": "申·辰 반합"
+            }
+          ],
+          "cons": [
+            {
+              "type": "천간 상극",
+              "score": -12,
+              "detail": "土剋水"
+            }
+          ],
+          "pillar_a": "戊申",
+          "pillar_b": "壬辰"
+        },
+        "ilji_raw": {
+          "total": 0,
+          "stem_rels": [
+            {
+              "type": "천간 상생",
+              "score": 12,
+              "detail": "火→土"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "상극",
+              "score": -12,
+              "detail": "金剋木"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간 상생",
+              "score": 12,
+              "detail": "火→土"
+            }
+          ],
+          "cons": [
+            {
+              "type": "상극",
+              "score": -12,
+              "detail": "金剋木"
+            }
+          ],
+          "pillar_a": "戊申",
+          "pillar_b": "丁卯"
+        },
+        "samhap_events": [
+          {
+            "type": "삼합(三合)",
+            "score": 25,
+            "element": "水",
+            "detail": "申子辰 삼합 → 水"
+          }
+        ],
+        "shinsal_findings": [
+          {
+            "name": "천덕귀인",
+            "score": 3,
+            "where": "巳",
+            "type": "길"
+          },
+          {
+            "name": "문창귀인",
+            "score": 3,
+            "where": "申",
+            "type": "길"
+          }
+        ]
+      }
+    },
+    "quant_detail": {
+      "total": 57.4,
+      "components": {
+        "macro": {
+          "total": 58.5,
+          "breakdown": {
+            "btc_dominance": 60.0,
+            "stablecoin_supply": 60.7,
+            "dxy_liquidity": 42.5,
+            "funding_rate": 70.0
+          },
+          "weights": {
+            "btc_dominance": 31,
+            "stablecoin_supply": 23,
+            "dxy_liquidity": 23,
+            "funding_rate": 23
+          },
+          "asof": "2026-04-23T12:00:00",
+          "note": "ETF·청산 지표는 Phase 2에 추가 (가중치 재분배)"
+        },
+        "onchain": {
+          "total": 53.5,
+          "breakdown": {
+            "active_addresses": 40.0,
+            "cap_trend_90d": 35.0,
+            "price_drawdown": 75.0,
+            "price_ma200_ratio": 70.0,
+            "volume_7d_vs_30d": 55.0
+          },
+          "weights": {
+            "active_addresses": 25,
+            "cap_trend_90d": 20,
+            "price_drawdown": 20,
+            "price_ma200_ratio": 15,
+            "volume_7d_vs_30d": 20
+          },
+          "symbol": "BTC-USD",
+          "note": "Phase 1 간이 버전. MVRV/NVT/SOPR은 Phase 2 (유료 Glassnode 또는 Dune)."
+        },
+        "ta": {
+          "total": 62.4,
+          "breakdown": {
+            "supertrend": 100.0,
+            "ma200_rsi": 0.0,
+            "macd_momentum": 100.0,
+            "volume_trend": 32.6,
+            "relative_strength_vs_btc": 50.0
+          },
+          "weights": {
+            "supertrend": 30,
+            "ma200_rsi": 20,
+            "macd_momentum": 20,
+            "volume_trend": 15,
+            "relative_strength_vs_btc": 15
+          }
+        }
+      },
+      "weights": {
+        "macro": 0.28,
+        "onchain": 0.44,
+        "ta": 0.28
+      }
+    }
+  },
+  {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "asset_class": "stock",
+    "sector": "Technology",
+    "primary_pillar": "壬午",
+    "primary_source": "founding",
+    "saju_100": 71.4,
+    "quant_100": 65.6,
+    "raw": 67.3,
+    "final": 67.3,
+    "penalty_applied": false,
+    "saju_detail": {
+      "total_100": 71.4,
+      "breakdown": {
+        "wolwoon_x_ilju": 84.0,
+        "ilji_x_ilju": 62.0,
+        "sewoon_element_match": 100.0,
+        "daeun_bias": 50.0,
+        "element_balance": 50.0,
+        "samchung_events": 50.0,
+        "shinsal_boost": 80.0
+      },
+      "weighted": {
+        "wolwoon_x_ilju": 21.0,
+        "ilji_x_ilju": 12.4,
+        "sewoon_element_match": 15.0,
+        "daeun_bias": 5.0,
+        "element_balance": 5.0,
+        "samchung_events": 5.0,
+        "shinsal_boost": 8.0
+      },
+      "weights": {
+        "wolwoon_x_ilju": 25,
+        "ilji_x_ilju": 20,
+        "sewoon_element_match": 15,
+        "daeun_bias": 10,
+        "element_balance": 10,
+        "samchung_events": 10,
+        "shinsal_boost": 10
+      },
+      "today_context": {
+        "sewoon": "丙午",
+        "wolwoon": "壬辰",
+        "ilji": "丁卯"
+      },
+      "relations": {
+        "wolwoon_raw": {
+          "total": 17,
+          "stem_rels": [
+            {
+              "type": "천간 오행동",
+              "score": 5,
+              "detail": "水 공유"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "상생",
+              "score": 12,
+              "detail": "火→土"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간 오행동",
+              "score": 5,
+              "detail": "水 공유"
+            },
+            {
+              "type": "상생",
+              "score": 12,
+              "detail": "火→土"
+            }
+          ],
+          "cons": [],
+          "pillar_a": "壬午",
+          "pillar_b": "壬辰"
+        },
+        "ilji_raw": {
+          "total": 6,
+          "stem_rels": [
+            {
+              "type": "천간합",
+              "score": 12,
+              "element": "木",
+              "detail": "壬·丁 합화 木"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "파(破)",
+              "score": -6,
+              "detail": "午·卯 파"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간합",
+              "score": 12,
+              "element": "木",
+              "detail": "壬·丁 합화 木"
+            }
+          ],
+          "cons": [
+            {
+              "type": "파(破)",
+              "score": -6,
+              "detail": "午·卯 파"
+            }
+          ],
+          "pillar_a": "壬午",
+          "pillar_b": "丁卯"
+        },
+        "samhap_events": [],
+        "shinsal_findings": [
+          {
+            "name": "천을귀인",
+            "score": 5,
+            "where": "卯",
+            "type": "길"
+          },
+          {
+            "name": "천을귀인",
+            "score": 5,
+            "where": "卯",
+            "type": "길"
+          },
+          {
+            "name": "도화살",
+            "score": -2,
+            "where": "卯",
+            "type": "흉"
+          },
+          {
+            "name": "화개살",
+            "score": -2,
+            "where": "辰",
+            "type": "흉"
+          }
+        ]
+      }
+    },
+    "quant_detail": {
+      "total": 65.6,
+      "components": {
+        "macro": {
+          "total": 58.7,
+          "breakdown": {
+            "yield_curve": 50.0,
+            "dxy_trend": 42.5,
+            "vix": 80.0,
+            "cpi": 50.0,
+            "sector_rs": 62.9
+          },
+          "weights": {
+            "yield_curve": 20,
+            "dxy_trend": 15,
+            "vix": 20,
+            "cpi": 15,
+            "sector_rs": 30
+          },
+          "asof": "2026-04-23T12:00:00"
+        },
+        "fa": {
+          "total": 61.8,
+          "breakdown": {
+            "valuation": 40.0,
+            "quality": 100.0,
+            "fcf_yield": 55.0,
+            "growth": 80.0,
+            "balance_sheet": 25.0
+          },
+          "weights": {
+            "valuation": 25,
+            "quality": 25,
+            "fcf_yield": 20,
+            "growth": 15,
+            "balance_sheet": 15
+          },
+          "symbol": "AAPL",
+          "raw_metrics": {
+            "forwardPE": 29.145535,
+            "pegRatio": 2.46,
+            "returnOnEquity": 1.5202099,
+            "operatingMargins": 0.35374,
+            "revenueGrowth": 0.157,
+            "earningsGrowth": 0.183,
+            "marketCap": 4015032631296,
+            "freeCashflow": 106312753152,
+            "debtToEquity": 102.63
+          }
+        },
+        "ta": {
+          "total": 78.3,
+          "breakdown": {
+            "supertrend": 100.0,
+            "ma_alignment": 75.0,
+            "rsi": 100.0,
+            "volume_trend": 52.8,
+            "relative_strength": 58.2
+          },
+          "weights": {
+            "supertrend": 25,
+            "ma_alignment": 25,
+            "rsi": 15,
+            "volume_trend": 15,
+            "relative_strength": 20
+          }
+        }
+      },
+      "weights": {
+        "macro": 0.28,
+        "fa": 0.44,
+        "ta": 0.28
+      }
+    }
+  },
+  {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corp.",
+    "asset_class": "stock",
+    "sector": "Technology",
+    "primary_pillar": "乙卯",
+    "primary_source": "founding",
+    "saju_100": 47.8,
+    "quant_100": 71.6,
+    "raw": 64.5,
+    "final": 64.5,
+    "penalty_applied": false,
+    "saju_detail": {
+      "total_100": 47.8,
+      "breakdown": {
+        "wolwoon_x_ilju": 64.0,
+        "ilji_x_ilju": 84.0,
+        "sewoon_element_match": 0.0,
+        "daeun_bias": 50.0,
+        "element_balance": 0,
+        "samchung_events": 50.0,
+        "shinsal_boost": 50.0
+      },
+      "weighted": {
+        "wolwoon_x_ilju": 16.0,
+        "ilji_x_ilju": 16.8,
+        "sewoon_element_match": 0.0,
+        "daeun_bias": 5.0,
+        "element_balance": 0.0,
+        "samchung_events": 5.0,
+        "shinsal_boost": 5.0
+      },
+      "weights": {
+        "wolwoon_x_ilju": 25,
+        "ilji_x_ilju": 20,
+        "sewoon_element_match": 15,
+        "daeun_bias": 10,
+        "element_balance": 10,
+        "samchung_events": 10,
+        "shinsal_boost": 10
+      },
+      "today_context": {
+        "sewoon": "丙午",
+        "wolwoon": "壬辰",
+        "ilji": "丁卯"
+      },
+      "relations": {
+        "wolwoon_raw": {
+          "total": 7,
+          "stem_rels": [
+            {
+              "type": "천간 상생",
+              "score": 12,
+              "detail": "水→木"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "해(害)",
+              "score": -5,
+              "detail": "卯·辰 해"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간 상생",
+              "score": 12,
+              "detail": "水→木"
+            }
+          ],
+          "cons": [
+            {
+              "type": "해(害)",
+              "score": -5,
+              "detail": "卯·辰 해"
+            }
+          ],
+          "pillar_a": "乙卯",
+          "pillar_b": "壬辰"
+        },
+        "ilji_raw": {
+          "total": 17,
+          "stem_rels": [
+            {
+              "type": "천간 상생",
+              "score": 12,
+              "detail": "木→火"
+            }
+          ],
+          "branch_rels": [
+            {
+              "type": "오행동(同)",
+              "score": 5,
+              "detail": "木 공유"
+            }
+          ],
+          "pros": [
+            {
+              "type": "천간 상생",
+              "score": 12,
+              "detail": "木→火"
+            },
+            {
+              "type": "오행동(同)",
+              "score": 5,
+              "detail": "木 공유"
+            }
+          ],
+          "cons": [],
+          "pillar_a": "乙卯",
+          "pillar_b": "丁卯"
+        },
+        "samhap_events": [],
+        "shinsal_findings": []
+      }
+    },
+    "quant_detail": {
+      "total": 71.6,
+      "components": {
+        "macro": {
+          "total": 58.7,
+          "breakdown": {
+            "yield_curve": 50.0,
+            "dxy_trend": 42.5,
+            "vix": 80.0,
+            "cpi": 50.0,
+            "sector_rs": 62.9
+          },
+          "weights": {
+            "yield_curve": 20,
+            "dxy_trend": 15,
+            "vix": 20,
+            "cpi": 15,
+            "sector_rs": 30
+          },
+          "asof": "2026-04-23T12:00:00"
+        },
+        "fa": {
+          "total": 73.8,
+          "breakdown": {
+            "valuation": 80.0,
+            "quality": 100.0,
+            "fcf_yield": 35.0,
+            "growth": 100.0,
+            "balance_sheet": 45.0
+          },
+          "weights": {
+            "valuation": 25,
+            "quality": 25,
+            "fcf_yield": 20,
+            "growth": 15,
+            "balance_sheet": 15
+          },
+          "symbol": "NVDA",
+          "raw_metrics": {
+            "forwardPE": 18.01733,
+            "pegRatio": 0.72,
+            "returnOnEquity": 1.01485,
+            "operatingMargins": 0.65024,
+            "revenueGrowth": 0.732,
+            "earningsGrowth": 0.956,
+            "marketCap": 4921762512896,
+            "freeCashflow": 58128998400,
+            "debtToEquity": 7.255
+          }
+        },
+        "ta": {
+          "total": 81.1,
+          "breakdown": {
+            "supertrend": 100.0,
+            "ma_alignment": 100.0,
+            "rsi": 100.0,
+            "volume_trend": 26.1,
+            "relative_strength": 60.7
+          },
+          "weights": {
+            "supertrend": 25,
+            "ma_alignment": 25,
+            "rsi": 15,
+            "volume_trend": 15,
+            "relative_strength": 20
+          }
+        }
+      },
+      "weights": {
+        "macro": 0.28,
+        "fa": 0.44,
+        "ta": 0.28
+      }
+    }
+  }
+]

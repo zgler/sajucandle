@@ -2,10 +2,13 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-# 의존성 먼저 설치 (레이어 캐시 활용)
 COPY pyproject.toml ./
 COPY src/ ./src/
 RUN pip install --no-cache-dir -e .
 
-# 런타임
-CMD ["python", "-m", "sajucandle.bot"]
+COPY data/tickers/ ./data/tickers/
+COPY data/manseryeok/ ./data/manseryeok/
+COPY data/solar_terms/ ./data/solar_terms/
+
+ENV PYTHONUNBUFFERED=1
+CMD ["uvicorn", "sajucandle.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

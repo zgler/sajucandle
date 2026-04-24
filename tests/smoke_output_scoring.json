@@ -1,0 +1,159 @@
+{
+  "case1_saju": {
+    "year_pillar": "庚午",
+    "month_pillar": "丙戌",
+    "day_pillar": "戊申",
+    "hour_pillar": "己未",
+    "year_stem": "庚",
+    "year_branch": "午",
+    "month_stem": "丙",
+    "month_branch": "戌",
+    "day_stem": "戊",
+    "day_branch": "申",
+    "hour_stem": "己",
+    "hour_branch": "未",
+    "birth_time": "14:30",
+    "birth_date": "1990-10-10",
+    "zi_time_type": null,
+    "solar_correction": {
+      "city": "Seoul",
+      "longitude": 126.9783,
+      "longitude_source": "geocoded",
+      "utc_offset": 9,
+      "standard_longitude": 135,
+      "correction_minutes": -32.1,
+      "original_time": "14:30",
+      "solar_time": "13:57"
+    }
+  },
+  "case1_balance": {
+    "counts": {
+      "木": 0,
+      "火": 2,
+      "土": 4,
+      "金": 2,
+      "水": 0
+    },
+    "total": 8,
+    "balance_score": 0.6,
+    "dominant": "土",
+    "missing": [
+      "木",
+      "水"
+    ]
+  },
+  "case1_tengod": {
+    "day_stem": "戊",
+    "year_stem_tg": "식신",
+    "year_branch_tg": "정인",
+    "month_stem_tg": "편인",
+    "month_branch_tg": "비견",
+    "hour_stem_tg": "겁재",
+    "hour_branch_tg": "겁재",
+    "day_branch_tg": "식신",
+    "counts": {
+      "식신": 2,
+      "정인": 1,
+      "편인": 1,
+      "비견": 1,
+      "겁재": 2
+    },
+    "group_counts": {
+      "비겁": 3,
+      "식상": 2,
+      "재성": 0,
+      "관성": 0,
+      "인성": 2
+    },
+    "dominant_group": "비겁"
+  },
+  "case1_shinsal": [
+    {
+      "name": "천을귀인",
+      "score": 5,
+      "where": "未",
+      "type": "길"
+    },
+    {
+      "name": "천덕귀인",
+      "score": 3,
+      "where": "丙",
+      "type": "길"
+    },
+    {
+      "name": "월덕귀인",
+      "score": 3,
+      "where": "丙",
+      "type": "길"
+    },
+    {
+      "name": "문창귀인",
+      "score": 3,
+      "where": "申",
+      "type": "길"
+    },
+    {
+      "name": "금여",
+      "score": 2,
+      "where": "未",
+      "type": "길"
+    },
+    {
+      "name": "역마살",
+      "score": 2,
+      "where": "申",
+      "type": "중립"
+    },
+    {
+      "name": "화개살",
+      "score": -2,
+      "where": "戌",
+      "type": "흉"
+    },
+    {
+      "name": "백호살",
+      "score": -4,
+      "where": "丙戌",
+      "type": "흉"
+    },
+    {
+      "name": "양인살",
+      "score": -3,
+      "where": "午",
+      "type": "흉"
+    }
+  ],
+  "case2_ilji_compat": {
+    "total": 0,
+    "stem_rels": [
+      {
+        "type": "천간 상생",
+        "score": 12,
+        "detail": "火→土"
+      }
+    ],
+    "branch_rels": [
+      {
+        "type": "상극",
+        "score": -12,
+        "detail": "金剋木"
+      }
+    ],
+    "pros": [
+      {
+        "type": "천간 상생",
+        "score": 12,
+        "detail": "火→土"
+      }
+    ],
+    "cons": [
+      {
+        "type": "상극",
+        "score": -12,
+        "detail": "金剋木"
+      }
+    ],
+    "pillar_a": "戊申",
+    "pillar_b": "丁卯"
+  }
+}

@@ -1,0 +1,16 @@
+symbol,name,asset_class,market,sector,founding_date,founding_time,listing_date,listing_time,birth_city,transition_points_json,weight_founding,weight_listing,weight_transition,notes
+BTC-USD,Bitcoin,coin,onchain,L1,2009-01-03,18:15,2010-07-17,00:00,London,"[{""date"":""2017-08-01"",""label"":""BCH 하드포크"",""time"":""12:37""},{""date"":""2021-02-08"",""label"":""Tesla BTC 매입"",""time"":""09:00""},{""date"":""2024-01-11"",""label"":""현물 ETF 승인"",""time"":""16:00""}]",0.7,0.2,0.1,제네시스 블록 UTC 18:15:05 — 명리 기준 가장 명확
+ETH-USD,Ethereum,coin,onchain,L1,2015-07-30,15:26,2015-08-07,00:00,London,"[{""date"":""2022-09-15"",""label"":""The Merge PoS 전환"",""time"":""06:42""}]",0.6,0.3,0.1,제네시스 블록 = 창립일 (Vitalik 화이트페이퍼 2013-12-09는 구상일이므로 제외)
+BNB-USD,BNB,coin,onchain,Exchange,2017-07-14,00:00,2017-07-25,00:00,Singapore,"[{""date"":""2020-04-18"",""label"":""BSC 메인넷 런칭"",""time"":""09:00""}]",0.5,0.3,0.2,ICO 시작일. BSC 이전은 ERC-20
+XRP-USD,Ripple,coin,onchain,Payments,2013-01-01,00:00,2013-08-01,00:00,San Francisco,[],0.5,0.5,0,XRP Ledger 제네시스 근사 (공식 발표 2013-01)
+ADA-USD,Cardano,coin,onchain,L1,2017-09-29,00:00,2017-10-01,00:00,Singapore,[],0.7,0.3,0,Byron 메인넷 런칭일
+SOL-USD,Solana,coin,onchain,L1,2020-03-16,00:00,2020-04-10,00:00,San Francisco,[],0.7,0.3,0,메인넷 베타 첫 블록
+DOGE-USD,Dogecoin,coin,onchain,Meme,2013-12-06,00:00,2013-12-06,00:00,San Francisco,[],1.0,0,0,창립=런칭 (Jackson Palmer/Billy Markus 동시 출시)
+AVAX-USD,Avalanche,coin,onchain,L1,2020-09-21,00:00,2020-09-21,00:00,New York,[],1.0,0,0,메인넷 런칭=거래소 상장 동시
+LINK-USD,Chainlink,coin,onchain,Oracle,2017-09-19,00:00,2017-09-19,00:00,San Francisco,[],1.0,0,0,ERC-20 배포=상장
+MATIC-USD,Polygon,coin,onchain,L2,2019-04-26,00:00,2019-04-26,00:00,Mumbai,[],0.5,0.5,0,Matic Network ICO 일자
+LTC-USD,Litecoin,coin,onchain,L1,2011-10-13,00:00,2011-10-13,00:00,San Francisco,[],1.0,0,0,Charlie Lee 제네시스 블록 = 런칭 동시
+BCH-USD,Bitcoin Cash,coin,onchain,L1,2017-08-01,12:37,2017-08-01,00:00,San Francisco,[],1.0,0,0,BTC 하드포크 블록 478558
+ATOM-USD,Cosmos,coin,onchain,L1,2019-03-13,00:00,2019-03-14,00:00,Berlin,"[{""date"":""2021-02-18"",""label"":""Stargate 업그레이드"",""time"":""00:00""}]",0.7,0.3,0,Hub 메인넷 런칭
+DOT-USD,Polkadot,coin,onchain,L1,2020-05-26,00:00,2020-08-18,00:00,Zug,"[{""date"":""2021-12-18"",""label"":""Parachain 경매 시작"",""time"":""00:00""}]",0.6,0.4,0,제네시스 블록 2020-05-26; 릴레이체인 2020-08-18
+UNI-USD,Uniswap,coin,onchain,DeFi,2020-09-17,00:00,2020-09-17,00:00,New York,[],1.0,0,0,UNI 거버넌스 토큰 에어드롭=런칭
