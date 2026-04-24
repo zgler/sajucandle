@@ -98,7 +98,7 @@
    - `TRANSPORT_ENABLED=false` → **`TRANSPORT_ENABLED=true`**
    - `TELEGRAM_BOT_TOKEN=` 뒤에 **Step 1에서 복사한 토큰 붙여넣기**
    - `TELEGRAM_ADMIN_CHAT_ID=` 뒤에 **Step 2에서 복사한 숫자 붙여넣기**
-   - 마지막 줄(`TELEGRAM_API_BASE=...`)은 건드리지 말 것
+   - `TELEGRAM_API_BASE=https://api.telegram.org` **그대로 둘 것** (Telegram 공식 서버 주소. 프록시나 자체 Bot API 서버 쓰는 특수 상황에만 바꾸면 됨. 개인 사용자는 건드릴 이유 없음)
 4. 최종 결과 예시 (토큰·chat_id는 본인 것으로):
    ```
    TRANSPORT_ENABLED=true
