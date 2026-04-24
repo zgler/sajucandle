@@ -39,6 +39,8 @@ from sajucandle.manseryeok.core import SajuCalculator
 from sajucandle.ticker.loader import load_tickers
 from sajucandle.signal.engine import generate_signals
 from sajucandle.signal.renderer import render_telegram, render_email_html, render_text
+from sajucandle.transport.config import TransportConfig
+from sajucandle.transport.telegram import send_message as tg_send
 
 logging.basicConfig(
     level=logging.INFO,
@@ -132,8 +134,12 @@ _SIG_ORDER = {"BUY": 1, "HOLD": 2, "SELL": 3, "WATCH": 4, "KILL": 5}
 
 # ── 핵심 잡 ───────────────────────────────────────────────────────────────
 
-def run_monthly_job(dt: datetime | None = None) -> None:
-    """월간 신호 생성 잡 (스케줄러 or 즉시 실행 공용)."""
+def run_monthly_job(dt: datetime | None = None, *, notify: bool = True) -> None:
+    """월간 신호 생성 잡 (스케줄러 or 즉시 실행 공용).
+
+    notify=True(기본)면 말미에 Telegram 전송 시도. cfg.is_telegram_ready()가
+    False면 파일 저장만 유지. 전송 실패도 job 성공으로 취급(파일 저장본으로 복구).
+    """
     if dt is None:
         dt = datetime.now().replace(hour=9, minute=0, second=0, microsecond=0)
 
@@ -182,6 +188,17 @@ def run_monthly_job(dt: datetime | None = None) -> None:
     if sells:
         log.info(f"SELL: {sells}")
 
+    # Phase 5: Telegram 관리자 전송 (활성화 시)
+    if notify:
+        cfg = TransportConfig.from_env()
+        if cfg.is_telegram_ready():
+            if tg_send(render_telegram(report), cfg=cfg):
+                log.info("Telegram 전송 완료")
+            else:
+                log.error("Telegram 전송 실패 — 파일 저장본은 유지됨")
+        else:
+            log.info("Telegram 비활성화 (TRANSPORT_ENABLED=false 또는 creds 누락)")
+
 
 # ── 진입점 ────────────────────────────────────────────────────────────────
 
@@ -189,13 +206,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="사주캔들 월간 신호 스케줄러")
     parser.add_argument("--daemon", action="store_true", help="스케줄러 상시 실행 (매월 1일 09:00 KST)")
     parser.add_argument("--date", type=str, default=None, help="즉시 실행 날짜 YYYY-MM-DD (기본: 오늘)")
+    parser.add_argument("--no-notify", action="store_true",
+                        help="Telegram 전송 skip (파일 저장만)")
     args = parser.parse_args()
+
+    notify = not args.no_notify
 
     if args.daemon:
         log.info("스케줄러 시작 — 매월 1일 09:00 KST 실행")
         scheduler = BlockingScheduler(timezone="Asia/Seoul")
         scheduler.add_job(
-            run_monthly_job,
+            lambda: run_monthly_job(notify=notify),
             trigger=CronTrigger(day=1, hour=9, minute=0, timezone="Asia/Seoul"),
             id="monthly_signal",
             name="월간 사주캔들 신호 생성",
@@ -212,7 +233,7 @@ def main() -> None:
         dt = None
         if args.date:
             dt = datetime.strptime(args.date, "%Y-%m-%d").replace(hour=9)
-        run_monthly_job(dt)
+        run_monthly_job(dt, notify=notify)
 
 
 if __name__ == "__main__":
