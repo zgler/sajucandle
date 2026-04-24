@@ -68,50 +68,97 @@
 
 ---
 
-## Step 4. `.env` 파일 만들기
+## Step 4. `.env` 파일 만들기 (메모장만 써서)
 
-프로젝트 루트(`M:/사주캔들/`)에서:
+> 터미널을 아직 안 열어도 됩니다. 파일 탐색기 + 메모장으로 충분.
 
-### 방법 A — 터미널 (Git Bash)
-```bash
-cd "M:/사주캔들"
-cp .env.example .env
-```
+### 4-1. 파일 탐색기에서 프로젝트 폴더 열기
+주소 표시줄에 `M:\사주캔들` 입력 후 엔터.
 
-### 방법 B — 메모장
-1. 파일 탐색기로 `M:/사주캔들/` 열기
-2. `.env.example` 파일 오른쪽 클릭 → 복사 → 붙여넣기
-3. 붙여넣은 복사본 이름을 `.env` 로 변경 (점 앞에 아무것도 없음, 확장자 아님)
+### 4-2. `.env.example` 을 `.env` 로 복사
+1. `.env.example` 파일 클릭해서 선택 → `Ctrl+C` (복사)
+2. 같은 폴더 빈 곳에서 `Ctrl+V` (붙여넣기)
+3. `.env.example - 복사본` 같은 파일이 생김 → 오른쪽 클릭 → `이름 바꾸기`
+4. 이름을 **정확히 `.env`** 로 변경 (앞 점 빠뜨리지 말 것, 뒤에 확장자 없음)
+   - "파일이 쓸 수 없게 될 수 있습니다" 경고가 뜨면 `예` 클릭
+   - 파일명 그대로 `.env` (즉, 이름 없이 확장자만 있는 형태)로 표시됨
 
-### 열어서 값 채우기
-`.env` 를 메모장으로 열어 다음처럼 수정:
+> 확장자가 안 보이면: 파일 탐색기 상단 **`보기`** 탭 → **`파일 확장명`** 체크박스 켜기.
 
-```bash
-TRANSPORT_ENABLED=true
-TELEGRAM_BOT_TOKEN=123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw
-TELEGRAM_ADMIN_CHAT_ID=123456789
-TELEGRAM_API_BASE=https://api.telegram.org
-```
+### 4-3. 메모장으로 열어서 값 채우기
+1. `.env` 파일 오른쪽 클릭 → `연결 프로그램` → `메모장` 선택
+2. 안에 이런 내용이 들어 있음:
+   ```
+   TRANSPORT_ENABLED=false
+   TELEGRAM_BOT_TOKEN=
+   TELEGRAM_ADMIN_CHAT_ID=
+   TELEGRAM_API_BASE=https://api.telegram.org
+   ```
+3. 아래처럼 수정:
+   - `TRANSPORT_ENABLED=false` → **`TRANSPORT_ENABLED=true`**
+   - `TELEGRAM_BOT_TOKEN=` 뒤에 **Step 1에서 복사한 토큰 붙여넣기**
+   - `TELEGRAM_ADMIN_CHAT_ID=` 뒤에 **Step 2에서 복사한 숫자 붙여넣기**
+   - 마지막 줄(`TELEGRAM_API_BASE=...`)은 건드리지 말 것
+4. 최종 결과 예시 (토큰·chat_id는 본인 것으로):
+   ```
+   TRANSPORT_ENABLED=true
+   TELEGRAM_BOT_TOKEN=123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw
+   TELEGRAM_ADMIN_CHAT_ID=987654321
+   TELEGRAM_API_BASE=https://api.telegram.org
+   ```
+5. `Ctrl+S` → 저장 → 메모장 닫기
 
-> 실제 토큰/chat_id는 Step 1, 2에서 받은 값으로. 큰따옴표 붙이지 말 것. 값 뒤에 공백 없도록.
+> ⚠️ 흔한 실수
+> - `=` 양쪽에 **공백 넣지 말 것** (`TRANSPORT_ENABLED = true` ❌)
+> - 값에 **큰따옴표 넣지 말 것** (`"123:abc"` ❌)
+> - 값 **끝에 공백/줄바꿈** 없게 (보이지 않지만 파싱 실패 원인)
 
-`.env` 는 `.gitignore` 로 자동 제외되므로 git에 커밋되지 않음 — 안전.
+`.env` 는 이미 `.gitignore` 에 포함되어 있어 git에 커밋되지 않음 — 안전.
 
 ---
 
-## Step 5. 실제 실행
+## Step 5. 실제 실행 (Git Bash 터미널)
 
-Git Bash에서:
+### 5-1. Git Bash 열기
+Windows 시작 메뉴 → `Git Bash` 검색 → 실행.
+(Git Bash가 없으면: https://git-scm.com/download/win 에서 설치 → 기본 옵션으로 쭉 `Next`)
 
+Git Bash 창이 열리면 보통 `~` 위치에서 시작. 프로젝트 폴더로 이동이 필요.
+
+### 5-2. 프로젝트 폴더로 이동
+Git Bash에 아래 한 줄 복붙 후 엔터:
 ```bash
-cd "M:/사주캔들"
+cd "/m/사주캔들"
+```
+> Windows의 `M:\` 드라이브는 Git Bash에서 `/m/` 으로 표기됨 (소문자, 슬래시).
+> 잘 이동했는지 확인: `pwd` 치면 `/m/사주캔들` 이 나와야 함.
 
-# .env를 현재 셸에 로드 (1줄)
+### 5-3. `.env` 값을 현재 터미널에 로드
+```bash
 set -a; source .env; set +a
+```
+**이 한 줄이 하는 일**: `.env` 안의 `TRANSPORT_ENABLED=true` 같은 줄들을 읽어서 **지금 이 터미널에서만** 쓸 수 있는 임시 변수로 등록. 터미널 닫으면 사라짐 (안전).
 
-# 실행 (특정 날짜 지정 → 즉시 1회 실행)
+확인: 아래 명령으로 값이 제대로 실렸는지 확인 가능 (토큰은 보이지 않아도 OK):
+```bash
+echo "enabled=$TRANSPORT_ENABLED chat_id=$TELEGRAM_ADMIN_CHAT_ID"
+```
+→ `enabled=true chat_id=987654321` 같은 출력이 나오면 성공.
+
+### 5-4. 실제 실행
+```bash
 PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --date 2026-05-01
 ```
+
+**명령어 풀이** (알면 디버깅 쉬움):
+| 조각 | 의미 |
+|---|---|
+| `PYTHONPATH=src` | "`src` 폴더에서 파이썬 모듈을 찾아라" |
+| `./.venv/Scripts/python.exe` | 프로젝트용 가상환경에 설치된 파이썬 실행 (시스템 파이썬 X) |
+| `-m sajucandle.scheduler.runner` | `sajucandle/scheduler/runner.py` 를 메인 모듈로 실행 |
+| `--date 2026-05-01` | "2026년 5월 1일" 기준으로 시그널 생성 (과거·미래 아무 날짜나 가능) |
+
+2~3분 걸림 (yfinance에서 30개 종목 주가 수집 때문).
 
 ### 기대 결과
 
