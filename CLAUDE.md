@@ -99,7 +99,9 @@
 | `ticker/loader.py` | `data/tickers/*.csv` 로더 |
 | `ticker/saju_resolver.py` | 티커 상장일 → 명식 계산 |
 | `api/main.py` | FastAPI — `/health`, `/signals/stock`, `/signals/stock/html`, `/signals/stock/telegram` |
-| `scheduler/runner.py` | APScheduler — 매월 1일 09:00 KST 자동 실행 |
+| `scheduler/runner.py` | APScheduler — 매월 1일 09:00 KST 자동 실행 + Telegram 전송 훅 |
+| `transport/config.py` | `TransportConfig` — `.env` → 설정 (SecretStr Bot Token 보호) |
+| `transport/telegram.py` | `send_message()` — httpx 기반 Telegram Bot API 전송, MDv2 + chunk + retry |
 
 ### 4.4 보조 도구 (`tools/`, optional deps `[tools]`)
 
@@ -138,7 +140,12 @@ PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --daemo
 
 # 수동 실행 (특정일)
 PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --date 2026-05-01
+
+# Telegram 전송 없이 파일 저장만 (드라이런)
+PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --date 2026-05-01 --no-notify
 ```
+
+`.env` (또는 배포 환경변수)에 `TRANSPORT_ENABLED=true`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ADMIN_CHAT_ID` 설정 시 잡 말미에 관리자 Telegram 전송. `.env.example` 참고.
 
 ### 5.4 배포 (Railway / 범용 Docker)
 - Dockerfile CMD: `uvicorn sajucandle.api.main:app --host 0.0.0.0 --port 8000`
@@ -146,10 +153,11 @@ PYTHONPATH=src ./.venv/Scripts/python.exe -m sajucandle.scheduler.runner --date 
 
 ## 6. 제약사항 / 주의점
 
-### 6.1 런타임 데이터
+### 6.1 런타임 데이터 / 설정
 - **data/tickers/**, **data/manseryeok/**, **data/solar_terms/** 는 git tracking (런타임 필수).
 - **data/prices/**, **data/signals/** 는 gitignore (캐시/출력). 재계산 가능.
 - **.bsp 천체력 파일**(de421.bsp 16MB, de440s.bsp 32MB)은 gitignore. 필요 시 `skyfield.api.load()`로 재다운로드.
+- **`.env` TRANSPORT_ENABLED**: `false` 기본값. `true` + `TELEGRAM_BOT_TOKEN` + `TELEGRAM_ADMIN_CHAT_ID` 주입 시에만 실제 Telegram 전송. 설정 예시는 `.env.example`.
 
 ### 6.2 외부 API / 환경
 - **yfinance**: 1h 인터벌 최근 60일 제한. 일봉 기반 백테스트는 무제한.
