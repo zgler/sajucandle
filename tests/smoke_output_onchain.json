@@ -1,0 +1,78 @@
+[
+  {
+    "total": 53.5,
+    "breakdown": {
+      "active_addresses": 40.0,
+      "cap_trend_90d": 35.0,
+      "price_drawdown": 75.0,
+      "price_ma200_ratio": 70.0,
+      "volume_7d_vs_30d": 55.0
+    },
+    "weights": {
+      "active_addresses": 25,
+      "cap_trend_90d": 20,
+      "price_drawdown": 20,
+      "price_ma200_ratio": 15,
+      "volume_7d_vs_30d": 20
+    },
+    "symbol": "BTC-USD",
+    "note": "Phase 1 간이 버전. MVRV/NVT/SOPR은 Phase 2 (유료 Glassnode 또는 Dune)."
+  },
+  {
+    "total": 45.2,
+    "breakdown": {
+      "active_addresses": 20.0,
+      "cap_trend_90d": 15.0,
+      "price_drawdown": 90.0,
+      "price_ma200_ratio": 55.0,
+      "volume_7d_vs_30d": 55.0
+    },
+    "weights": {
+      "active_addresses": 25,
+      "cap_trend_90d": 20,
+      "price_drawdown": 20,
+      "price_ma200_ratio": 15,
+      "volume_7d_vs_30d": 20
+    },
+    "symbol": "ETH-USD",
+    "note": "Phase 1 간이 버전. MVRV/NVT/SOPR은 Phase 2 (유료 Glassnode 또는 Dune)."
+  },
+  {
+    "total": 67.7,
+    "breakdown": {
+      "active_addresses": 50.0,
+      "cap_trend_90d": 50.0,
+      "price_drawdown": 90.0,
+      "price_ma200_ratio": 55.0,
+      "volume_7d_vs_30d": 55.0
+    },
+    "weights": {
+      "active_addresses": 0,
+      "cap_trend_90d": 0,
+      "price_drawdown": 36,
+      "price_ma200_ratio": 27,
+      "volume_7d_vs_30d": 36
+    },
+    "symbol": "SOL-USD",
+    "note": "알트코인: CoinMetrics 미지원, 가격 proxy만 사용."
+  },
+  {
+    "total": 73.2,
+    "breakdown": {
+      "active_addresses": 50.0,
+      "cap_trend_90d": 50.0,
+      "price_drawdown": 90.0,
+      "price_ma200_ratio": 55.0,
+      "volume_7d_vs_30d": 70.0
+    },
+    "weights": {
+      "active_addresses": 0,
+      "cap_trend_90d": 0,
+      "price_drawdown": 36,
+      "price_ma200_ratio": 27,
+      "volume_7d_vs_30d": 36
+    },
+    "symbol": "DOGE-USD",
+    "note": "알트코인: CoinMetrics 미지원, 가격 proxy만 사용."
+  }
+]

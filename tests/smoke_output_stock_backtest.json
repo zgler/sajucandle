@@ -1,0 +1,440 @@
+{
+  "spy_benchmark": {
+    "cagr": 0.1301,
+    "sharpe": 0.9,
+    "mdd": -0.3372,
+    "total_return": 2.3957
+  },
+  "real_backtest": {
+    "cagr": 0.115,
+    "sharpe": 0.8,
+    "sortino": 1.24,
+    "mdd": -0.1896,
+    "hit_rate": 0.546,
+    "n_rebalances": 119,
+    "final_equity": 2.9433,
+    "avg_turnover": 0.35
+  },
+  "real_log_sample": [
+    {
+      "date": "2015-01-01",
+      "next_date": "2015-02-01",
+      "held": [
+        "NEE",
+        "BAC",
+        "HON",
+        "WMT",
+        "UNH"
+      ],
+      "scores": [
+        [
+          "NEE",
+          67.8
+        ],
+        [
+          "BAC",
+          66.9
+        ],
+        [
+          "HON",
+          64.8
+        ],
+        [
+          "WMT",
+          64.6
+        ],
+        [
+          "UNH",
+          64.6
+        ]
+      ],
+      "period_return": 0.0,
+      "turnover": 1.0,
+      "net_return": -0.0015,
+      "equity": 0.9985
+    },
+    {
+      "date": "2015-02-01",
+      "next_date": "2015-03-01",
+      "held": [
+        "UNH",
+        "WMT",
+        "HON",
+        "NEE",
+        "BAC"
+      ],
+      "scores": [
+        [
+          "UNH",
+          70.1
+        ],
+        [
+          "WMT",
+          69.9
+        ],
+        [
+          "HON",
+          68.6
+        ],
+        [
+          "NEE",
+          65.2
+        ],
+        [
+          "BAC",
+          65.0
+        ]
+      ],
+      "period_return": 0.0086,
+      "turnover": 0.0,
+      "net_return": 0.0086,
+      "equity": 1.0071
+    },
+    {
+      "date": "2015-03-01",
+      "next_date": "2015-04-01",
+      "held": [
+        "HON",
+        "UNH",
+        "DIS",
+        "AVGO",
+        "META"
+      ],
+      "scores": [
+        [
+          "HON",
+          71.5
+        ],
+        [
+          "UNH",
+          67.7
+        ],
+        [
+          "DIS",
+          64.5
+        ],
+        [
+          "AVGO",
+          61.6
+        ],
+        [
+          "META",
+          61.4
+        ]
+      ],
+      "period_return": -0.0007,
+      "turnover": 0.6,
+      "net_return": -0.0016,
+      "equity": 1.0055
+    },
+    {
+      "date": "2015-04-01",
+      "next_date": "2015-05-01",
+      "held": [
+        "UNH",
+        "HON",
+        "DIS",
+        "META",
+        "KO"
+      ],
+      "scores": [
+        [
+          "UNH",
+          73.2
+        ],
+        [
+          "HON",
+          67.0
+        ],
+        [
+          "DIS",
+          66.2
+        ],
+        [
+          "META",
+          64.1
+        ],
+        [
+          "KO",
+          60.8
+        ]
+      ],
+      "period_return": -0.0075,
+      "turnover": 0.2,
+      "net_return": -0.0078,
+      "equity": 0.9976
+    },
+    {
+      "date": "2015-05-01",
+      "next_date": "2015-06-01",
+      "held": [
+        "META",
+        "DIS",
+        "HON",
+        "AVGO",
+        "MCD"
+      ],
+      "scores": [
+        [
+          "META",
+          72.8
+        ],
+        [
+          "DIS",
+          68.4
+        ],
+        [
+          "HON",
+          63.3
+        ],
+        [
+          "AVGO",
+          60.5
+        ],
+        [
+          "MCD",
+          60.1
+        ]
+      ],
+      "period_return": 0.0414,
+      "turnover": 0.4,
+      "net_return": 0.0408,
+      "equity": 1.0383
+    },
+    {
+      "date": "2015-06-01",
+      "next_date": "2015-07-01",
+      "held": [
+        "DIS",
+        "AVGO",
+        "MCD",
+        "HON",
+        "GOOGL"
+      ],
+      "scores": [
+        [
+          "DIS",
+          72.3
+        ],
+        [
+          "AVGO",
+          67.7
+        ],
+        [
+          "MCD",
+          64.8
+        ],
+        [
+          "HON",
+          62.3
+        ],
+        [
+          "GOOGL",
+          59.8
+        ]
+      ],
+      "period_return": -0.0045,
+      "turnover": 0.2,
+      "net_return": -0.0048,
+      "equity": 1.0333
+    },
+    {
+      "date": "2015-07-01",
+      "next_date": "2015-08-01",
+      "held": [
+        "DIS",
+        "AVGO",
+        "MCD",
+        "BAC",
+        "CVX"
+      ],
+      "scores": [
+        [
+          "DIS",
+          68.0
+        ],
+        [
+          "AVGO",
+          67.1
+        ],
+        [
+          "MCD",
+          65.2
+        ],
+        [
+          "BAC",
+          57.3
+        ],
+        [
+          "CVX",
+          57.0
+        ]
+      ],
+      "period_return": -0.0064,
+      "turnover": 0.4,
+      "net_return": -0.007,
+      "equity": 1.026
+    },
+    {
+      "date": "2015-08-01",
+      "next_date": "2015-09-01",
+      "held": [
+        "BAC",
+        "DIS",
+        "MCD",
+        "UNH",
+        "HON"
+      ],
+      "scores": [
+        [
+          "BAC",
+          73.0
+        ],
+        [
+          "DIS",
+          72.2
+        ],
+        [
+          "MCD",
+          71.5
+        ],
+        [
+          "UNH",
+          55.2
+        ],
+        [
+          "HON",
+          54.8
+        ]
+      ],
+      "period_return": -0.0295,
+      "turnover": 0.4,
+      "net_return": -0.0301,
+      "equity": 0.9952
+    },
+    {
+      "date": "2015-09-01",
+      "next_date": "2015-10-01",
+      "held": [
+        "MCD",
+        "DIS",
+        "BAC",
+        "UNH",
+        "V"
+      ],
+      "scores": [
+        [
+          "MCD",
+          74.6
+        ],
+        [
+          "DIS",
+          71.3
+        ],
+        [
+          "BAC",
+          68.6
+        ],
+        [
+          "UNH",
+          60.6
+        ],
+        [
+          "V",
+          58.9
+        ]
+      ],
+      "period_return": 0.021,
+      "turnover": 0.2,
+      "net_return": 0.0207,
+      "equity": 1.0157
+    },
+    {
+      "date": "2015-10-01",
+      "next_date": "2015-11-01",
+      "held": [
+        "MCD",
+        "V",
+        "UNH",
+        "GOOGL",
+        "NKE"
+      ],
+      "scores": [
+        [
+          "MCD",
+          74.6
+        ],
+        [
+          "V",
+          63.7
+        ],
+        [
+          "UNH",
+          59.2
+        ],
+        [
+          "GOOGL",
+          57.1
+        ],
+        [
+          "NKE",
+          55.7
+        ]
+      ],
+      "period_return": 0.0434,
+      "turnover": 0.4,
+      "net_return": 0.0428,
+      "equity": 1.0591
+    }
+  ],
+  "placebo_test": {
+    "real": {
+      "cagr": 0.115,
+      "sharpe": 0.8,
+      "sortino": 1.24,
+      "mdd": -0.1896,
+      "hit_rate": 0.546,
+      "n_rebalances": 119,
+      "final_equity": 2.9433,
+      "avg_turnover": 0.35
+    },
+    "placebo_mean": {
+      "cagr": 0.2224,
+      "sharpe": 1.282,
+      "sortino": 2.176,
+      "hit_rate": 0.6554
+    },
+    "placebo_std": {
+      "cagr": 0.0166,
+      "sharpe": 0.0646,
+      "sortino": 0.3171,
+      "hit_rate": 0.035
+    },
+    "zscore": {
+      "cagr": -6.49,
+      "sharpe": -7.46,
+      "sortino": -2.95,
+      "hit_rate": -3.13
+    },
+    "verdict": "fail",
+    "n_trials": 5,
+    "asset_class": "stock"
+  },
+  "shuffle_test": {
+    "real_sharpe": 0.8,
+    "shuffled_sharpes": [
+      0.82,
+      1.18,
+      1.01,
+      1.0,
+      0.87
+    ],
+    "percentile": 0.0,
+    "verdict": "fail",
+    "n_trials": 5,
+    "asset_class": "stock"
+  },
+  "pass_count": 0,
+  "marginal_count": 0,
+  "final_verdict": "주식도 FAIL → 사주 필터 전용 격하 강력 시사"
+}

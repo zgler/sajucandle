@@ -1,0 +1,197 @@
+{
+  "stocks": [
+    {
+      "symbol": "NVDA",
+      "rows": 275,
+      "total": 81.1,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma_alignment": 100.0,
+        "rsi": 100.0,
+        "volume_trend": 26.1,
+        "relative_strength": 60.7
+      },
+      "weights": {
+        "supertrend": 25,
+        "ma_alignment": 25,
+        "rsi": 15,
+        "volume_trend": 15,
+        "relative_strength": 20
+      }
+    },
+    {
+      "symbol": "AAPL",
+      "rows": 275,
+      "total": 78.3,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma_alignment": 75.0,
+        "rsi": 100.0,
+        "volume_trend": 52.8,
+        "relative_strength": 58.2
+      },
+      "weights": {
+        "supertrend": 25,
+        "ma_alignment": 25,
+        "rsi": 15,
+        "volume_trend": 15,
+        "relative_strength": 20
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "rows": 275,
+      "total": 51.5,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma_alignment": 25.0,
+        "rsi": 60.0,
+        "volume_trend": 48.2,
+        "relative_strength": 20.3
+      },
+      "weights": {
+        "supertrend": 25,
+        "ma_alignment": 25,
+        "rsi": 15,
+        "volume_trend": 15,
+        "relative_strength": 20
+      }
+    },
+    {
+      "symbol": "TSLA",
+      "rows": 275,
+      "total": 56.3,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma_alignment": 25.0,
+        "rsi": 100.0,
+        "volume_trend": 38.1,
+        "relative_strength": 21.6
+      },
+      "weights": {
+        "supertrend": 25,
+        "ma_alignment": 25,
+        "rsi": 15,
+        "volume_trend": 15,
+        "relative_strength": 20
+      }
+    },
+    {
+      "symbol": "AMZN",
+      "rows": 275,
+      "total": 68.3,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma_alignment": 75.0,
+        "rsi": 60.0,
+        "volume_trend": 34.2,
+        "relative_strength": 52.1
+      },
+      "weights": {
+        "supertrend": 25,
+        "ma_alignment": 25,
+        "rsi": 15,
+        "volume_trend": 15,
+        "relative_strength": 20
+      }
+    }
+  ],
+  "coins": [
+    {
+      "symbol": "BTC-USD",
+      "rows": 400,
+      "total": 62.4,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma200_rsi": 0.0,
+        "macd_momentum": 100.0,
+        "volume_trend": 32.6,
+        "relative_strength_vs_btc": 50.0
+      },
+      "weights": {
+        "supertrend": 30,
+        "ma200_rsi": 20,
+        "macd_momentum": 20,
+        "volume_trend": 15,
+        "relative_strength_vs_btc": 15
+      }
+    },
+    {
+      "symbol": "ETH-USD",
+      "rows": 400,
+      "total": 75.1,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma200_rsi": 50.0,
+        "macd_momentum": 100.0,
+        "volume_trend": 37.8,
+        "relative_strength_vs_btc": 62.6
+      },
+      "weights": {
+        "supertrend": 30,
+        "ma200_rsi": 20,
+        "macd_momentum": 20,
+        "volume_trend": 15,
+        "relative_strength_vs_btc": 15
+      }
+    },
+    {
+      "symbol": "SOL-USD",
+      "rows": 400,
+      "total": 39.5,
+      "breakdown": {
+        "supertrend": 0.0,
+        "ma200_rsi": 50.0,
+        "macd_momentum": 100.0,
+        "volume_trend": 35.7,
+        "relative_strength_vs_btc": 27.7
+      },
+      "weights": {
+        "supertrend": 30,
+        "ma200_rsi": 20,
+        "macd_momentum": 20,
+        "volume_trend": 15,
+        "relative_strength_vs_btc": 15
+      }
+    },
+    {
+      "symbol": "DOGE-USD",
+      "rows": 400,
+      "total": 39.7,
+      "breakdown": {
+        "supertrend": 0.0,
+        "ma200_rsi": 50.0,
+        "macd_momentum": 100.0,
+        "volume_trend": 45.4,
+        "relative_strength_vs_btc": 19.0
+      },
+      "weights": {
+        "supertrend": 30,
+        "ma200_rsi": 20,
+        "macd_momentum": 20,
+        "volume_trend": 15,
+        "relative_strength_vs_btc": 15
+      }
+    },
+    {
+      "symbol": "BNB-USD",
+      "rows": 400,
+      "total": 69.9,
+      "breakdown": {
+        "supertrend": 100.0,
+        "ma200_rsi": 50.0,
+        "macd_momentum": 100.0,
+        "volume_trend": 40.7,
+        "relative_strength_vs_btc": 25.5
+      },
+      "weights": {
+        "supertrend": 30,
+        "ma200_rsi": 20,
+        "macd_momentum": 20,
+        "volume_trend": 15,
+        "relative_strength_vs_btc": 15
+      }
+    }
+  ],
+  "evaluated_at": "2026-04-23T00:00:00"
+}

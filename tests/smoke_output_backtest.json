@@ -1,0 +1,182 @@
+{
+  "real_backtest": {
+    "cagr": -0.38,
+    "sharpe": -1.21,
+    "sortino": -1.33,
+    "mdd": -0.4553,
+    "hit_rate": 0.4,
+    "n_rebalances": 15,
+    "final_equity": 0.5501,
+    "avg_turnover": 0.49
+  },
+  "real_log_sample": [
+    {
+      "date": "2025-01-01",
+      "next_date": "2025-02-01",
+      "held": [
+        "LINK-USD",
+        "XRP-USD",
+        "BNB-USD"
+      ],
+      "scores": [
+        [
+          "LINK-USD",
+          68.7
+        ],
+        [
+          "XRP-USD",
+          63.7
+        ],
+        [
+          "BNB-USD",
+          61.3
+        ]
+      ],
+      "period_return": 0.0,
+      "turnover": 1.0,
+      "net_return": -0.001,
+      "equity": 0.999
+    },
+    {
+      "date": "2025-02-01",
+      "next_date": "2025-03-01",
+      "held": [
+        "LINK-USD",
+        "BTC-USD",
+        "XRP-USD"
+      ],
+      "scores": [
+        [
+          "LINK-USD",
+          71.9
+        ],
+        [
+          "BTC-USD",
+          67.9
+        ],
+        [
+          "XRP-USD",
+          67.6
+        ]
+      ],
+      "period_return": -0.2471,
+      "turnover": 0.33,
+      "net_return": -0.2475,
+      "equity": 0.7518
+    },
+    {
+      "date": "2025-03-01",
+      "next_date": "2025-04-01",
+      "held": [
+        "BNB-USD",
+        "AVAX-USD",
+        "ADA-USD"
+      ],
+      "scores": [
+        [
+          "BNB-USD",
+          60.2
+        ],
+        [
+          "AVAX-USD",
+          54.3
+        ],
+        [
+          "ADA-USD",
+          54.1
+        ]
+      ],
+      "period_return": -0.0204,
+      "turnover": 1.0,
+      "net_return": -0.0214,
+      "equity": 0.7357
+    },
+    {
+      "date": "2025-04-01",
+      "next_date": "2025-05-01",
+      "held": [
+        "AVAX-USD",
+        "ADA-USD",
+        "BTC-USD"
+      ],
+      "scores": [
+        [
+          "AVAX-USD",
+          61.0
+        ],
+        [
+          "ADA-USD",
+          55.3
+        ],
+        [
+          "BTC-USD",
+          52.7
+        ]
+      ],
+      "period_return": 0.0444,
+      "turnover": 0.33,
+      "net_return": 0.044,
+      "equity": 0.7681
+    },
+    {
+      "date": "2025-05-01",
+      "next_date": "2025-06-01",
+      "held": [
+        "BTC-USD",
+        "ADA-USD",
+        "DOGE-USD"
+      ],
+      "scores": [
+        [
+          "BTC-USD",
+          66.7
+        ],
+        [
+          "ADA-USD",
+          60.0
+        ],
+        [
+          "DOGE-USD",
+          56.2
+        ]
+      ],
+      "period_return": 0.0464,
+      "turnover": 0.33,
+      "net_return": 0.046,
+      "equity": 0.8034
+    }
+  ],
+  "placebo_test": {
+    "real": {
+      "cagr": -0.4892,
+      "sharpe": -1.42,
+      "sortino": -1.5,
+      "mdd": -0.5682,
+      "hit_rate": 0.333,
+      "n_rebalances": 15,
+      "final_equity": 0.4318,
+      "avg_turnover": 0.49
+    },
+    "placebo_mean": {
+      "cagr": -0.3955,
+      "sharpe": -0.9467,
+      "sortino": -1.1767,
+      "hit_rate": 0.333
+    },
+    "placebo_std": {
+      "cagr": 0.082,
+      "sharpe": 0.2281,
+      "sortino": 0.3099,
+      "hit_rate": 0.0
+    },
+    "zscore": {
+      "cagr": -1.14,
+      "sharpe": -2.08,
+      "sortino": -1.04,
+      "hit_rate": null
+    },
+    "verdict": "fail",
+    "n_trials": 3,
+    "asset_class": "coin"
+  }
+}

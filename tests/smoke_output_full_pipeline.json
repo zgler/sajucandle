@@ -1,0 +1,522 @@
+[
+  {
+    "symbol": "BTC-USD",
+    "name": "Bitcoin",
+    "asset_class": "coin",
+    "primary_pillar": "戊申",
+    "primary_source": "listing",
+    "total_100": 66.4,
+    "breakdown": {
+      "wolwoon_x_ilju": 46.0,
+      "ilji_x_ilju": 50.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 69.0,
+      "samchung_events": 100.0,
+      "shinsal_boost": 80.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 11.5,
+      "ilji_x_ilju": 10.0,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 6.9,
+      "samchung_events": 10.0,
+      "shinsal_boost": 8.0
+    }
+  },
+  {
+    "symbol": "ETH-USD",
+    "name": "Ethereum",
+    "asset_class": "coin",
+    "primary_pillar": "丁未",
+    "primary_source": "founding",
+    "total_100": 67.6,
+    "breakdown": {
+      "wolwoon_x_ilju": 84.0,
+      "ilji_x_ilju": 80.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 36.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 20.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 21.0,
+      "ilji_x_ilju": 16.0,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 3.6,
+      "samchung_events": 5.0,
+      "shinsal_boost": 2.0
+    }
+  },
+  {
+    "symbol": "SOL-USD",
+    "name": "Solana",
+    "asset_class": "coin",
+    "primary_pillar": "丁巳",
+    "primary_source": "founding",
+    "total_100": 76.3,
+    "breakdown": {
+      "wolwoon_x_ilju": 98.0,
+      "ilji_x_ilju": 84.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 50.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 50.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 24.5,
+      "ilji_x_ilju": 16.8,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 5.0,
+      "samchung_events": 5.0,
+      "shinsal_boost": 5.0
+    }
+  },
+  {
+    "symbol": "DOGE-USD",
+    "name": "Dogecoin",
+    "asset_class": "coin",
+    "primary_pillar": "乙巳",
+    "primary_source": "founding",
+    "total_100": 81.2,
+    "breakdown": {
+      "wolwoon_x_ilju": 98.0,
+      "ilji_x_ilju": 98.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 36.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 85.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 24.5,
+      "ilji_x_ilju": 19.6,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 3.6,
+      "samchung_events": 5.0,
+      "shinsal_boost": 8.5
+    }
+  },
+  {
+    "symbol": "BNB-USD",
+    "name": "BNB",
+    "asset_class": "coin",
+    "primary_pillar": "辛丑",
+    "primary_source": "founding",
+    "total_100": 46.4,
+    "breakdown": {
+      "wolwoon_x_ilju": 62.0,
+      "ilji_x_ilju": 2.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 15.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 40.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 15.5,
+      "ilji_x_ilju": 0.4,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 1.5,
+      "samchung_events": 5.0,
+      "shinsal_boost": 4.0
+    }
+  },
+  {
+    "symbol": "XRP-USD",
+    "name": "Ripple",
+    "asset_class": "coin",
+    "primary_pillar": "癸巳",
+    "primary_source": "founding",
+    "total_100": 69.6,
+    "breakdown": {
+      "wolwoon_x_ilju": 84.0,
+      "ilji_x_ilju": 50.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 36.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 100.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 21.0,
+      "ilji_x_ilju": 10.0,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 3.6,
+      "samchung_events": 5.0,
+      "shinsal_boost": 10.0
+    }
+  },
+  {
+    "symbol": "AVAX-USD",
+    "name": "Avalanche",
+    "asset_class": "coin",
+    "primary_pillar": "丙寅",
+    "primary_source": "founding",
+    "total_100": 53.1,
+    "breakdown": {
+      "wolwoon_x_ilju": 2.0,
+      "ilji_x_ilju": 70.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 36.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 100.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 0.5,
+      "ilji_x_ilju": 14.0,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 3.6,
+      "samchung_events": 5.0,
+      "shinsal_boost": 10.0
+    }
+  },
+  {
+    "symbol": "LINK-USD",
+    "name": "Chainlink",
+    "asset_class": "coin",
+    "primary_pillar": "戊申",
+    "primary_source": "founding",
+    "total_100": 55.6,
+    "breakdown": {
+      "wolwoon_x_ilju": 46.0,
+      "ilji_x_ilju": 50.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 36.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 55.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 11.5,
+      "ilji_x_ilju": 10.0,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 3.6,
+      "samchung_events": 5.0,
+      "shinsal_boost": 5.5
+    }
+  },
+  {
+    "symbol": "MATIC-USD",
+    "name": "Polygon",
+    "asset_class": "coin",
+    "primary_pillar": "庚申",
+    "primary_source": "founding",
+    "total_100": 52.4,
+    "breakdown": {
+      "wolwoon_x_ilju": 94.0,
+      "ilji_x_ilju": 2.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 35.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 23.5,
+      "ilji_x_ilju": 0.4,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 0.0,
+      "samchung_events": 5.0,
+      "shinsal_boost": 3.5
+    }
+  },
+  {
+    "symbol": "ADA-USD",
+    "name": "Cardano",
+    "asset_class": "coin",
+    "primary_pillar": "戊午",
+    "primary_source": "founding",
+    "total_100": 60.3,
+    "breakdown": {
+      "wolwoon_x_ilju": 50.0,
+      "ilji_x_ilju": 62.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 69.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 35.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 12.5,
+      "ilji_x_ilju": 12.4,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 6.9,
+      "samchung_events": 5.0,
+      "shinsal_boost": 3.5
+    }
+  },
+  {
+    "symbol": "NVDA",
+    "name": "NVIDIA Corp.",
+    "asset_class": "stock",
+    "primary_pillar": "乙卯",
+    "primary_source": "founding",
+    "total_100": 47.8,
+    "breakdown": {
+      "wolwoon_x_ilju": 64.0,
+      "ilji_x_ilju": 84.0,
+      "sewoon_element_match": 0.0,
+      "daeun_bias": 50.0,
+      "element_balance": 0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 50.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 16.0,
+      "ilji_x_ilju": 16.8,
+      "sewoon_element_match": 0.0,
+      "daeun_bias": 5.0,
+      "element_balance": 0.0,
+      "samchung_events": 5.0,
+      "shinsal_boost": 5.0
+    }
+  },
+  {
+    "symbol": "AAPL",
+    "name": "Apple Inc.",
+    "asset_class": "stock",
+    "primary_pillar": "壬午",
+    "primary_source": "founding",
+    "total_100": 71.4,
+    "breakdown": {
+      "wolwoon_x_ilju": 84.0,
+      "ilji_x_ilju": 62.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 50.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 80.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 21.0,
+      "ilji_x_ilju": 12.4,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 5.0,
+      "samchung_events": 5.0,
+      "shinsal_boost": 8.0
+    }
+  },
+  {
+    "symbol": "MSFT",
+    "name": "Microsoft Corp.",
+    "asset_class": "stock",
+    "primary_pillar": "己卯",
+    "primary_source": "founding",
+    "total_100": 35.8,
+    "breakdown": {
+      "wolwoon_x_ilju": 16.0,
+      "ilji_x_ilju": 84.0,
+      "sewoon_element_match": 0.0,
+      "daeun_bias": 50.0,
+      "element_balance": 0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 50.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 4.0,
+      "ilji_x_ilju": 16.8,
+      "sewoon_element_match": 0.0,
+      "daeun_bias": 5.0,
+      "element_balance": 0.0,
+      "samchung_events": 5.0,
+      "shinsal_boost": 5.0
+    }
+  },
+  {
+    "symbol": "GOOGL",
+    "name": "Alphabet Inc.",
+    "asset_class": "stock",
+    "primary_pillar": "癸丑",
+    "primary_source": "founding",
+    "total_100": 52.8,
+    "breakdown": {
+      "wolwoon_x_ilju": 48.0,
+      "ilji_x_ilju": 2.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 69.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 85.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 12.0,
+      "ilji_x_ilju": 0.4,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 6.9,
+      "samchung_events": 5.0,
+      "shinsal_boost": 8.5
+    }
+  },
+  {
+    "symbol": "AMZN",
+    "name": "Amazon.com Inc.",
+    "asset_class": "stock",
+    "primary_pillar": "辛卯",
+    "primary_source": "founding",
+    "total_100": 58.7,
+    "breakdown": {
+      "wolwoon_x_ilju": 64.0,
+      "ilji_x_ilju": 36.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 50.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 55.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 16.0,
+      "ilji_x_ilju": 7.2,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 5.0,
+      "samchung_events": 5.0,
+      "shinsal_boost": 5.5
+    }
+  },
+  {
+    "symbol": "TSLA",
+    "name": "Tesla Inc.",
+    "asset_class": "stock",
+    "primary_pillar": "甲戌",
+    "primary_source": "founding",
+    "total_100": 65.0,
+    "breakdown": {
+      "wolwoon_x_ilju": 38.0,
+      "ilji_x_ilju": 100.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 25.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 80.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 9.5,
+      "ilji_x_ilju": 20.0,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 2.5,
+      "samchung_events": 5.0,
+      "shinsal_boost": 8.0
+    }
+  },
+  {
+    "symbol": "META",
+    "name": "Meta Platforms",
+    "asset_class": "stock",
+    "primary_pillar": "壬子",
+    "primary_source": "founding",
+    "total_100": 47.3,
+    "breakdown": {
+      "wolwoon_x_ilju": 80.0,
+      "ilji_x_ilju": 54.0,
+      "sewoon_element_match": 0.0,
+      "daeun_bias": 50.0,
+      "element_balance": 15.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 50.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 20.0,
+      "ilji_x_ilju": 10.8,
+      "sewoon_element_match": 0.0,
+      "daeun_bias": 5.0,
+      "element_balance": 1.5,
+      "samchung_events": 5.0,
+      "shinsal_boost": 5.0
+    }
+  },
+  {
+    "symbol": "BRK-B",
+    "name": "Berkshire Hathaway",
+    "asset_class": "stock",
+    "primary_pillar": "乙巳",
+    "primary_source": "listing",
+    "total_100": 80.1,
+    "breakdown": {
+      "wolwoon_x_ilju": 98.0,
+      "ilji_x_ilju": 98.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 15.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 95.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 24.5,
+      "ilji_x_ilju": 19.6,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 1.5,
+      "samchung_events": 5.0,
+      "shinsal_boost": 9.5
+    }
+  },
+  {
+    "symbol": "JPM",
+    "name": "JPMorgan Chase",
+    "asset_class": "stock",
+    "primary_pillar": "丁巳",
+    "primary_source": "listing",
+    "total_100": 78.4,
+    "breakdown": {
+      "wolwoon_x_ilju": 98.0,
+      "ilji_x_ilju": 84.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 36.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 85.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 24.5,
+      "ilji_x_ilju": 16.8,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 3.6,
+      "samchung_events": 5.0,
+      "shinsal_boost": 8.5
+    }
+  },
+  {
+    "symbol": "XOM",
+    "name": "ExxonMobil",
+    "asset_class": "stock",
+    "primary_pillar": "庚寅",
+    "primary_source": "listing",
+    "total_100": 50.2,
+    "breakdown": {
+      "wolwoon_x_ilju": 50.0,
+      "ilji_x_ilju": 36.0,
+      "sewoon_element_match": 100.0,
+      "daeun_bias": 50.0,
+      "element_balance": 15.0,
+      "samchung_events": 50.0,
+      "shinsal_boost": 40.0
+    },
+    "weighted": {
+      "wolwoon_x_ilju": 12.5,
+      "ilji_x_ilju": 7.2,
+      "sewoon_element_match": 15.0,
+      "daeun_bias": 5.0,
+      "element_balance": 1.5,
+      "samchung_events": 5.0,
+      "shinsal_boost": 4.0
+    }
+  }
+]

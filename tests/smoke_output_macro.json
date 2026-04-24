@@ -1,0 +1,37 @@
+{
+  "stock_macro": {
+    "total": 58.7,
+    "breakdown": {
+      "yield_curve": 50.0,
+      "dxy_trend": 42.6,
+      "vix": 80.0,
+      "cpi": 50.0,
+      "sector_rs": 62.9
+    },
+    "weights": {
+      "yield_curve": 20,
+      "dxy_trend": 15,
+      "vix": 20,
+      "cpi": 15,
+      "sector_rs": 30
+    },
+    "asof": "2026-04-23T00:00:00"
+  },
+  "coin_macro": {
+    "total": 58.1,
+    "breakdown": {
+      "btc_dominance": 60.0,
+      "stablecoin_supply": 59.0,
+      "dxy_liquidity": 42.6,
+      "funding_rate": 70.0
+    },
+    "weights": {
+      "btc_dominance": 31,
+      "stablecoin_supply": 23,
+      "dxy_liquidity": 23,
+      "funding_rate": 23
+    },
+    "asof": "2026-04-23T00:00:00",
+    "note": "ETF·청산 지표는 Phase 2에 추가 (가중치 재분배)"
+  }
+}

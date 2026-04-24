@@ -1,0 +1,170 @@
+{
+  "target_dt": "2026-04-23T09:00:00",
+  "universe": 30,
+  "saju_survivors": 29,
+  "new_holdings": [
+    "AVGO",
+    "BAC",
+    "CAT",
+    "NVDA",
+    "WMT"
+  ],
+  "signals": [
+    {
+      "symbol": "NVDA",
+      "signal": "BUY",
+      "saju_score": 47.8,
+      "quant_score": 71.6,
+      "rank": 5,
+      "reason": "Top5 신규 진입",
+      "breakdown": {
+        "ta": 82.3,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "BAC",
+      "signal": "BUY",
+      "saju_score": 56.3,
+      "quant_score": 71.8,
+      "rank": 4,
+      "reason": "Top5 신규 진입",
+      "breakdown": {
+        "ta": 82.6,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "AVGO",
+      "signal": "BUY",
+      "saju_score": 65.9,
+      "quant_score": 72.9,
+      "rank": 3,
+      "reason": "Top5 신규 진입",
+      "breakdown": {
+        "ta": 84.2,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "WMT",
+      "signal": "BUY",
+      "saju_score": 59.7,
+      "quant_score": 76.1,
+      "rank": 2,
+      "reason": "Top5 신규 진입",
+      "breakdown": {
+        "ta": 89.0,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "CAT",
+      "signal": "BUY",
+      "saju_score": 54.1,
+      "quant_score": 77.9,
+      "rank": 1,
+      "reason": "Top5 신규 진입",
+      "breakdown": {
+        "ta": 91.7,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "KO",
+      "signal": "SELL",
+      "saju_score": 49.3,
+      "quant_score": 45.1,
+      "rank": 22,
+      "reason": "순위 #22로 하락, 청산",
+      "breakdown": {
+        "ta": 42.7,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "XOM",
+      "signal": "SELL",
+      "saju_score": 34.3,
+      "quant_score": 51.3,
+      "rank": 18,
+      "reason": "순위 #18로 하락, 청산",
+      "breakdown": {
+        "ta": 52.0,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "signal": "SELL",
+      "saju_score": 35.8,
+      "quant_score": 51.8,
+      "rank": 17,
+      "reason": "순위 #17로 하락, 청산",
+      "breakdown": {
+        "ta": 52.7,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "JPM",
+      "signal": "SELL",
+      "saju_score": 78.4,
+      "quant_score": 67.6,
+      "rank": 10,
+      "reason": "Top5 탈락 (현재 #10), 청산 권장",
+      "breakdown": {
+        "ta": 76.3,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "AAPL",
+      "signal": "SELL",
+      "saju_score": 71.4,
+      "quant_score": 69.8,
+      "rank": 8,
+      "reason": "Top5 탈락 (현재 #8), 청산 권장",
+      "breakdown": {
+        "ta": 79.6,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "UNH",
+      "signal": "WATCH",
+      "saju_score": 73.3,
+      "quant_score": 69.6,
+      "rank": 9,
+      "reason": "Top5 근접 대기 (#9)",
+      "breakdown": {
+        "ta": 79.3,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "GS",
+      "signal": "WATCH",
+      "saju_score": 44.3,
+      "quant_score": 70.9,
+      "rank": 7,
+      "reason": "Top5 근접 대기 (#7)",
+      "breakdown": {
+        "ta": 81.2,
+        "macro": 50.0
+      }
+    },
+    {
+      "symbol": "AMD",
+      "signal": "WATCH",
+      "saju_score": 48.9,
+      "quant_score": 71.6,
+      "rank": 6,
+      "reason": "Top5 근접 대기 (#6)",
+      "breakdown": {
+        "ta": 82.2,
+        "macro": 50.0
+      }
+    }
+  ]
+}

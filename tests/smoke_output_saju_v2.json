@@ -1,0 +1,72 @@
+{
+  "pure_quant": {
+    "cagr": 0.0764,
+    "sharpe": 0.65,
+    "sortino": 1.02,
+    "mdd": -0.1915,
+    "hit_rate": 0.571,
+    "n_rebalances": 119,
+    "final_equity": 2.0762,
+    "avg_turnover": 0.3
+  },
+  "v1_30pct": {
+    "cagr": 0.1267,
+    "sharpe": 0.93,
+    "sortino": 1.99,
+    "mdd": -0.1128,
+    "hit_rate": 0.613,
+    "n_rebalances": 119,
+    "final_equity": 3.2651,
+    "avg_turnover": 0.35
+  },
+  "v2_filter_30": {
+    "cagr": 0.1377,
+    "sharpe": 0.96,
+    "sortino": 1.54,
+    "mdd": -0.1484,
+    "hit_rate": 0.613,
+    "n_rebalances": 119,
+    "final_equity": 3.5945,
+    "avg_turnover": 0.31
+  },
+  "v2_10pct": {
+    "cagr": 0.1565,
+    "sharpe": 1.15,
+    "sortino": 1.85,
+    "mdd": -0.1396,
+    "hit_rate": 0.647,
+    "n_rebalances": 119,
+    "final_equity": 4.2285,
+    "avg_turnover": 0.32
+  },
+  "v2_15pct": {
+    "cagr": 0.1252,
+    "sharpe": 0.92,
+    "sortino": 1.82,
+    "mdd": -0.1268,
+    "hit_rate": 0.597,
+    "n_rebalances": 119,
+    "final_equity": 3.2218,
+    "avg_turnover": 0.33
+  },
+  "v2_20pct": {
+    "cagr": 0.1279,
+    "sharpe": 0.94,
+    "sortino": 1.77,
+    "mdd": -0.1268,
+    "hit_rate": 0.613,
+    "n_rebalances": 119,
+    "final_equity": 3.2982,
+    "avg_turnover": 0.34
+  },
+  "v2_30pct": {
+    "cagr": 0.1448,
+    "sharpe": 0.99,
+    "sortino": 1.96,
+    "mdd": -0.1885,
+    "hit_rate": 0.639,
+    "n_rebalances": 119,
+    "final_equity": 3.8232,
+    "avg_turnover": 0.39
+  }
+}
