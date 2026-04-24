@@ -17,10 +17,8 @@
 
 from __future__ import annotations
 
-import math
 from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from .constants import GAPJA, gapja_index, is_yang_year
 

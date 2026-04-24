@@ -6,10 +6,8 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-from typing import List
 
-from .engine import SignalReport, SignalType, TickerSignal
+from .engine import SignalReport, SignalType
 
 # 신호별 이모지/색상
 _EMOJI = {
@@ -56,7 +54,6 @@ def render_telegram(report: SignalReport) -> str:
             quant_str = f"{t.quant_score:.0f}"
             # 텔레그램 MD V2: 특수문자 이스케이프
             sym = _tg_escape(t.symbol)
-            reason = _tg_escape(t.reason)
             lines.append(
                 f"  `{sym:<8}` {rank_str:<4} "
                 f"사주 {saju_str} / 퀀트 {quant_str}"

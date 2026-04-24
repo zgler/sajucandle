@@ -1,11 +1,9 @@
 import pandas as pd
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple, Any
-import json
 import unicodedata
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
-import os
 from pathlib import Path
 
 
@@ -202,7 +200,7 @@ class SajuCalculator:
     
     def _adjust_date_for_solar(self, year: int, month: int, day: int, date_change: int) -> Tuple[int, int, int]:
         """태양시 보정으로 인한 날짜 조정"""
-        from datetime import date, timedelta
+        from datetime import date
         current_date = date(year, month, day)
         adjusted_date = current_date + timedelta(days=date_change)
         return adjusted_date.year, adjusted_date.month, adjusted_date.day
@@ -290,7 +288,7 @@ class SajuCalculator:
         row = result.iloc[0]
         try:
             term_time = row['term_time']
-        except:
+        except (KeyError, IndexError):
             return True
         
         # term_time이 없거나 빈 값이면 절기가 아님
@@ -313,14 +311,14 @@ class SajuCalculator:
                 term_datetime = datetime(term_year, term_month, term_day, term_hour, term_minute)
                 
                 return current_time >= term_datetime
-        except:
+        except (ValueError, TypeError, AttributeError):
             return True
-        
+
         return True
     
     def _get_previous_month_pillar(self, year: int, month: int, day: int) -> str:
         """이전 월주를 찾아 반환합니다."""
-        from datetime import date, timedelta
+        from datetime import date
         current_date = date(year, month, day)
         
         # 최대 35일 전까지 확인 (한 달 이상 거슬러 올라가는 경우는 드물다)
@@ -345,7 +343,7 @@ class SajuCalculator:
                             if not prev_prev_result.empty:
                                 return prev_prev_result.iloc[0]['month_pillar']
                         return prev_row['month_pillar']
-                except:
+                except (KeyError, IndexError, ValueError):
                     pass
         
         # 못 찾은 경우 빈 문자열 반환
@@ -426,9 +424,9 @@ class SajuCalculator:
                         
                         if not prev_result.empty:
                             return prev_result.iloc[0]['month_pillar']
-        except:
+        except (KeyError, IndexError, ValueError):
             pass
-        
+
         return current_month_pillar
     
     def calculate_saju(self, year: int, month: int, day: int, hour: int, minute: int = 0,

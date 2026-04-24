@@ -30,7 +30,6 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional
 
 import numpy as np
-import pandas as pd
 
 
 def _score_btc_dominance(asof: datetime) -> float:
@@ -99,7 +98,6 @@ def _score_dxy_liquidity(asof: datetime) -> float:
     M2 증가율로 추가 가산.
     """
     from .macro import _score_dxy
-    from datetime import timedelta
     start = asof - timedelta(days=365)
     dxy_score = _score_dxy(start, asof)
     # M2 증감 확인 (FRED CSV 직통)

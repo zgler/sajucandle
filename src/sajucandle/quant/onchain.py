@@ -28,7 +28,7 @@ BTC/ETH는 AdrActCnt 사용, 알트는 가격/거래량 proxy만.
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 import pandas as pd
 

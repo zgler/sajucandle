@@ -25,7 +25,6 @@ Phase 1 간이 구현 (yfinance 의존, Tier 0):
 
 from __future__ import annotations
 
-from functools import lru_cache
 from typing import Dict, Optional
 
 # yfinance.Ticker(sym).info 결과를 세션 내에서 캐시

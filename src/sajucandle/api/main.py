@@ -30,7 +30,7 @@ if str(_root) not in sys.path:
 from sajucandle.manseryeok.core import SajuCalculator
 from sajucandle.ticker.loader import load_tickers
 from sajucandle.signal.engine import generate_signals, SignalType
-from sajucandle.signal.renderer import render_telegram, render_email_html, render_text
+from sajucandle.signal.renderer import render_telegram, render_email_html
 
 app = FastAPI(
     title="사주캔들 Signal API",

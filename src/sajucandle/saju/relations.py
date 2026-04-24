@@ -6,17 +6,13 @@ PRD §4-4 수치값(초기 prior)을 기준으로 관계 점수 산출.
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import Dict, List
 
 from .constants import (
     BRANCH_ELEMENT,
-    BRANCH_YIN_YANG,
-    BRANCHES,
     ELEMENT_GENERATES,
     ELEMENT_OVERCOMES,
     STEM_ELEMENT,
-    STEM_YIN_YANG,
-    STEMS,
 )
 
 

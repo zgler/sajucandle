@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional
 
-from .schema import CSV_COLUMNS, TickerRecord, TransitionPoint
+from .schema import TickerRecord, TransitionPoint
 
 
 def _parse_transition_points(raw: str) -> List[TransitionPoint]:

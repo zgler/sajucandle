@@ -17,14 +17,12 @@
 
 from __future__ import annotations
 
-from typing import Dict, List
+from typing import Dict
 
 from .constants import (
-    BRANCH_ELEMENT,
     ELEMENT_GENERATES,
     ELEMENT_OVERCOMES,
     STEM_ELEMENT,
-    STEM_YIN_YANG,
     is_yang_stem,
 )
 

@@ -140,7 +140,6 @@ def saju_score(
         if p and len(p) == 2:
             all_branches.append(p[1])
     samhap = samhap_detection(all_branches)
-    chong_count = 0  # 전체 지지 쌍에서 충 카운트
     # 충 감점은 이미 pillar_compat_score에 반영됨 → 삼합 위주 가산
     event_raw = 0
     for s in samhap:
@@ -235,10 +234,6 @@ def saju_score_v2(
     sewoon_match_score = (overlap / possible) * 100
 
     # 3) 신살 보정 (ICIR=0.113 → 27%)
-    ticker_pillars = [ticker_saju.get("year_pillar", ""),
-                      ticker_saju.get("month_pillar", ""),
-                      ticker_saju.get("day_pillar", ""),
-                      ticker_saju.get("hour_pillar", "")]
     findings = find_shinsal(ticker_saju)
     shinsal_boost = shinsal_total_score(findings)
     shinsal_norm = (shinsal_boost + 10) / 20 * 100

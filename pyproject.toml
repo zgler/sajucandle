@@ -48,3 +48,12 @@ pythonpath = ["src"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
+# Phase 4 이식 코드 스타일 수용 — pyflakes(F*)는 엄격 유지, pycodestyle(E*)는 선택적 완화
+select = ["F", "E4", "E7", "E9", "W6"]
+ignore = [
+    "E701",  # multiple statements on one line (colon)
+    "E402",  # module-level import not at top of file
+    "E741",  # ambiguous variable name
+]

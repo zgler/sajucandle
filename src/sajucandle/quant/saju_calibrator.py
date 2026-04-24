@@ -11,7 +11,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, List, Optional
 
 import numpy as np
@@ -22,7 +22,6 @@ from ..ticker.schema import TickerRecord
 from ..ticker.saju_resolver import resolve_ticker_saju
 from ..saju.scorer import saju_score
 from .backtest import _month_starts, _forward_return
-from .price_data import get_ohlcv
 
 
 FEATURE_NAMES = [
@@ -238,7 +237,7 @@ def propose_new_weights(
         train_end = datetime(start.year + extra_year, extra_month, 1)
 
     print(f"  학습 기간: {start.strftime('%Y-%m')} ~ {train_end.strftime('%Y-%m')}")
-    print(f"  수집 중...")
+    print("  수집 중...")
 
     df = collect_saju_features(calc, records, asset_class, start, end, train_end=train_end)
     if df.empty:
