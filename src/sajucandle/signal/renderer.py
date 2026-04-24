@@ -49,10 +49,10 @@ def render_telegram(report: SignalReport) -> str:
         label = sig_type.value
         lines.append(f"{emoji} *{label}*")
         for t in sorted(items, key=lambda x: x.rank or 999):
-            rank_str = f"#{t.rank}" if t.rank else "—"
-            saju_str = f"{t.saju_score:.0f}"
-            quant_str = f"{t.quant_score:.0f}"
-            # 텔레그램 MD V2: 특수문자 이스케이프
+            # 텔레그램 MDv2: 특수문자(#, -, . 등)는 이스케이프 필요
+            rank_str = _tg_escape(f"#{t.rank}") if t.rank else _tg_escape("—")
+            saju_str = _tg_escape(f"{t.saju_score:.0f}")
+            quant_str = _tg_escape(f"{t.quant_score:.0f}")
             sym = _tg_escape(t.symbol)
             lines.append(
                 f"  `{sym:<8}` {rank_str:<4} "
