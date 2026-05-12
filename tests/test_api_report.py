@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, patch
 
+import anthropic
 import pytest
 from fastapi.testclient import TestClient
 from sajucandle.api.main import app
@@ -92,3 +93,15 @@ class TestReportEndpoint:
                 "gender": "M",
             })
         assert resp.status_code == 502
+
+    def test_report_timeout_returns_504(self, client: TestClient):
+        with patch("sajucandle.api.main._has_anthropic_key", return_value=True), \
+             patch("sajucandle.api.main.collect_report_context", return_value={}), \
+             patch("sajucandle.api.main.generate_report",
+                        new_callable=AsyncMock,
+                        side_effect=anthropic.APITimeoutError(request=None)):
+            resp = client.post("/api/saju/report", json={
+                "year": 1985, "month": 3, "day": 15,
+                "gender": "M",
+            })
+        assert resp.status_code == 504

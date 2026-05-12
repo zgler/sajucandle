@@ -39,6 +39,12 @@ def parse_sections(text: str) -> list[dict[str, Any]]:
     if len(sections) != 7:
         raise ValueError(f"섹션 수가 7개가 아닙니다: {len(sections)}")
 
+    required_keys = {"id", "title", "content", "highlight"}
+    for i, sec in enumerate(sections):
+        missing = required_keys - set(sec.keys())
+        if missing:
+            raise ValueError(f"섹션 {i+1}에 필수 키 누락: {missing}")
+
     return sections
 
 

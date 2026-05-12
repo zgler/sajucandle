@@ -48,6 +48,14 @@ class TestParseSections:
         with pytest.raises(ValueError, match="7"):
             parse_sections(json.dumps(bad))
 
+    def test_parse_missing_section_fields_raises(self):
+        bad = {"sections": [
+            {"id": i, "title": f"t{i}", "content": f"c{i}"}
+            for i in range(1, 8)
+        ]}
+        with pytest.raises(ValueError, match="highlight"):
+            parse_sections(json.dumps(bad))
+
 
 SAMPLE_CONTEXT = {
     "birth": {"year": 1985, "month": 3, "day": 15, "hour": 14, "gender": "M"},

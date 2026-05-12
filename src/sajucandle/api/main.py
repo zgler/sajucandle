@@ -417,7 +417,7 @@ def saju_yearly(
 
 # ── 감정서 API ─────────────────────────────────────────────────────────────
 import os
-import asyncio
+import anthropic
 from sajucandle.saju.report_context import collect_report_context
 from sajucandle.saju.report_generator import generate_report
 
@@ -452,7 +452,7 @@ async def saju_report(req: ReportRequest):
         sections = await generate_report(context)
     except ValueError:
         raise HTTPException(status_code=502, detail="감정서 생성 중 오류가 발생했습니다")
-    except asyncio.TimeoutError:
+    except anthropic.APITimeoutError:
         raise HTTPException(
             status_code=504,
             detail="감정서 생성 시간이 초과되었습니다. 잠시 후 다시 시도해주세요",
