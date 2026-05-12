@@ -123,6 +123,25 @@ export default function ProfilePage() {
           </>
         )}
 
+        {/* Report CTA */}
+        <button
+          onClick={() => router.push("/report")}
+          className="w-full bg-gradient-to-br from-zinc-900 to-zinc-900/80 rounded-2xl p-5 border border-amber-500/15 hover:border-amber-500/30 transition-all duration-300 text-left group"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center flex-shrink-0">
+              <span className="text-xs text-zinc-950 font-black">鑑</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold text-zinc-100 mb-0.5">나의 투자 감정서</p>
+              <p className="text-xs text-zinc-500">사주로 읽는 {new Date().getFullYear()}년 투자 전략</p>
+            </div>
+            <span className="text-zinc-600 group-hover:text-amber-400 transition-colors text-lg mt-1">
+              &rsaquo;
+            </span>
+          </div>
+        </button>
+
         {/* Actions */}
         <div className="space-y-3 pt-2">
           <button

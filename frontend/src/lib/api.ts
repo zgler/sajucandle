@@ -1,4 +1,4 @@
-import type { ProfileResponse, DailyFortuneResponse, YearlyFortuneResponse } from "./types";
+import type { ProfileResponse, DailyFortuneResponse, YearlyFortuneResponse, ReportResponse } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
@@ -66,4 +66,31 @@ export async function fetchYearlyFortune(params: {
     throw new Error(`fetchYearlyFortune failed: ${res.status} ${text}`);
   }
   return res.json();
+}
+
+export async function fetchReport(params: {
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+  gender: "M" | "F";
+}): Promise<ReportResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/saju/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`fetchReport failed: ${res.status} ${text}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
 }

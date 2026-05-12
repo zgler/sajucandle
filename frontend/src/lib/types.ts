@@ -62,3 +62,17 @@ export interface UserData {
   gender: "M" | "F";
   profile?: ProfileResponse;
 }
+
+export interface ReportSection {
+  id: number;
+  title: string;
+  content: string;
+  highlight: string;
+}
+
+export interface ReportResponse {
+  report_id: string;
+  target_year: number;
+  tier: string;
+  sections: ReportSection[];
+}
