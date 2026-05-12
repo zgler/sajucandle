@@ -413,3 +413,56 @@ def saju_yearly(
         "daeun_start_age": daeun_start,
         "daeun_description": daeun_desc,
     }
+
+
+# ── 감정서 API ─────────────────────────────────────────────────────────────
+import os
+import asyncio
+from sajucandle.saju.report_context import collect_report_context
+from sajucandle.saju.report_generator import generate_report
+
+
+def _has_anthropic_key() -> bool:
+    return bool(os.environ.get("ANTHROPIC_API_KEY"))
+
+
+class ReportRequest(BaseModel):
+    year: int
+    month: int
+    day: int
+    hour: Optional[int] = None
+    gender: str = "M"
+
+
+@app.post("/api/saju/report")
+async def saju_report(req: ReportRequest):
+    """사주 기반 투자 감정서 생성."""
+    if not _has_anthropic_key():
+        raise HTTPException(status_code=503, detail="감정서 서비스 준비 중입니다")
+
+    now_year = datetime.now().year
+    hour_str = f"{req.hour:02d}" if req.hour is not None else "00"
+    report_id = f"rpt_{req.year}{req.month:02d}{req.day:02d}{hour_str}{req.gender}_{now_year}"
+
+    try:
+        context = collect_report_context(
+            req.year, req.month, req.day,
+            req.hour, req.gender, now_year,
+        )
+        sections = await generate_report(context)
+    except ValueError:
+        raise HTTPException(status_code=502, detail="감정서 생성 중 오류가 발생했습니다")
+    except asyncio.TimeoutError:
+        raise HTTPException(
+            status_code=504,
+            detail="감정서 생성 시간이 초과되었습니다. 잠시 후 다시 시도해주세요",
+        )
+    except Exception:
+        raise HTTPException(status_code=502, detail="감정서 생성 중 오류가 발생했습니다")
+
+    return {
+        "report_id": report_id,
+        "target_year": now_year,
+        "tier": "standard",
+        "sections": sections,
+    }
