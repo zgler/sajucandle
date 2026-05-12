@@ -1,8 +1,6 @@
 """tests/test_investor_profile.py — 투자 체질 분류기 단위 테스트."""
 from __future__ import annotations
 
-import pytest
-
 from sajucandle.saju.investor_profile import (
     InvestorProfile,
     classify_investor_type,
