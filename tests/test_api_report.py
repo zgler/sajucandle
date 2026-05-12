@@ -1,8 +1,7 @@
 """tests/test_api_report.py — POST /api/saju/report 엔드포인트 테스트."""
 from __future__ import annotations
 
-import json
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
