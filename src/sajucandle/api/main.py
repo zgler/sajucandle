@@ -214,3 +214,179 @@ def _parse_holdings(holdings_str: Optional[str]) -> Set[str]:
     if not holdings_str:
         return set()
     return {s.strip().upper() for s in holdings_str.split(",") if s.strip()}
+
+
+# ── 사주 운세 API (MVP) ─────────────────────────────────────────────────────
+
+from fastapi.middleware.cors import CORSMiddleware
+from sajucandle.manseryeok.core import get_saju_calculator
+from sajucandle.saju.investor_profile import classify_investor_type
+from sajucandle.saju.daily_fortune import generate_daily_fortune
+from sajucandle.saju.fortune_templates import (
+    SEWOON_TEMPLATES,
+    DAEUN_TEMPLATES,
+)
+from sajucandle.saju.investor_profile import DAY_MASTER_DESCRIPTIONS
+from sajucandle.saju.tengod import ten_god_for_stem
+from sajucandle.saju.daeun import compute_daeun
+from sajucandle.saju.sewoon import compute_sewoon_wolwoon_ilji
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+class ProfileRequest(BaseModel):
+    year: int
+    month: int
+    day: int
+    hour: Optional[int] = None
+    minute: int = 0
+    gender: str = "M"
+
+
+def _calc_saju_for_user(req_year: int, req_month: int, req_day: int,
+                        req_hour: Optional[int], req_minute: int = 0) -> dict:
+    """유저 생년월일 → 사주 계산. 시간 미입력 시 시주 제거."""
+    calc = get_saju_calculator()
+    h = req_hour if req_hour is not None else 0
+    saju = calc.calculate_saju(req_year, req_month, req_day, h, req_minute)
+    if req_hour is None:
+        saju["hour_pillar"] = ""
+        saju["hour_stem"] = ""
+        saju["hour_branch"] = ""
+    return saju
+
+
+@app.post("/api/saju/profile")
+def saju_profile(req: ProfileRequest):
+    """생년월일시 → 투자 체질 프로필."""
+    saju = _calc_saju_for_user(req.year, req.month, req.day, req.hour, req.minute)
+    profile = classify_investor_type(saju)
+    return {
+        "saju": {
+            "year_pillar": saju["year_pillar"],
+            "month_pillar": saju["month_pillar"],
+            "day_pillar": saju["day_pillar"],
+            "hour_pillar": saju.get("hour_pillar", ""),
+        },
+        "day_master": profile.day_master,
+        "day_master_element": profile.day_master_element,
+        "day_master_description": DAY_MASTER_DESCRIPTIONS.get(profile.day_master, ""),
+        "investor_type": profile.investor_type,
+        "description": profile.description,
+        "strengths": profile.strengths,
+        "weaknesses": profile.weaknesses,
+        "risk_score": profile.risk_score,
+        "element_distribution": profile.element_distribution,
+        "dominant_group": profile.dominant_group,
+        "tengod_counts": profile.tengod_counts,
+    }
+
+
+@app.get("/api/saju/daily")
+def saju_daily(
+    year: int,
+    month: int,
+    day: int,
+    hour: Optional[int] = None,
+    minute: int = 0,
+    gender: str = "M",
+    date: Optional[str] = None,
+):
+    """오늘의 매매 기운."""
+    saju = _calc_saju_for_user(year, month, day, hour, minute)
+
+    if date:
+        parts = date.split("-")
+        target = datetime(int(parts[0]), int(parts[1]), int(parts[2]), 12)
+    else:
+        target = datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
+
+    fortune = generate_daily_fortune(saju, target)
+    return {
+        "date": fortune.date,
+        "day_pillar_today": fortune.day_pillar_today,
+        "tengod_label": fortune.tengod_label,
+        "judgment_score": fortune.judgment_score,
+        "execution_score": fortune.execution_score,
+        "patience_score": fortune.patience_score,
+        "coaching": fortune.coaching,
+        "caution": fortune.caution,
+        "detail": fortune.detail,
+        "shinsal_messages": fortune.shinsal_messages,
+        "relation_messages": fortune.relation_messages,
+    }
+
+
+@app.get("/api/saju/yearly")
+def saju_yearly(
+    year: int,
+    month: int,
+    day: int,
+    hour: Optional[int] = None,
+    minute: int = 0,
+    gender: str = "M",
+    target_year: Optional[int] = None,
+):
+    """올해 세운/대운 투자 흐름 해설."""
+    saju = _calc_saju_for_user(year, month, day, hour, minute)
+    calc = get_saju_calculator()
+    now = datetime.now()
+    ty = target_year or now.year
+
+    target = datetime(ty, now.month, now.day, 12)
+    context = compute_sewoon_wolwoon_ilji(calc, target)
+
+    sewoon_pillar = context["sewoon"]
+    sewoon_stem = sewoon_pillar[0] if sewoon_pillar else ""
+    day_stem = saju["day_stem"]
+    sewoon_tg = ten_god_for_stem(day_stem, sewoon_stem)
+
+    group_map = {
+        "비견": "비겁", "겁재": "비겁",
+        "식신": "식상", "상관": "식상",
+        "편재": "재성", "정재": "재성",
+        "편관": "관성", "정관": "관성",
+        "편인": "인성", "정인": "인성",
+    }
+
+    h = hour if hour is not None else 0
+    birth_dt = datetime(year, month, day, h, minute)
+    daeun_data = compute_daeun(
+        calc.data, birth_dt,
+        saju["year_pillar"], saju["month_pillar"], gender,
+    )
+
+    current_daeun = None
+    age = ty - year
+    for d in daeun_data.get("daeun", []):
+        if d["start_age"] <= age < d["end_age"]:
+            current_daeun = d
+            break
+
+    daeun_info = {}
+    if current_daeun:
+        daeun_stem = current_daeun["stem"]
+        daeun_tg = ten_god_for_stem(day_stem, daeun_stem)
+        daeun_group = group_map.get(daeun_tg, "비겁")
+        daeun_info = {
+            "pillar": current_daeun["pillar"],
+            "tengod": daeun_tg,
+            "group": daeun_group,
+            "message": DAEUN_TEMPLATES.get(daeun_group, ""),
+            "start_age": current_daeun["start_age"],
+            "end_age": current_daeun["end_age"],
+        }
+
+    return {
+        "target_year": ty,
+        "sewoon_pillar": sewoon_pillar,
+        "sewoon_tengod": sewoon_tg,
+        "sewoon_message": SEWOON_TEMPLATES.get(sewoon_tg, ""),
+        "daeun": daeun_info,
+    }
