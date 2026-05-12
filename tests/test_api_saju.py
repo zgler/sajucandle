@@ -27,9 +27,12 @@ class TestProfileEndpoint:
         data = resp.json()
         assert "investor_type" in data
         assert "day_master" in data
-        assert "saju" in data
+        assert "pillars" in data
         assert "element_distribution" in data
         assert "description" in data
+        pillars = data["pillars"]
+        assert "year_stem" in pillars
+        assert "day_stem" in pillars
 
     def test_profile_without_hour(self, client: TestClient):
         resp = client.post("/api/saju/profile", json={
@@ -38,7 +41,7 @@ class TestProfileEndpoint:
         })
         assert resp.status_code == 200
         data = resp.json()
-        assert data["saju"]["hour_pillar"] == ""
+        assert data["pillars"]["hour_stem"] is None
 
 
 class TestDailyEndpoint:
@@ -55,10 +58,11 @@ class TestDailyEndpoint:
             "hour": 14, "gender": "M",
         })
         data = resp.json()
-        assert "judgment_score" in data
-        assert "execution_score" in data
-        assert "patience_score" in data
-        assert "tengod_label" in data
+        assert "scores" in data
+        assert "judgment" in data["scores"]
+        assert "action" in data["scores"]
+        assert "patience" in data["scores"]
+        assert "iljin_stem" in data
         assert "coaching" in data
 
     def test_daily_with_specific_date(self, client: TestClient):
@@ -86,7 +90,7 @@ class TestYearlyEndpoint:
             "hour": 14, "gender": "M",
         })
         data = resp.json()
-        assert "sewoon_pillar" in data
-        assert "sewoon_tengod" in data
-        assert "sewoon_message" in data
-        assert "daeun" in data
+        assert "sewoon_stem" in data
+        assert "sewoon_element" in data
+        assert "yearly_outlook" in data
+        assert "daeun_description" in data

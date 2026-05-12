@@ -230,6 +230,13 @@ from sajucandle.saju.investor_profile import DAY_MASTER_DESCRIPTIONS
 from sajucandle.saju.tengod import ten_god_for_stem
 from sajucandle.saju.daeun import compute_daeun
 from sajucandle.saju.sewoon import compute_sewoon_wolwoon_ilji
+from sajucandle.saju.constants import element_of_stem
+
+_ELEMENT_KR = {"木": "목", "火": "화", "土": "토", "金": "금", "水": "수"}
+
+
+def _element_kr(stem: str) -> str:
+    return _ELEMENT_KR.get(element_of_stem(stem), "")
 
 app.add_middleware(
     CORSMiddleware,
@@ -268,14 +275,18 @@ def saju_profile(req: ProfileRequest):
     saju = _calc_saju_for_user(req.year, req.month, req.day, req.hour, req.minute)
     profile = classify_investor_type(saju)
     return {
-        "saju": {
-            "year_pillar": saju["year_pillar"],
-            "month_pillar": saju["month_pillar"],
-            "day_pillar": saju["day_pillar"],
-            "hour_pillar": saju.get("hour_pillar", ""),
+        "pillars": {
+            "year_stem": saju["year_stem"],
+            "year_branch": saju["year_branch"],
+            "month_stem": saju["month_stem"],
+            "month_branch": saju["month_branch"],
+            "day_stem": saju["day_stem"],
+            "day_branch": saju["day_branch"],
+            "hour_stem": saju.get("hour_stem") or None,
+            "hour_branch": saju.get("hour_branch") or None,
         },
         "day_master": profile.day_master,
-        "day_master_element": profile.day_master_element,
+        "day_master_element": _element_kr(profile.day_master),
         "day_master_description": DAY_MASTER_DESCRIPTIONS.get(profile.day_master, ""),
         "investor_type": profile.investor_type,
         "description": profile.description,
@@ -308,18 +319,23 @@ def saju_daily(
         target = datetime.now().replace(hour=12, minute=0, second=0, microsecond=0)
 
     fortune = generate_daily_fortune(saju, target)
+    iljin_stem = fortune.day_pillar_today[0] if fortune.day_pillar_today else ""
+    iljin_branch = fortune.day_pillar_today[1] if len(fortune.day_pillar_today) > 1 else ""
     return {
         "date": fortune.date,
-        "day_pillar_today": fortune.day_pillar_today,
-        "tengod_label": fortune.tengod_label,
-        "judgment_score": fortune.judgment_score,
-        "execution_score": fortune.execution_score,
-        "patience_score": fortune.patience_score,
+        "scores": {
+            "judgment": fortune.judgment_score,
+            "action": fortune.execution_score,
+            "patience": fortune.patience_score,
+        },
         "coaching": fortune.coaching,
         "caution": fortune.caution,
         "detail": fortune.detail,
         "shinsal_messages": fortune.shinsal_messages,
         "relation_messages": fortune.relation_messages,
+        "iljin_stem": iljin_stem,
+        "iljin_branch": iljin_branch,
+        "iljin_element": _element_kr(iljin_stem),
     }
 
 
@@ -369,24 +385,31 @@ def saju_yearly(
             current_daeun = d
             break
 
-    daeun_info = {}
+    sewoon_branch = sewoon_pillar[1] if len(sewoon_pillar) > 1 else ""
+
+    daeun_stem_val = ""
+    daeun_branch_val = ""
+    daeun_start = 0
+    daeun_desc = ""
     if current_daeun:
-        daeun_stem = current_daeun["stem"]
-        daeun_tg = ten_god_for_stem(day_stem, daeun_stem)
+        daeun_stem_val = current_daeun["stem"]
+        daeun_pillar = current_daeun["pillar"]
+        daeun_branch_val = daeun_pillar[1] if len(daeun_pillar) > 1 else ""
+        daeun_tg = ten_god_for_stem(day_stem, daeun_stem_val)
         daeun_group = group_map.get(daeun_tg, "비겁")
-        daeun_info = {
-            "pillar": current_daeun["pillar"],
-            "tengod": daeun_tg,
-            "group": daeun_group,
-            "message": DAEUN_TEMPLATES.get(daeun_group, ""),
-            "start_age": current_daeun["start_age"],
-            "end_age": current_daeun["end_age"],
-        }
+        daeun_start = int(current_daeun["start_age"])
+        daeun_desc = DAEUN_TEMPLATES.get(daeun_group, "")
 
     return {
-        "target_year": ty,
-        "sewoon_pillar": sewoon_pillar,
-        "sewoon_tengod": sewoon_tg,
-        "sewoon_message": SEWOON_TEMPLATES.get(sewoon_tg, ""),
-        "daeun": daeun_info,
+        "year": ty,
+        "sewoon_stem": sewoon_stem,
+        "sewoon_branch": sewoon_branch,
+        "sewoon_element": _element_kr(sewoon_stem),
+        "yearly_outlook": SEWOON_TEMPLATES.get(sewoon_tg, ""),
+        "monthly_tips": [],
+        "daeun_stem": daeun_stem_val,
+        "daeun_branch": daeun_branch_val,
+        "daeun_element": _element_kr(daeun_stem_val),
+        "daeun_start_age": daeun_start,
+        "daeun_description": daeun_desc,
     }
