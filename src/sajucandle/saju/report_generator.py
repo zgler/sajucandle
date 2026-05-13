@@ -11,9 +11,26 @@ from sajucandle.saju.report_prompt import build_messages
 
 MODEL_STANDARD = "claude-sonnet-4-6"
 MODEL_PREMIUM = "claude-opus-4-6"
-MAX_TOKENS = 4096
-TIMEOUT = 60.0
+MAX_TOKENS = 8192
+TIMEOUT = 120.0
 MAX_RETRIES = 2
+
+
+def _repair_json(raw: str) -> str:
+    """LLM이 생성한 JSON의 흔한 오류를 수정한다."""
+    raw = re.sub(r",\s*([}\]])", r"\1", raw)
+    lines = raw.split("\n")
+    repaired: list[str] = []
+    in_string = False
+    for line in lines:
+        quote_count = len(re.findall(r'(?<!\\)"', line))
+        if in_string:
+            repaired[-1] += "\\n" + line
+        else:
+            repaired.append(line)
+        if quote_count % 2 == 1:
+            in_string = not in_string
+    return "\n".join(repaired)
 
 
 def parse_sections(text: str) -> list[dict[str, Any]]:
@@ -27,10 +44,15 @@ def parse_sections(text: str) -> list[dict[str, Any]]:
     if brace_start < 0 or brace_end <= brace_start:
         raise ValueError("JSON 객체를 찾을 수 없습니다")
 
+    json_str = text[brace_start:brace_end]
     try:
-        parsed = json.loads(text[brace_start:brace_end])
-    except json.JSONDecodeError as e:
-        raise ValueError(f"JSON 파싱 실패: {e}") from e
+        parsed = json.loads(json_str)
+    except json.JSONDecodeError:
+        repaired = _repair_json(json_str)
+        try:
+            parsed = json.loads(repaired)
+        except json.JSONDecodeError as e:
+            raise ValueError(f"JSON 파싱 실패: {e}") from e
 
     if "sections" not in parsed:
         raise ValueError("'sections' 키가 없습니다")

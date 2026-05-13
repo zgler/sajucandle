@@ -68,6 +68,7 @@ export interface ReportSection {
   title: string;
   content: string;
   highlight: string;
+  locked: boolean;
 }
 
 export interface ReportResponse {
