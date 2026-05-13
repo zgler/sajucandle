@@ -47,6 +47,38 @@ class TestReportEndpoint:
         assert "tier" in data
         assert "sections" in data
         assert len(data["sections"]) == 7
+        for sec in data["sections"]:
+            assert "locked" in sec
+
+    def test_sections_1_2_unlocked_with_content(self, client: TestClient):
+        with patch("sajucandle.api.main._has_anthropic_key", return_value=True), \
+             patch("sajucandle.api.main.collect_report_context", return_value={}), \
+             patch("sajucandle.api.main.generate_report",
+                    new_callable=AsyncMock, return_value=MOCK_SECTIONS):
+            resp = client.post("/api/saju/report", json={
+                "year": 1985, "month": 3, "day": 15,
+                "hour": 14, "gender": "M",
+            })
+        data = resp.json()
+        for sec in data["sections"][:2]:
+            assert sec["locked"] is False
+            assert sec["content"] != ""
+
+    def test_sections_3_to_7_locked_no_content(self, client: TestClient):
+        with patch("sajucandle.api.main._has_anthropic_key", return_value=True), \
+             patch("sajucandle.api.main.collect_report_context", return_value={}), \
+             patch("sajucandle.api.main.generate_report",
+                    new_callable=AsyncMock, return_value=MOCK_SECTIONS):
+            resp = client.post("/api/saju/report", json={
+                "year": 1985, "month": 3, "day": 15,
+                "hour": 14, "gender": "M",
+            })
+        data = resp.json()
+        for sec in data["sections"][2:]:
+            assert sec["locked"] is True
+            assert sec["content"] == ""
+            assert sec["title"] != ""
+            assert sec["highlight"] != ""
 
     def test_report_id_format(self, client: TestClient):
         with patch("sajucandle.api.main._has_anthropic_key", return_value=True), \

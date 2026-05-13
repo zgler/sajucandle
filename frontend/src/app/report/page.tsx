@@ -35,7 +35,8 @@ function buildReportId(user: UserData): string {
   return `rpt_${user.year}${String(user.month).padStart(2, "0")}${String(user.day).padStart(2, "0")}${h}${user.gender}_${y}`;
 }
 
-function SectionCard({ section, blurred }: { section: ReportSection; blurred: boolean }) {
+function SectionCard({ section }: { section: ReportSection }) {
+  const blurred = section.locked;
   return (
     <div className="relative group">
       <div
@@ -230,16 +231,16 @@ export default function ReportPage() {
               <SectionCard
                 key={section.id}
                 section={section}
-                blurred={section.id > 2}
               />
             ))}
 
             {/* Paywall CTA */}
+            {report.sections.some((s) => s.locked) && (
             <div className="relative -mt-16 pt-20 pb-2">
               <div className="bg-gradient-to-b from-zinc-950/0 via-zinc-950/80 to-zinc-950 absolute inset-x-0 -top-16 h-20 pointer-events-none" />
               <div className="bg-zinc-900/90 backdrop-blur-md rounded-2xl border border-amber-500/20 p-6 text-center space-y-4">
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs text-amber-400 font-medium">
-                  5개 섹션 잠김
+                  {report.sections.filter((s) => s.locked).length}개 섹션 잠김
                 </div>
                 <p className="text-base font-bold text-zinc-100">
                   감정서 전체 보기
@@ -258,6 +259,7 @@ export default function ReportPage() {
                 </p>
               </div>
             </div>
+            )}
           </>
         )}
       </div>

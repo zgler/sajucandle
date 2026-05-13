@@ -460,9 +460,22 @@ async def saju_report(req: ReportRequest):
     except Exception:
         raise HTTPException(status_code=502, detail="감정서 생성 중 오류가 발생했습니다")
 
+    redacted = []
+    for sec in sections:
+        if sec["id"] <= 2:
+            redacted.append({**sec, "locked": False})
+        else:
+            redacted.append({
+                "id": sec["id"],
+                "title": sec["title"],
+                "highlight": sec["highlight"],
+                "content": "",
+                "locked": True,
+            })
+
     return {
         "report_id": report_id,
         "target_year": now_year,
         "tier": "standard",
-        "sections": sections,
+        "sections": redacted,
     }
