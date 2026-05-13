@@ -41,7 +41,7 @@ export default function OnboardingForm({ onComplete }: Props) {
     }
   }
 
-  const yearOptions = Array.from({ length: 91 }, (_, i) => 1920 + i);
+  const yearOptions = Array.from({ length: 91 }, (_, i) => 2010 - i);
   const monthOptions = Array.from({ length: 12 }, (_, i) => i + 1);
   const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
   const hourOptions = Array.from({ length: 24 }, (_, i) => i);
