@@ -20,7 +20,15 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Toast animation */
+/* ── Serif Korean font stack for report ── */
+.font-serif-ko {
+  font-family: "Noto Serif KR", "Batang", "바탕", serif;
+}
+.font-serif {
+  font-family: "Noto Serif KR", "Batang", serif;
+}
+
+/* ── Toast animation ── */
 @keyframes fade-in {
   from { opacity: 0; transform: translate(-50%, 8px); }
   to { opacity: 1; transform: translate(-50%, 0); }
@@ -29,7 +37,124 @@ body {
   animation: fade-in 0.25s ease-out;
 }
 
-/* Scrollbar styling */
+/* ── Report page animations ── */
+
+/* Section card staggered entrance */
+@keyframes section-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.report-section-enter {
+  animation: section-enter 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Header entrance */
+@keyframes header-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+.report-header-enter {
+  animation: header-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Paywall entrance */
+@keyframes paywall-enter {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.paywall-enter {
+  animation: paywall-enter 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: 500ms;
+}
+
+/* Toast slide up */
+@keyframes toast-enter {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+.toast-enter {
+  animation: toast-enter 0.3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Candle flame flicker */
+@keyframes flame-flicker {
+  0%, 100% { transform: translateX(-50%) scale(1) rotate(-1deg); opacity: 0.8; }
+  25% { transform: translateX(-50%) scale(1.05) rotate(1deg); opacity: 1; }
+  50% { transform: translateX(-50%) scale(0.95) rotate(-2deg); opacity: 0.7; }
+  75% { transform: translateX(-50%) scale(1.02) rotate(0.5deg); opacity: 0.9; }
+}
+.flame-flicker {
+  animation: flame-flicker 2s ease-in-out infinite;
+}
+.flame-flicker-delayed {
+  animation: flame-flicker 2s ease-in-out infinite;
+  animation-delay: 0.3s;
+}
+
+/* Flame ambient glow */
+@keyframes flame-glow {
+  0%, 100% { transform: translate(-50%) scale(1); opacity: 0.5; }
+  50% { transform: translate(-50%) scale(1.1); opacity: 0.8; }
+}
+.flame-glow {
+  animation: flame-glow 3s ease-in-out infinite;
+}
+
+/* Ink dot loading animation */
+@keyframes ink-dot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1.2); opacity: 0.8; }
+}
+.ink-dot {
+  animation: ink-dot 1.4s ease-in-out infinite;
+}
+
+/* Paywall button shimmer */
+@keyframes shimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.paywall-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* ── Report content typography ── */
+.report-content-text {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* ── Scrollbar styling ── */
 ::-webkit-scrollbar {
   width: 4px;
 }
