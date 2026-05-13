@@ -11,8 +11,8 @@ from sajucandle.saju.report_prompt import build_messages
 
 MODEL_STANDARD = "claude-sonnet-4-6"
 MODEL_PREMIUM = "claude-opus-4-6"
-MAX_TOKENS = 8192
-TIMEOUT = 120.0
+MAX_TOKENS = 16384
+TIMEOUT = 300.0
 MAX_RETRIES = 2
 
 

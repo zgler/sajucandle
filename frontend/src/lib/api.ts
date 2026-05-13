@@ -76,7 +76,7 @@ export async function fetchReport(params: {
   gender: "M" | "F";
 }): Promise<ReportResponse> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 150000);
+  const timeout = setTimeout(() => controller.abort(), 300000);
 
   try {
     const res = await fetch(`${API_BASE}/api/saju/report`, {
