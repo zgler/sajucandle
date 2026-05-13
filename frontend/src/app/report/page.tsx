@@ -252,7 +252,7 @@ export default function ReportPage() {
                   onClick={handlePurchase}
                   className="w-full py-3.5 rounded-xl font-bold text-zinc-950 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-300 hover:to-amber-400 transition-all duration-300 shadow-lg shadow-amber-500/20"
                 >
-                  4,900원으로 잠금 해제
+                  990원으로 잠금 해제
                 </button>
                 <p className="text-[10px] text-zinc-600">
                   명리학 기반 해석이며 투자 권유가 아닙니다
