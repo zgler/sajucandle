@@ -74,6 +74,11 @@ SYSTEM_PROMPT = """\
 
 반드시 아래 JSON 형식으로만 응답하세요. JSON 외의 텍스트를 포함하지 마세요.
 
+**JSON 작성 규칙:**
+- content, highlight 값은 반드시 한 줄 문자열로 작성 (줄바꿈은 \\n으로 이스케이프)
+- 문자열 내 큰따옴표는 \\"로 이스케이프
+- 마지막 항목 뒤에 쉼표(trailing comma) 금지
+
 ```json
 {
   "sections": [
