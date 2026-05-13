@@ -16,6 +16,7 @@ dependencies = [
     "ta>=0.11,<0.12",
     "ccxt>=4.2,<5.0",
     "requests>=2.31,<3.0",
+    "anthropic>=0.49,<1.0",
 ]
 
 [project.optional-dependencies]
