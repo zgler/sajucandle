@@ -72,7 +72,13 @@ async def payment_confirm(req: PaymentConfirmRequest):
         raise HTTPException(status_code=502, detail=f"결제 요청 오류: {exc}") from exc
 
     if toss_resp.status_code != 200:
-        toss_data = toss_resp.json()
+        try:
+            toss_data = toss_resp.json()
+        except Exception:
+            raise HTTPException(
+                status_code=502,
+                detail="결제 서버로부터 비정상 응답을 받았습니다",
+            )
         raise HTTPException(
             status_code=400,
             detail={
