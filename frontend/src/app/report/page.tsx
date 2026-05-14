@@ -6,6 +6,7 @@ import TabNav from "@/components/TabNav";
 import { loadUser } from "@/lib/storage";
 import { fetchReport } from "@/lib/api";
 import type { UserData, ReportResponse, ReportSection } from "@/lib/types";
+import { loadTossPayments } from "@tosspayments/tosspayments-sdk";
 
 /* ── 오행 accent per section ─────────────────────── */
 const SECTION_META: Record<
@@ -281,11 +282,50 @@ export default function ReportPage() {
       .finally(() => setLoading(false));
   }
 
-  function handlePurchase(tier: "standard" | "premium") {
-    // TODO: 결제 연동 후 실제 결제 플로우로 교체
-    console.log(`Purchase requested: ${tier}`);
-    setToastVisible(true);
-    setTimeout(() => setToastVisible(false), 2500);
+  async function handlePurchase(tier: "standard" | "premium") {
+    if (!user) return;
+
+    const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+    if (!clientKey) {
+      setToastVisible(true);
+      setTimeout(() => setToastVisible(false), 2500);
+      return;
+    }
+
+    const amount = tier === "standard" ? 990 : 9900;
+    const reportId = buildReportId(user);
+    const orderId = `ord_${Date.now()}_${reportId}_${tier}`;
+    const orderName = `사주캔들 투자 감정서 (${tier === "standard" ? "Standard" : "Premium"})`;
+
+    // pending_order를 localStorage에 저장 (success 페이지에서 사용)
+    try {
+      localStorage.setItem("pending_order", JSON.stringify({
+        tier,
+        year: user.year,
+        month: user.month,
+        day: user.day,
+        hour: user.hour,
+        gender: user.gender,
+      }));
+    } catch {
+      // ignore
+    }
+
+    try {
+      const tossPayments = await loadTossPayments(clientKey);
+      const payment = tossPayments.payment({ customerKey: reportId });
+      await payment.requestPayment({
+        method: "CARD",
+        amount: { currency: "KRW", value: amount },
+        orderId,
+        orderName,
+        successUrl: `${window.location.origin}/report/success`,
+        failUrl: `${window.location.origin}/report/fail`,
+      });
+    } catch (err) {
+      // 사용자가 결제창 닫은 경우 등
+      console.error("Payment request failed:", err);
+    }
   }
 
   const lockedCount = report?.sections.filter((s) => s.locked).length ?? 0;
