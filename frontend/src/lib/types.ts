@@ -77,3 +77,15 @@ export interface ReportResponse {
   tier: string;
   sections: ReportSection[];
 }
+
+export interface PaymentInfo {
+  order_id: string;
+  amount: number;
+  tier: string;
+}
+
+export interface PaymentConfirmResponse {
+  success: boolean;
+  payment: PaymentInfo;
+  report: ReportResponse;
+}

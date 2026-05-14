@@ -1,4 +1,4 @@
-import type { ProfileResponse, DailyFortuneResponse, YearlyFortuneResponse, ReportResponse } from "./types";
+import type { ProfileResponse, DailyFortuneResponse, YearlyFortuneResponse, ReportResponse, PaymentConfirmResponse } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
@@ -74,6 +74,7 @@ export async function fetchReport(params: {
   day: number;
   hour?: number;
   gender: "M" | "F";
+  tier?: "standard" | "premium";
 }): Promise<ReportResponse> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 300000);
@@ -88,6 +89,37 @@ export async function fetchReport(params: {
     if (!res.ok) {
       const text = await res.text();
       throw new Error(`fetchReport failed: ${res.status} ${text}`);
+    }
+    return res.json();
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function confirmPayment(params: {
+  payment_key: string;
+  order_id: string;
+  amount: number;
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+  gender: "M" | "F";
+  tier: "standard" | "premium";
+}): Promise<PaymentConfirmResponse> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 300000);
+
+  try {
+    const res = await fetch(`${API_BASE}/api/payments/confirm`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`confirmPayment failed: ${res.status} ${text}`);
     }
     return res.json();
   } finally {
