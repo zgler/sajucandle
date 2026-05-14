@@ -78,10 +78,10 @@ class TestPaymentConfirmValidation:
 class TestPaymentConfirmSuccess:
     def test_standard_payment_success(self, client: TestClient):
         mock_client = _make_async_client_mock(200)
-        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client), \
-             patch("sajucandle.api.main.collect_report_context", return_value={}), \
-             patch("sajucandle.api.main.generate_report",
+        with patch("sajucandle.api.routers.payments.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.routers.payments.httpx.AsyncClient", return_value=mock_client), \
+             patch("sajucandle.api.routers.payments.collect_report_context", return_value={}), \
+             patch("sajucandle.api.routers.payments.generate_report",
                    new_callable=AsyncMock, return_value=MOCK_SECTIONS):
             payload = {**BASE_PAYLOAD, "tier": "standard", "amount": 990}
             resp = client.post("/api/payments/confirm", json=payload)
@@ -97,10 +97,10 @@ class TestPaymentConfirmSuccess:
 
     def test_premium_payment_success(self, client: TestClient):
         mock_client = _make_async_client_mock(200)
-        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client), \
-             patch("sajucandle.api.main.collect_report_context", return_value={}), \
-             patch("sajucandle.api.main.generate_report",
+        with patch("sajucandle.api.routers.payments.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.routers.payments.httpx.AsyncClient", return_value=mock_client), \
+             patch("sajucandle.api.routers.payments.collect_report_context", return_value={}), \
+             patch("sajucandle.api.routers.payments.generate_report",
                    new_callable=AsyncMock, return_value=MOCK_SECTIONS):
             payload = {**BASE_PAYLOAD, "tier": "premium", "amount": 9900}
             resp = client.post("/api/payments/confirm", json=payload)
@@ -118,8 +118,8 @@ class TestPaymentConfirmFailure:
         mock_client = _make_async_client_mock(
             400, {"code": "INVALID_PAYMENT", "message": "결제 실패"}
         )
-        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client):
+        with patch("sajucandle.api.routers.payments.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.routers.payments.httpx.AsyncClient", return_value=mock_client):
             resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
 
         assert resp.status_code == 400
@@ -127,7 +127,7 @@ class TestPaymentConfirmFailure:
         assert data["detail"]["success"] is False
 
     def test_no_toss_secret_key_returns_503(self, client: TestClient):
-        with patch("sajucandle.api.main.os.environ.get", return_value=None):
+        with patch("sajucandle.api.routers.payments.os.environ.get", return_value=None):
             resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
 
         assert resp.status_code == 503
@@ -138,8 +138,8 @@ class TestPaymentConfirmFailure:
         mock_client.__aenter__ = AsyncMock(return_value=mock_client)
         mock_client.__aexit__ = AsyncMock(return_value=False)
 
-        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client):
+        with patch("sajucandle.api.routers.payments.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.routers.payments.httpx.AsyncClient", return_value=mock_client):
             resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
 
         assert resp.status_code == 502
@@ -147,10 +147,10 @@ class TestPaymentConfirmFailure:
 
     def test_generate_report_error_after_payment_success_returns_502(self, client: TestClient):
         mock_client = _make_async_client_mock(200)
-        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client), \
-             patch("sajucandle.api.main.collect_report_context", return_value={}), \
-             patch("sajucandle.api.main.generate_report",
+        with patch("sajucandle.api.routers.payments.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.routers.payments.httpx.AsyncClient", return_value=mock_client), \
+             patch("sajucandle.api.routers.payments.collect_report_context", return_value={}), \
+             patch("sajucandle.api.routers.payments.generate_report",
                    new_callable=AsyncMock, side_effect=Exception("AI error")):
             resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
 
