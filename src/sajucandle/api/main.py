@@ -12,11 +12,15 @@
 
 from __future__ import annotations
 
+import base64
+import os
 import sys
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
 from typing import List, Optional, Set
+
+import httpx
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse
@@ -445,6 +449,7 @@ class ReportRequest(BaseModel):
     day: int
     hour: Optional[int] = None
     gender: str = "M"
+    tier: str = "standard"  # "standard" (Sonnet) or "premium" (Opus)
 
 
 @app.post("/api/saju/report")
@@ -462,7 +467,8 @@ async def saju_report(req: ReportRequest):
             req.year, req.month, req.day,
             req.hour, req.gender, now_year,
         )
-        sections = await generate_report(context)
+        tier = req.tier if req.tier in ("standard", "premium") else "standard"
+        sections = await generate_report(context, tier=tier)
     except ValueError:
         raise HTTPException(status_code=502, detail="감정서 생성 중 오류가 발생했습니다")
     except anthropic.APITimeoutError:
@@ -489,6 +495,95 @@ async def saju_report(req: ReportRequest):
     return {
         "report_id": report_id,
         "target_year": now_year,
-        "tier": "standard",
+        "tier": tier,
         "sections": redacted,
+    }
+
+
+# ── 결제 승인 API ─────────────────────────────────────────────────────────────
+
+TIER_PRICES = {"standard": 990, "premium": 9900}
+
+
+class PaymentConfirmRequest(BaseModel):
+    payment_key: str
+    order_id: str
+    amount: int
+    year: int
+    month: int
+    day: int
+    hour: Optional[int] = None
+    gender: str = "M"
+    tier: str = "standard"
+
+
+@app.post("/api/payments/confirm")
+async def payment_confirm(req: PaymentConfirmRequest):
+    """Toss 결제 승인 후 전체 잠금 해제 감정서를 반환한다."""
+    # 1. tier / amount 유효성 검증
+    if req.tier not in TIER_PRICES:
+        raise HTTPException(status_code=400, detail=f"유효하지 않은 tier입니다: {req.tier}")
+    if req.amount != TIER_PRICES[req.tier]:
+        raise HTTPException(
+            status_code=400,
+            detail=f"금액 불일치: {req.tier} 티어는 {TIER_PRICES[req.tier]}원이어야 합니다",
+        )
+
+    # 2. Toss 시크릿 키 확인
+    secret_key = os.environ.get("TOSS_SECRET_KEY")
+    if not secret_key:
+        raise HTTPException(status_code=503, detail="결제 서비스 준비 중입니다")
+
+    # 3. Toss 결제 승인 API 호출
+    credentials = base64.b64encode(f"{secret_key}:".encode()).decode()
+    toss_resp = httpx.post(
+        "https://api.tosspayments.com/v1/payments/confirm",
+        headers={
+            "Authorization": f"Basic {credentials}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "paymentKey": req.payment_key,
+            "orderId": req.order_id,
+            "amount": req.amount,
+        },
+        timeout=30,
+    )
+    if toss_resp.status_code != 200:
+        toss_data = toss_resp.json()
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "success": False,
+                "error": toss_data.get("message", "결제 승인 실패"),
+                "code": toss_data.get("code", "UNKNOWN"),
+            },
+        )
+
+    # 4. 전체 잠금 해제 감정서 생성
+    now_year = datetime.now().year
+    hour_str = f"{req.hour:02d}" if req.hour is not None else "00"
+    report_id = f"rpt_{req.year}{req.month:02d}{req.day:02d}{hour_str}{req.gender}_{now_year}"
+
+    context = collect_report_context(
+        req.year, req.month, req.day,
+        req.hour, req.gender, now_year,
+    )
+    sections = await generate_report(context, tier=req.tier)
+
+    unlocked = [{**sec, "locked": False} for sec in sections]
+
+    return {
+        "success": True,
+        "payment": {
+            "order_id": req.order_id,
+            "amount": req.amount,
+            "tier": req.tier,
+        },
+        "report": {
+            "report_id": report_id,
+            "target_year": now_year,
+            "tier": req.tier,
+            "sections": unlocked,
+        },
     }
