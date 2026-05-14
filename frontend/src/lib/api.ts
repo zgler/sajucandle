@@ -1,4 +1,5 @@
 import type { ProfileResponse, DailyFortuneResponse, YearlyFortuneResponse, ReportResponse, PaymentConfirmResponse } from "./types";
+import type { ChartOhlcvResponse } from "./chart-types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
@@ -111,4 +112,15 @@ export function confirmPayment(params: {
   tier: "standard" | "premium";
 }): Promise<PaymentConfirmResponse> {
   return api(`${API_BASE}/api/payments/confirm`, postJson(params, 300000));
+}
+
+export function fetchChartOhlcv(params: {
+  symbol: string;
+  asset_class?: string;
+  months?: number;
+  birth_date?: string;
+  birth_time?: string;
+  gender?: string;
+}): Promise<ChartOhlcvResponse> {
+  return api(`${API_BASE}/api/chart/ohlcv`, postJson(params, 30000));
 }
