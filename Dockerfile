@@ -13,4 +13,4 @@ COPY data/solar_terms/ ./data/solar_terms/
 ENV PYTHONUNBUFFERED=1
 ENV PORT=8000
 
-CMD uvicorn sajucandle.api.main:app --host 0.0.0.0 --port $PORT
+CMD ["sh", "-c", "uvicorn sajucandle.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
