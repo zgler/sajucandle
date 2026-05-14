@@ -13,7 +13,7 @@ export default function TabNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-sm border-b border-zinc-800">
+    <nav className="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-sm border-b border-zinc-800 print-hidden">
       <div className="flex">
         {TABS.map(({ href, label, icon }) => {
           const active = pathname === href || pathname.startsWith(href + "/");

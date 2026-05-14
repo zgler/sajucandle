@@ -165,3 +165,124 @@ body {
   background: #3f3f46;
   border-radius: 2px;
 }
+
+/* ── Print / PDF styles ── */
+@media print {
+  /* Reset to white background for readability */
+  body {
+    background: #fff !important;
+    color: #1a1a1a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide non-content elements */
+  .print-hidden,
+  nav,
+  .paywall-enter,
+  .toast-enter {
+    display: none !important;
+  }
+
+  /* Clean up report page */
+  .min-h-screen {
+    min-height: auto !important;
+    background: #fff !important;
+  }
+
+  /* Section cards: remove dark theme */
+  .report-section-enter {
+    animation: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+    margin-bottom: 16px;
+  }
+
+  .report-header-enter {
+    animation: none !important;
+  }
+
+  /* Override stone backgrounds */
+  [class*="bg-stone-950"],
+  [class*="bg-stone-900"] {
+    background: #fff !important;
+  }
+
+  [class*="border-stone-"] {
+    border-color: #e5e5e5 !important;
+  }
+
+  /* Text colors for print */
+  [class*="text-stone-100"],
+  [class*="text-stone-200"],
+  [class*="text-stone-300"] {
+    color: #1a1a1a !important;
+  }
+
+  [class*="text-stone-400"],
+  [class*="text-stone-500"] {
+    color: #444 !important;
+  }
+
+  [class*="text-stone-600"],
+  [class*="text-stone-700"] {
+    color: #666 !important;
+  }
+
+  /* Accent colors stay visible */
+  [class*="text-amber-300"],
+  [class*="text-amber-400"] {
+    color: #b45309 !important;
+  }
+
+  [class*="text-emerald-300"] {
+    color: #047857 !important;
+  }
+
+  [class*="text-sky-300"] {
+    color: #0369a1 !important;
+  }
+
+  [class*="text-violet-300"] {
+    color: #6d28d9 !important;
+  }
+
+  [class*="text-rose-300"] {
+    color: #be123c !important;
+  }
+
+  [class*="text-teal-300"] {
+    color: #0f766e !important;
+  }
+
+  [class*="text-orange-300"] {
+    color: #c2410c !important;
+  }
+
+  /* Remove blur on locked sections */
+  .blur-\\[6px\\] {
+    filter: none !important;
+  }
+
+  /* Remove glow effects */
+  [style*="box-shadow"] {
+    box-shadow: none !important;
+  }
+
+  /* Remove gradient overlays */
+  .absolute.inset-0.bg-gradient-to-t {
+    display: none !important;
+  }
+
+  /* Page margins */
+  @page {
+    margin: 20mm 15mm;
+    size: A4;
+  }
+
+  /* Hanja badge: print-friendly */
+  .rounded-xl {
+    border: 1px solid #ccc !important;
+    background: #f9f9f9 !important;
+  }
+}
