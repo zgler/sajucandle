@@ -218,6 +218,8 @@ def _parse_holdings(holdings_str: Optional[str]) -> Set[str]:
 
 # ── 사주 운세 API (MVP) ─────────────────────────────────────────────────────
 
+import os
+
 from fastapi.middleware.cors import CORSMiddleware
 from sajucandle.manseryeok.core import get_saju_calculator
 from sajucandle.saju.investor_profile import classify_investor_type
@@ -238,9 +240,20 @@ _ELEMENT_KR = {"木": "목", "火": "화", "土": "토", "金": "금", "水": "�
 def _element_kr(stem: str) -> str:
     return _ELEMENT_KR.get(element_of_stem(stem), "")
 
+def _build_cors_origins() -> list[str]:
+    """환경변수 기반 CORS origin 목록 구성."""
+    origins = [
+        "http://localhost:3000",
+        "http://localhost:3001",
+    ]
+    frontend_url = os.environ.get("FRONTEND_URL")
+    if frontend_url:
+        origins.append(frontend_url.rstrip("/"))
+    return origins
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_build_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
