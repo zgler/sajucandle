@@ -281,7 +281,9 @@ export default function ReportPage() {
       .finally(() => setLoading(false));
   }
 
-  function handlePurchase() {
+  function handlePurchase(tier: "standard" | "premium") {
+    // TODO: 결제 연동 후 실제 결제 플로우로 교체
+    console.log(`Purchase requested: ${tier}`);
     setToastVisible(true);
     setTimeout(() => setToastVisible(false), 2500);
   }
@@ -377,18 +379,31 @@ export default function ReportPage() {
                       투자 스타일 · 투자 함정 분석
                     </p>
 
-                    <button
-                      onClick={handlePurchase}
-                      className="group relative w-full py-3.5 rounded-xl font-bold text-stone-950 overflow-hidden transition-all duration-500"
-                    >
-                      {/* Button gradient bg */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 transition-all duration-500 group-hover:from-amber-300 group-hover:via-amber-200 group-hover:to-amber-300" />
-                      {/* Shimmer effect */}
-                      <div className="absolute inset-0 paywall-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                      <span className="relative text-[15px] tracking-wide">
-                        990원으로 봉인 해제
-                      </span>
-                    </button>
+                    {/* Tier selection */}
+                    <div className="space-y-2.5">
+                      <button
+                        onClick={() => handlePurchase("standard")}
+                        className="group relative w-full py-3.5 rounded-xl font-bold text-stone-950 overflow-hidden transition-all duration-500"
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-400 transition-all duration-500 group-hover:from-amber-300 group-hover:via-amber-200 group-hover:to-amber-300" />
+                        <div className="absolute inset-0 paywall-shimmer opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                        <span className="relative text-[15px] tracking-wide">
+                          990원으로 봉인 해제
+                        </span>
+                      </button>
+
+                      <button
+                        onClick={() => handlePurchase("premium")}
+                        className="group w-full py-3 rounded-xl font-bold text-amber-300 border border-amber-500/25 hover:border-amber-500/50 hover:bg-amber-500/[0.05] transition-all duration-300"
+                      >
+                        <span className="text-[13px] tracking-wide">
+                          9,900원 · PREMIUM
+                        </span>
+                        <span className="block text-[10px] text-stone-500 font-normal mt-0.5">
+                          Opus 모델 · 더 깊은 분석
+                        </span>
+                      </button>
+                    </div>
 
                     <p className="text-[10px] text-stone-700 mt-4 leading-relaxed">
                       본 감정서는 명리학적 해석이며 투자 권유가 아닙니다
