@@ -128,7 +128,7 @@ def chart_ohlcv(req: ChartOhlcvRequest):
     start = end - timedelta(days=req.months * 31)
     try:
         df = get_ohlcv(symbol, asset_class, start, end)
-    except Exception as e:
+    except Exception:
         raise HTTPException(status_code=404, detail=f"가격 데이터를 가져올 수 없습니다: {symbol}")
 
     if df.empty:
