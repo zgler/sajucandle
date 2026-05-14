@@ -10,7 +10,7 @@ interface Props {
 
 export default function CandleChart({ ohlcv, markers }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<ReturnType<typeof import("lightweight-charts").createChart> | null>(null);
+  const chartRef = useRef<any>(null);
 
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
@@ -55,8 +55,8 @@ export default function CandleChart({ ohlcv, markers }: Props) {
 
       chartRef.current = chart;
 
-      // 캔들스틱
-      const candleSeries = chart.addCandlestickSeries({
+      // 캔들스틱 (v5 API: addSeries)
+      const candleSeries = chart.addSeries(LWC.CandlestickSeries, {
         upColor: "#4ade80",
         downColor: "#ef4444",
         borderDownColor: "#ef4444",
@@ -74,8 +74,8 @@ export default function CandleChart({ ohlcv, markers }: Props) {
       }));
       candleSeries.setData(candleData);
 
-      // 거래량
-      const volumeSeries = chart.addHistogramSeries({
+      // 거래량 (v5 API: addSeries)
+      const volumeSeries = chart.addSeries(LWC.HistogramSeries, {
         priceFormat: { type: "volume" },
         priceScaleId: "vol",
       });
@@ -98,7 +98,7 @@ export default function CandleChart({ ohlcv, markers }: Props) {
         ma20Data.push({ time: ohlcv[i].date, value: +(sum / 20).toFixed(2) });
       }
       if (ma20Data.length > 0) {
-        const maSeries = chart.addLineSeries({
+        const maSeries = chart.addSeries(LWC.LineSeries, {
           color: "#fbbf2480",
           lineWidth: 1,
           priceLineVisible: false,
@@ -107,7 +107,7 @@ export default function CandleChart({ ohlcv, markers }: Props) {
         maSeries.setData(ma20Data);
       }
 
-      // 시그널 마커
+      // 시그널 마커 (v5 API: createSeriesMarkers)
       if (markers.length > 0) {
         const MARKER_MAP: Record<string, { position: string; color: string; shape: string }> = {
           BUY: { position: "belowBar", color: "#4ade80", shape: "arrowUp" },
@@ -124,7 +124,7 @@ export default function CandleChart({ ohlcv, markers }: Props) {
             text: m.signal,
           }));
         if (chartMarkers.length > 0) {
-          candleSeries.setMarkers(chartMarkers);
+          LWC.createSeriesMarkers(candleSeries, chartMarkers);
         }
       }
 
