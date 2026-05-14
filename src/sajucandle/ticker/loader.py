@@ -27,8 +27,8 @@ def _parse_transition_points(raw: str) -> List[TransitionPoint]:
 def load_tickers(csv_path: Optional[Path] = None) -> Dict[str, TickerRecord]:
     """CSV에서 종목 레코드 로드. symbol → TickerRecord 딕셔너리."""
     if csv_path is None:
-        project_root = Path(__file__).resolve().parents[3]
-        csv_path = project_root / "data" / "tickers" / "sample_tickers.csv"
+        from sajucandle._paths import DATA_DIR
+        csv_path = DATA_DIR / "tickers" / "sample_tickers.csv"
     records: Dict[str, TickerRecord] = {}
     with csv_path.open(encoding="utf-8") as f:
         reader = csv.DictReader(f)

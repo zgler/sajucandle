@@ -32,11 +32,8 @@ class SajuCalculator:
             사주 데이터가 포함된 CSV 파일 경로 (기본값: 패키지 내장 파일)
         """
         if csv_path is None:
-            # 프로젝트 내부의 skyfield 기반 새 CSV 사용
-            # 경로: <project_root>/data/manseryeok/calendar_data_v1.csv
-            # __file__: .../src/sajucandle/manseryeok/core.py → 3단계 위로
-            project_root = Path(__file__).resolve().parents[3]
-            csv_path = project_root / 'data' / 'manseryeok' / 'calendar_data_v1.csv'
+            from sajucandle._paths import DATA_DIR
+            csv_path = DATA_DIR / 'manseryeok' / 'calendar_data_v1.csv'
             if not csv_path.exists():
                 # 폴백: 패키지 내부 calendar_data.csv (있을 경우)
                 csv_path = Path(__file__).parent / 'calendar_data.csv'

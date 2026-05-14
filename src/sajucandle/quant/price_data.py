@@ -20,8 +20,9 @@ from typing import Optional
 import pandas as pd
 
 
-_ROOT = Path(__file__).resolve().parents[3]
-_PRICE_CACHE_DIR = _ROOT / "data" / "prices"
+from sajucandle._paths import PROJECT_ROOT as _ROOT, DATA_DIR as _DATA_DIR
+
+_PRICE_CACHE_DIR = _DATA_DIR / "prices"
 
 # In-memory cache: (symbol, asset_class) → DataFrame (전체 기간)
 # CSV 재읽기 비용 제거. 프로세스 내 재사용.
