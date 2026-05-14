@@ -12,3 +12,7 @@ docs/
 .vscode/
 .idea/
 README.md
+frontend/
+data/prices/
+data/signals/
+*.bsp
