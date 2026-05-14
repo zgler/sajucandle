@@ -22,7 +22,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from sajucandle.api.routers import signals, saju, payments
+from sajucandle.api.routers import signals, saju, payments, chart
 
 app = FastAPI(
     title="사주캔들 Signal API",
@@ -54,3 +54,4 @@ app.add_middleware(
 app.include_router(signals.router)
 app.include_router(saju.router)
 app.include_router(payments.router)
+app.include_router(chart.router)
