@@ -4,14 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { confirmPayment } from "@/lib/api";
 import type { UserData } from "@/lib/types";
-
-const REPORT_CACHE_PREFIX = "saju_report_";
-
-function buildReportId(user: UserData): string {
-  const h = user.hour !== undefined ? String(user.hour).padStart(2, "0") : "00";
-  const y = new Date().getFullYear();
-  return `rpt_${user.year}${String(user.month).padStart(2, "0")}${String(user.day).padStart(2, "0")}${h}${user.gender}_${y}`;
-}
+import { buildReportId, REPORT_CACHE_PREFIX } from "@/lib/report";
 
 function SuccessContent() {
   const router = useRouter();
