@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import httpx
 import pytest
 from fastapi.testclient import TestClient
 from sajucandle.api.main import app
@@ -31,6 +32,22 @@ BASE_PAYLOAD = {
 }
 
 
+def _make_async_client_mock(status_code: int = 200, json_data: dict | None = None):
+    """AsyncClient context manager mock that returns a response with given status_code."""
+    if json_data is None:
+        json_data = {"paymentKey": "pk_test_abc123", "status": "DONE"}
+    mock_resp = MagicMock()
+    mock_resp.status_code = status_code
+    mock_resp.json.return_value = json_data
+
+    mock_client = AsyncMock()
+    mock_client.post = AsyncMock(return_value=mock_resp)
+    mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+    mock_client.__aexit__ = AsyncMock(return_value=False)
+
+    return mock_client
+
+
 class TestPaymentConfirmValidation:
     def test_standard_tier_wrong_amount_returns_400(self, client: TestClient):
         payload = {**BASE_PAYLOAD, "tier": "standard", "amount": 9900}
@@ -47,18 +64,22 @@ class TestPaymentConfirmValidation:
         resp = client.post("/api/payments/confirm", json=payload)
         assert resp.status_code == 400
 
+    def test_empty_payment_key_returns_422(self, client: TestClient):
+        payload = {**BASE_PAYLOAD, "payment_key": ""}
+        resp = client.post("/api/payments/confirm", json=payload)
+        assert resp.status_code == 422
+
+    def test_empty_order_id_returns_422(self, client: TestClient):
+        payload = {**BASE_PAYLOAD, "order_id": ""}
+        resp = client.post("/api/payments/confirm", json=payload)
+        assert resp.status_code == 422
+
 
 class TestPaymentConfirmSuccess:
-    def _mock_toss_response(self, status_code: int = 200):
-        mock_resp = MagicMock()
-        mock_resp.status_code = status_code
-        mock_resp.json.return_value = {"paymentKey": "pk_test_abc123", "status": "DONE"}
-        return mock_resp
-
     def test_standard_payment_success(self, client: TestClient):
-        mock_resp = self._mock_toss_response(200)
+        mock_client = _make_async_client_mock(200)
         with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.post", return_value=mock_resp), \
+             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client), \
              patch("sajucandle.api.main.collect_report_context", return_value={}), \
              patch("sajucandle.api.main.generate_report",
                    new_callable=AsyncMock, return_value=MOCK_SECTIONS):
@@ -75,9 +96,9 @@ class TestPaymentConfirmSuccess:
         assert all(sec["locked"] is False for sec in data["report"]["sections"])
 
     def test_premium_payment_success(self, client: TestClient):
-        mock_resp = self._mock_toss_response(200)
+        mock_client = _make_async_client_mock(200)
         with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.post", return_value=mock_resp), \
+             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client), \
              patch("sajucandle.api.main.collect_report_context", return_value={}), \
              patch("sajucandle.api.main.generate_report",
                    new_callable=AsyncMock, return_value=MOCK_SECTIONS):
@@ -94,12 +115,11 @@ class TestPaymentConfirmSuccess:
 
 class TestPaymentConfirmFailure:
     def test_toss_rejection_returns_400(self, client: TestClient):
-        mock_resp = MagicMock()
-        mock_resp.status_code = 400
-        mock_resp.json.return_value = {"code": "INVALID_PAYMENT", "message": "결제 실패"}
-
+        mock_client = _make_async_client_mock(
+            400, {"code": "INVALID_PAYMENT", "message": "결제 실패"}
+        )
         with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
-             patch("sajucandle.api.main.httpx.post", return_value=mock_resp):
+             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client):
             resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
 
         assert resp.status_code == 400
@@ -111,3 +131,28 @@ class TestPaymentConfirmFailure:
             resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
 
         assert resp.status_code == 503
+
+    def test_toss_network_timeout_returns_502(self, client: TestClient):
+        mock_client = AsyncMock()
+        mock_client.post = AsyncMock(side_effect=httpx.TimeoutException("timed out"))
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+
+        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client):
+            resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
+
+        assert resp.status_code == 502
+        assert "결제 서버 연결 실패" in resp.json()["detail"]
+
+    def test_generate_report_error_after_payment_success_returns_502(self, client: TestClient):
+        mock_client = _make_async_client_mock(200)
+        with patch("sajucandle.api.main.os.environ.get", return_value="test_secret_key"), \
+             patch("sajucandle.api.main.httpx.AsyncClient", return_value=mock_client), \
+             patch("sajucandle.api.main.collect_report_context", return_value={}), \
+             patch("sajucandle.api.main.generate_report",
+                   new_callable=AsyncMock, side_effect=Exception("AI error")):
+            resp = client.post("/api/payments/confirm", json=BASE_PAYLOAD)
+
+        assert resp.status_code == 502
+        assert "결제는 완료되었습니다" in resp.json()["detail"]
