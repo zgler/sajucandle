@@ -2,7 +2,46 @@ import type { ProfileResponse, DailyFortuneResponse, YearlyFortuneResponse, Repo
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8001";
 
-export async function fetchProfile(params: {
+/* ── 공통 fetch 래퍼 ─────────────────────────────── */
+
+async function api<T>(
+  url: string,
+  init?: RequestInit & { timeoutMs?: number },
+): Promise<T> {
+  const { timeoutMs, ...fetchInit } = init ?? {};
+
+  let controller: AbortController | undefined;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+  if (timeoutMs) {
+    controller = new AbortController();
+    timeout = setTimeout(() => controller!.abort(), timeoutMs);
+    fetchInit.signal = controller.signal;
+  }
+
+  try {
+    const res = await fetch(url, fetchInit);
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`API error: ${res.status} ${text}`);
+    }
+    return res.json();
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
+function postJson(body: unknown, timeoutMs?: number) {
+  return {
+    method: "POST" as const,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+    timeoutMs,
+  };
+}
+
+/* ── API 함수 ─────────────────────────────────────── */
+
+export function fetchProfile(params: {
   year: number;
   month: number;
   day: number;
@@ -10,19 +49,10 @@ export async function fetchProfile(params: {
   minute?: number;
   gender: "M" | "F";
 }): Promise<ProfileResponse> {
-  const res = await fetch(`${API_BASE}/api/saju/profile`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(params),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`fetchProfile failed: ${res.status} ${text}`);
-  }
-  return res.json();
+  return api(`${API_BASE}/api/saju/profile`, postJson(params));
 }
 
-export async function fetchDailyFortune(params: {
+export function fetchDailyFortune(params: {
   year: number;
   month: number;
   day: number;
@@ -38,15 +68,10 @@ export async function fetchDailyFortune(params: {
   query.set("gender", params.gender);
   if (params.date) query.set("date", params.date);
 
-  const res = await fetch(`${API_BASE}/api/saju/daily?${query.toString()}`);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`fetchDailyFortune failed: ${res.status} ${text}`);
-  }
-  return res.json();
+  return api(`${API_BASE}/api/saju/daily?${query.toString()}`);
 }
 
-export async function fetchYearlyFortune(params: {
+export function fetchYearlyFortune(params: {
   year: number;
   month: number;
   day: number;
@@ -60,15 +85,10 @@ export async function fetchYearlyFortune(params: {
   if (params.hour !== undefined) query.set("hour", String(params.hour));
   query.set("gender", params.gender);
 
-  const res = await fetch(`${API_BASE}/api/saju/yearly?${query.toString()}`);
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`fetchYearlyFortune failed: ${res.status} ${text}`);
-  }
-  return res.json();
+  return api(`${API_BASE}/api/saju/yearly?${query.toString()}`);
 }
 
-export async function fetchReport(params: {
+export function fetchReport(params: {
   year: number;
   month: number;
   day: number;
@@ -76,27 +96,10 @@ export async function fetchReport(params: {
   gender: "M" | "F";
   tier?: "standard" | "premium";
 }): Promise<ReportResponse> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 300000);
-
-  try {
-    const res = await fetch(`${API_BASE}/api/saju/report`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`fetchReport failed: ${res.status} ${text}`);
-    }
-    return res.json();
-  } finally {
-    clearTimeout(timeout);
-  }
+  return api(`${API_BASE}/api/saju/report`, postJson(params, 300000));
 }
 
-export async function confirmPayment(params: {
+export function confirmPayment(params: {
   payment_key: string;
   order_id: string;
   amount: number;
@@ -107,22 +110,5 @@ export async function confirmPayment(params: {
   gender: "M" | "F";
   tier: "standard" | "premium";
 }): Promise<PaymentConfirmResponse> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 300000);
-
-  try {
-    const res = await fetch(`${API_BASE}/api/payments/confirm`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(params),
-      signal: controller.signal,
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`confirmPayment failed: ${res.status} ${text}`);
-    }
-    return res.json();
-  } finally {
-    clearTimeout(timeout);
-  }
+  return api(`${API_BASE}/api/payments/confirm`, postJson(params, 300000));
 }
